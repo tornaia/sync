@@ -1,5 +1,6 @@
 package com.github.tornaia.sync.client.win;
 
+import com.github.tornaia.sync.shared.AddFileRequest;
 import com.sun.nio.file.SensitivityWatchEventModifier;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
@@ -19,7 +20,9 @@ import static java.nio.file.StandardWatchEventKinds.*;
 public class WinClientApp {
 
     private static final String SERVER_URL = "http://127.0.0.1:8080";
-    private static final String HELLO_PATH = "/api/hello";
+    private static final String HELLO_PATH = "/file/hello";
+
+    private static HttpClient httpClient = HttpClientBuilder.create().build();
 
     public static void main(String[] args) throws IOException {
         Path tempDirectory = FileSystems.getDefault().getPath("C:\\temp\\");
@@ -53,11 +56,11 @@ public class WinClientApp {
                         continue;
                     }
                     if (kind == ENTRY_CREATE) {
-                        onDirectoryChange(filename);
+                        onFileCreate(filename);
                     } else if (kind == ENTRY_DELETE) {
-                        onDirectoryChange(filename);
+                        onFileDelete(filename);
                     } else if (kind == ENTRY_MODIFY) {
-                        onDirectoryChange(filename);
+                        onFileModify(filename);
                     }
 
                     boolean valid = key.reset();
@@ -83,10 +86,16 @@ public class WinClientApp {
         });
     }
 
-    private static HttpClient httpClient = HttpClientBuilder.create().build();
+    private static void onFileCreate(Path filePath) {
+        AddFileRequest request = new AddFileRequest();
+    }
 
-    private static void onDirectoryChange(Path filename) {
-        // TODO
+    private static void onFileDelete(Path filePath) {
+
+    }
+
+    private static void onFileModify(Path filePath) {
+
     }
 
     private static String getServerInfo() throws IOException {
