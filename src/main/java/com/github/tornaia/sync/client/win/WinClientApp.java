@@ -1,14 +1,9 @@
 package com.github.tornaia.sync.client.win;
 
-import com.github.tornaia.sync.shared.api.PutDirectoryRequest;
-import com.sun.nio.file.SensitivityWatchEventModifier;
-import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHeaders;
-import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpDelete;
-import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
@@ -17,17 +12,15 @@ import org.apache.http.impl.client.HttpClientBuilder;
 
 import javax.ws.rs.core.MediaType;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.charset.Charset;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
-import static com.github.tornaia.sync.client.win.util.SerializerUtils.toStringEntity;
 import static com.github.tornaia.sync.shared.util.FileSizeUtils.toReadableFileSize;
 import static java.nio.file.StandardWatchEventKinds.*;
 
@@ -38,17 +31,15 @@ public class WinClientApp {
     private static final int SERVER_PORT = 8080;
     private static final String SERVER_URL = SERVER_SCHEME + "://" + SERVER_HOST + ":" + SERVER_PORT;
 
-    private static final String HELLO_PATH = "/api/hello";
     private static final String FILE_PATH = "/api/file";
-    private static final String DIRECTORY_PATH = "/api/directory";
-    private static final String OBJECT_PATH = "/api/object";
 
     private static final String USERID = "7247234";
 
-    private static final Path SYNC_DIRECTORY = FileSystems.getDefault().getPath("C:\\temp\\");
+    private static final Path SYNC_DIRECTORY = FileSystems.getDefault().getPath("C:\\mongodb\\"); // "C:\\temp\\"
 
     private static final HttpClient HTTP_CLIENT = HttpClientBuilder.
             create()
+            .disableAutomaticRetries()
             .addInterceptorFirst(new ThrowExceptionOnNonOkResponse())
             .build();
 
@@ -64,11 +55,9 @@ public class WinClientApp {
 
     public static void main(String[] args) throws IOException {
         System.out.println("PID: " + ManagementFactory.getRuntimeMXBean().getName());
-        String serverInfo = getServerInfo();
-        System.out.println("Server says: " + serverInfo);
 
-        SYNC_DIRECTORY.register(WATCHER, new WatchEvent.Kind[]{ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY, OVERFLOW}, SensitivityWatchEventModifier.HIGH);
-        registerRecursive(WATCHER, SYNC_DIRECTORY);
+        SYNC_DIRECTORY.register(WATCHER, new WatchEvent.Kind[]{ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY, OVERFLOW});
+        registerRecursive(SYNC_DIRECTORY);
 
         while (true) {
             WatchKey key;
@@ -95,10 +84,10 @@ public class WinClientApp {
                 Path filePath = ownerPath.resolve(filename);
                 if (kind == ENTRY_CREATE) {
                     onFileCreate(filePath);
-                } else if (kind == ENTRY_DELETE) {
-                    onFileDelete(filePath);
                 } else if (kind == ENTRY_MODIFY) {
                     onFileModify(filePath);
+                } else if (kind == ENTRY_DELETE) {
+                    onFileDelete(filePath);
                 }
 
                 boolean valid = key.reset();
@@ -111,13 +100,49 @@ public class WinClientApp {
         }
     }
 
-    private static void registerRecursive(WatchService watchService, Path root) {
+    private static void onFileCreate(Path filePath) throws IOException {
+        File file = SYNC_DIRECTORY.resolve(filePath).toFile();
+        if (file.isFile()) {
+            return;
+        } else if (file.isDirectory()) {
+            registerRecursive(filePath.toAbsolutePath());
+        } else {
+            System.out.println("Unknown file type. File does not exist? " + file);
+        }
+    }
+
+    private static void onFileModify(Path filePath) throws IOException {
+        File file = filePath.toFile();
+        if (file.isDirectory()) {
+            return;
+        } else if (file.isFile()) {
+            putFile(file);
+        } else {
+            System.out.println("Unknown file type. File does not exist? " + file);
+        }
+    }
+
+    private static void onFileDelete(Path filePath) throws IOException {
+        File file = SYNC_DIRECTORY.resolve(filePath).toFile();
+        if (file.exists()) {
+            throw new IllegalStateException("Object must not exist on deleteObject: " + file);
+        }
+        deleteObject(file);
+    }
+
+    private static void registerRecursive(Path root) {
         try {
             Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
                 @Override
                 public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
                     System.out.println("WatchService registered for dir: " + dir.getFileName());
-                    dir.register(watchService, ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY);
+                    dir.register(WATCHER, ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY);
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+                    System.out.println("VISIT FAILED: " + file + ", exception: " + exc.getMessage());
                     return FileVisitResult.CONTINUE;
                 }
             });
@@ -125,19 +150,6 @@ public class WinClientApp {
             throw new RuntimeException(e);
         }
     }
-
-    private static void onFileCreate(Path filePath) throws IOException {
-        File file = SYNC_DIRECTORY.resolve(filePath).toFile();
-        if (file.isFile()) {
-            putFile(file);
-        } else if (file.isDirectory()) {
-            putDirectory(file);
-            registerRecursive(WATCHER, filePath.toAbsolutePath());
-        } else {
-            throw new IllegalStateException("Unknown file type: " + file);
-        }
-    }
-
 
     private static void putFile(File file) throws IOException {
         String relativePathWithinSyncFolder = getRelativePath(file);
@@ -149,30 +161,16 @@ public class WinClientApp {
 
         HttpPut httpPut = new HttpPut(SERVER_URL + FILE_PATH + "?userid=" + USERID);
         httpPut.setEntity(multipart);
-        HTTP_CLIENT.execute(httpPut);
+        try {
+            HTTP_CLIENT.execute(httpPut);
+        } catch (FileNotFoundException e) {
+            System.out.println("File disappeared? " + e.getMessage());
+            return;
+        }
         System.out.println("PUT file: " + relativePathWithinSyncFolder + " (" + toReadableFileSize(file.length()) + ")");
     }
 
-    private static void putDirectory(File directory) throws IOException {
-        String relativePathWithinSyncFolder = getRelativePath(directory);
-
-        HttpPut httpPut = new HttpPut(SERVER_URL + DIRECTORY_PATH + "?userid=" + USERID);
-        PutDirectoryRequest putDirectoryRequest = new PutDirectoryRequest(relativePathWithinSyncFolder);
-        httpPut.setEntity(toStringEntity(putDirectoryRequest));
-        httpPut.setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
-        HTTP_CLIENT.execute(httpPut);
-        System.out.println("PUT directory: " + relativePathWithinSyncFolder);
-    }
-
-    private static void onFileDelete(Path filePath) throws IOException {
-        File file = SYNC_DIRECTORY.resolve(filePath).toFile();
-        if (file.exists()) {
-            throw new IllegalStateException("Object must not exist on delete: " + file);
-        }
-        delete(file);
-    }
-
-    private static void delete(File object) throws IOException {
+    private static void deleteObject(File object) throws IOException {
         String relativePathWithinSyncFolder = getRelativePath(object);
 
         URI uri;
@@ -181,7 +179,7 @@ public class WinClientApp {
                     .setScheme(SERVER_SCHEME)
                     .setHost(SERVER_HOST)
                     .setPort(SERVER_PORT)
-                    .setPath(OBJECT_PATH)
+                    .setPath(FILE_PATH)
                     .addParameter("userid", USERID)
                     .addParameter("relativePath", relativePathWithinSyncFolder)
                     .build();
@@ -194,22 +192,6 @@ public class WinClientApp {
 
         HTTP_CLIENT.execute(httpDelete);
         System.out.println("DELETE file: " + relativePathWithinSyncFolder);
-    }
-
-    private static void onFileModify(Path filePath) throws IOException {
-        File file = filePath.toFile();
-        if (file.isDirectory()) {
-            return;
-        } else if (file.isFile()) {
-            onFileCreate(filePath);
-        } else {
-            throw new IllegalStateException("Unknown file: " + file);
-        }
-    }
-
-    private static String getServerInfo() throws IOException {
-        HttpResponse response = HTTP_CLIENT.execute(new HttpGet(SERVER_URL + HELLO_PATH));
-        return IOUtils.toString(response.getEntity().getContent(), Charset.defaultCharset());
     }
 
     private static String getRelativePath(File directory) {
