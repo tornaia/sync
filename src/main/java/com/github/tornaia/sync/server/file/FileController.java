@@ -1,6 +1,6 @@
 package com.github.tornaia.sync.server.file;
 
-import com.github.tornaia.sync.shared.api.DeleteDirectoryRequest;
+import com.github.tornaia.sync.shared.api.DeleteFileRequest;
 import com.github.tornaia.sync.shared.util.FileSizeUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -18,9 +18,9 @@ public class FileController {
     }
 
     @RequestMapping(value = "/api/file", method = RequestMethod.DELETE)
-    public void deleteDirectory(DeleteDirectoryRequest deleteDirectoryRequest) throws IOException {
-        String userid = deleteDirectoryRequest.getUserid();
-        String relativePath = deleteDirectoryRequest.getRelativePath();
-        System.out.println("DELETE object: " + relativePath);
+    public void deleteDirectory(DeleteFileRequest deleteFileRequest) throws IOException {
+        String userid = deleteFileRequest.getUserid();
+        String relativePath = deleteFileRequest.getRelativePath();
+        System.out.println("DELETE file: " + relativePath);
     }
 }
