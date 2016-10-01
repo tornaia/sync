@@ -16,6 +16,8 @@
         <java.version>1.8</java.version>
         <org.apache.httpcomponents.version>4.5.2</org.apache.httpcomponents.version>
         <commons-io.version>2.5</commons-io.version>
+        <jackson-databind.version>2.6.6</jackson-databind.version>
+        <javax.ws.rs-api.version>2.0.1</javax.ws.rs-api.version>
         <junit.version>4.12</junit.version>
 
         <maven-compiler-plugin.version>3.5.1</maven-compiler-plugin.version>
@@ -90,6 +92,18 @@
             </dependency>
 
             <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>${jackson-databind.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>javax.ws.rs</groupId>
+                <artifactId>javax.ws.rs-api</artifactId>
+                <version>${javax.ws.rs-api.version}</version>
+            </dependency>
+
+            <dependency>
                 <groupId>com.github.tornaia</groupId>
                 <artifactId>sync-client-win</artifactId>
                 <version>${project.version}</version>
@@ -123,6 +137,18 @@
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson-databind.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>javax.ws.rs</groupId>
+            <artifactId>javax.ws.rs-api</artifactId>
+            <version>${javax.ws.rs-api.version}</version>
         </dependency>
     </dependencies>
 
