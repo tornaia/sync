@@ -1,5 +1,6 @@
 package com.github.tornaia.sync.server.file;
 
+import com.github.tornaia.sync.util.FileSizeUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -15,6 +16,7 @@ public class FileController {
     public void addFile(@RequestParam("userid") String userid, @RequestPart("file") MultipartFile multipartFile) throws IOException {
         String relativePathWithinSyncDir = multipartFile.getOriginalFilename();
         byte[] bytes = multipartFile.getBytes();
+        System.out.println("File received: " + relativePathWithinSyncDir + " (" + FileSizeUtils.toReadableFileSize(bytes.length) + ")");
         return;
     }
 }
