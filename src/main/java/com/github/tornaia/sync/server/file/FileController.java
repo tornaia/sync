@@ -1,11 +1,9 @@
 package com.github.tornaia.sync.server.file;
 
-import com.github.tornaia.sync.shared.AddFileRequest;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @RestController
@@ -14,7 +12,9 @@ public class FileController {
     private AtomicInteger counter = new AtomicInteger();
 
     @RequestMapping(value = "/api/file", method = RequestMethod.PUT)
-    public void addFile(@RequestBody AddFileRequest addFileRequest) {
+    public void addFile(@RequestParam("userid") String userid, @RequestPart("file") MultipartFile multipartFile) throws IOException {
+        String relativePathWithinSyncDir = multipartFile.getOriginalFilename();
+        byte[] bytes = multipartFile.getBytes();
         return;
     }
 }
