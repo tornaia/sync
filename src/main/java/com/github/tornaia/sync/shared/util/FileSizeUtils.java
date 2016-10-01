@@ -1,4 +1,4 @@
-package com.github.tornaia.sync.util;
+package com.github.tornaia.sync.shared.util;
 
 import java.text.DecimalFormat;
 

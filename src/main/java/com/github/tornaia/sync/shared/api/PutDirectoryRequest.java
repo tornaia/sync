@@ -1,7 +1,14 @@
 package com.github.tornaia.sync.shared.api;
 
-/**
- * Created by TAATOAN3 on 10/1/2016.
- */
 public class PutDirectoryRequest {
+
+    public String relativePath;
+
+    public PutDirectoryRequest() {
+        // must have because of serialization
+    }
+
+    public PutDirectoryRequest(String relativePath) {
+        this.relativePath = relativePath;
+    }
 }
