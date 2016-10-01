@@ -14,7 +14,6 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
         <java.version>1.8</java.version>
-        <spring-boot-starter-parent.version>1.4.1.RELEASE</spring-boot-starter-parent.version>
         <mongo-java-driver.version>3.3.0</mongo-java-driver.version>
         <junit.version>4.12</junit.version>
 
@@ -25,7 +24,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>${spring-boot-starter-parent.version}</version>
+        <version>1.4.1.RELEASE</version>
     </parent>
 
     <build>
@@ -102,7 +101,6 @@
             <groupId>org.mongodb</groupId>
             <artifactId>mongo-java-driver</artifactId>
         </dependency>
-
     </dependencies>
 
 </project>
