@@ -2,6 +2,7 @@ package com.github.tornaia.sync.server.controller;
 
 import java.io.IOException;
 
+import javax.annotation.Resource;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
@@ -28,7 +29,8 @@ public class FileController {
 	
 	@Autowired
     private MongoOperations mongoOperations;
-	
+
+    @Resource
 	private FileRepository fileRepo;
 
     @RequestMapping(value = "/api/file", method = RequestMethod.PUT)
@@ -66,8 +68,5 @@ public class FileController {
         System.out.println("GET file: " + findOne + ")");
         
         return response.build();
-        
-        
     }
-
 }
