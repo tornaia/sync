@@ -8,17 +8,13 @@ public class File {
 	@Id
 	private String id;
 	
-	private String name;
+	private String path;
 	
 	private byte[] data;
 	
-	@DBRef
-	private Folder folder;
-	
-	public File(String name, byte[] data, Folder folder){
-		this.name = name;
+	public File(String path, byte[] data){
+		this.path = path;
 		this.data = data;
-		this.folder = folder;
 	}
 
 	public String getId() {
@@ -29,13 +25,6 @@ public class File {
 		this.id = id;
 	}
 
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
 
 	public byte[] getData() {
 		return data;
@@ -45,12 +34,12 @@ public class File {
 		this.data = data;
 	}
 
-	public Folder getFolder() {
-		return folder;
+	public String getPath() {
+		return path;
 	}
 
-	public void setFolder(Folder folder) {
-		this.folder = folder;
+	public void setPath(String path) {
+		this.path = path;
 	}
-	
+
 }
