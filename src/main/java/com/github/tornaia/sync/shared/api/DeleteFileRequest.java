@@ -1,6 +1,6 @@
 package com.github.tornaia.sync.shared.api;
 
-public class DeleteDirectoryRequest {
+public class DeleteFileRequest {
 
     private String userid;
     private String relativePath;
