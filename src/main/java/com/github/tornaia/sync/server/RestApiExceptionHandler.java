@@ -11,6 +11,7 @@ public final class RestApiExceptionHandler {
 
     @ExceptionHandler(value = Throwable.class)
     public static ModelAndView handle(HttpServletResponse response, Exception e) {
+        e.printStackTrace();
         return null;
     }
 
