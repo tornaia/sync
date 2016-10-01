@@ -19,6 +19,7 @@ import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.concurrent.TimeUnit;
 
+import static com.github.tornaia.sync.util.FileSizeUtils.toReadableFileSize;
 import static java.nio.file.StandardWatchEventKinds.*;
 
 public class WinClientApp {
@@ -93,7 +94,7 @@ public class WinClientApp {
     }
 
     private static void onFileCreate(Path filePath) throws IOException {
-        File file = filePath.toFile();
+        File file = tempDirectory.resolve(filePath).toFile();
         String relativePathWithinSyncFolder = file.getAbsolutePath().substring(tempDirectory.toAbsolutePath().toFile().getAbsolutePath().length());
 
         HttpEntity multipart = MultipartEntityBuilder
@@ -104,6 +105,7 @@ public class WinClientApp {
         HttpPut httpPut = new HttpPut(SERVER_URL + FILE_ADD + "?userid=" + USERID);
         httpPut.setEntity(multipart);
         HttpResponse response = httpClient.execute(httpPut);
+        System.out.println("File pushed: " + relativePathWithinSyncFolder + " (" + toReadableFileSize(file.length()) + ")");
     }
 
     private static void onFileDelete(Path filePath) {
