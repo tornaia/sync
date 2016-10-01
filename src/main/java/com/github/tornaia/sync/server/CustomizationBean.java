@@ -9,6 +9,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class CustomizationBean implements EmbeddedServletContainerCustomizer {
 
+    private static final int _1GB = 1073741824;
+
     @Override
     public void customize(ConfigurableEmbeddedServletContainer container) {
         String port = System.getenv("PORT");
@@ -17,7 +19,7 @@ public class CustomizationBean implements EmbeddedServletContainerCustomizer {
         }
         container.setPort(Integer.parseInt(port));
     }
-    
+
     @Bean
     public EmbeddedServletContainerCustomizer containerCustomizer() {
         return (ConfigurableEmbeddedServletContainer container) -> {
@@ -25,7 +27,7 @@ public class CustomizationBean implements EmbeddedServletContainerCustomizer {
                 TomcatEmbeddedServletContainerFactory tomcat = (TomcatEmbeddedServletContainerFactory) container;
                 tomcat.addConnectorCustomizers(
                         (connector) -> {
-                            connector.setMaxPostSize(1073741824); // 1 GB
+                            connector.setMaxPostSize(_1GB);
                         }
                 );
             }
