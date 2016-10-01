@@ -13,7 +13,7 @@ import javax.servlet.MultipartConfigElement;
 public class CustomizationBean implements EmbeddedServletContainerCustomizer {
 
     private static final int _1GB = 1073741824;
-    public static final String _1024MB = "1024MB";
+    private static final String _1024MB = "1024MB";
 
     @Override
     public void customize(ConfigurableEmbeddedServletContainer container) {
