@@ -125,7 +125,8 @@ public class WinClientApp {
     private static void onFileDelete(Path filePath) throws IOException {
         File file = SYNC_DIRECTORY.resolve(filePath).toFile();
         if (file.exists()) {
-            throw new IllegalStateException("Object must not exist on deleteObject: " + file);
+            System.out.println("File exist when we want to sync a delete event? " + file);
+            return;
         }
         deleteObject(file);
     }
