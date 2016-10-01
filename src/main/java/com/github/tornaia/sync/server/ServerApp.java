@@ -7,12 +7,8 @@ import org.springframework.context.annotation.ComponentScan;
 @SpringBootApplication
 @ComponentScan("com.github.tornaia.sync.server")
 public class ServerApp {
-	
 
     public static void main(String[] args) throws Exception {
         SpringApplication.run(ServerApp.class, args);
-        
     }
-
-    
 }
