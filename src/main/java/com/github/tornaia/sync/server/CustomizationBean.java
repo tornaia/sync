@@ -5,11 +5,12 @@ import org.springframework.boot.context.embedded.EmbeddedServletContainerCustomi
 import org.springframework.boot.context.embedded.tomcat.TomcatEmbeddedServletContainerFactory;
 import org.springframework.boot.web.servlet.MultipartConfigFactory;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
 
 import javax.servlet.MultipartConfigElement;
 
-@Component
+@Configuration
 public class CustomizationBean implements EmbeddedServletContainerCustomizer {
 
     private static final int _1GB = 1073741824;
