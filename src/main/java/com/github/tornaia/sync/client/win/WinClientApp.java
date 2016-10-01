@@ -1,13 +1,17 @@
 package com.github.tornaia.sync.client.win;
 
-import com.github.tornaia.sync.shared.AddFileRequest;
 import com.sun.nio.file.SensitivityWatchEventModifier;
 import org.apache.commons.io.IOUtils;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.impl.client.HttpClientBuilder;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.nio.charset.Charset;
@@ -19,13 +23,15 @@ import static java.nio.file.StandardWatchEventKinds.*;
 
 public class WinClientApp {
 
+    private static final String USERID = "7247234";
     private static final String SERVER_URL = "http://127.0.0.1:8080";
     private static final String HELLO_PATH = "/file/hello";
+    private static final String FILE_ADD = "/api/file";
 
+    private static Path tempDirectory = FileSystems.getDefault().getPath("C:\\temp\\");
     private static HttpClient httpClient = HttpClientBuilder.create().build();
 
     public static void main(String[] args) throws IOException {
-        Path tempDirectory = FileSystems.getDefault().getPath("C:\\temp\\");
         System.out.println("PID: " + ManagementFactory.getRuntimeMXBean().getName());
         String serverInfo = getServerInfo();
         System.out.println("Server says: " + serverInfo);
@@ -86,8 +92,18 @@ public class WinClientApp {
         });
     }
 
-    private static void onFileCreate(Path filePath) {
-        AddFileRequest request = new AddFileRequest();
+    private static void onFileCreate(Path filePath) throws IOException {
+        File file = filePath.toFile();
+        String relativePathWithinSyncFolder = file.getAbsolutePath().substring(tempDirectory.toAbsolutePath().toFile().getAbsolutePath().length());
+
+        HttpEntity multipart = MultipartEntityBuilder
+                .create()
+                .addBinaryBody("file", file, ContentType.APPLICATION_OCTET_STREAM, relativePathWithinSyncFolder)
+                .build();
+
+        HttpPut httpPut = new HttpPut(SERVER_URL + FILE_ADD + "?userid=" + USERID);
+        httpPut.setEntity(multipart);
+        HttpResponse response = httpClient.execute(httpPut);
     }
 
     private static void onFileDelete(Path filePath) {
