@@ -25,11 +25,7 @@ public class CustomizationBean implements EmbeddedServletContainerCustomizer {
         return (ConfigurableEmbeddedServletContainer container) -> {
             if (container instanceof TomcatEmbeddedServletContainerFactory) {
                 TomcatEmbeddedServletContainerFactory tomcat = (TomcatEmbeddedServletContainerFactory) container;
-                tomcat.addConnectorCustomizers(
-                        (connector) -> {
-                            connector.setMaxPostSize(_1GB);
-                        }
-                );
+                tomcat.addConnectorCustomizers((connector) -> connector.setMaxPostSize(_1GB));
             }
         };
     }
