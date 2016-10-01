@@ -29,7 +29,7 @@ public class WinClientApp {
     private static final String HELLO_PATH = "/file/hello";
     private static final String FILE_ADD = "/api/file";
 
-    private static Path tempDirectory = FileSystems.getDefault().getPath("C:\\temp\\");
+    private static Path syncDirectory = FileSystems.getDefault().getPath("C:\\temp\\");
     private static HttpClient httpClient = HttpClientBuilder.create().build();
 
     public static void main(String[] args) throws IOException {
@@ -38,8 +38,8 @@ public class WinClientApp {
         System.out.println("Server says: " + serverInfo);
 
         try (WatchService watcher = FileSystems.getDefault().newWatchService()) {
-            tempDirectory.register(watcher, new WatchEvent.Kind[]{ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY, OVERFLOW}, SensitivityWatchEventModifier.HIGH);
-            registerRecursive(watcher, tempDirectory);
+            syncDirectory.register(watcher, new WatchEvent.Kind[]{ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY, OVERFLOW}, SensitivityWatchEventModifier.HIGH);
+            registerRecursive(watcher, syncDirectory);
 
             while (true) {
                 WatchKey key;
@@ -78,7 +78,8 @@ public class WinClientApp {
                 Thread.yield();
             }
         } catch (Throwable e) {
-            // Log or rethrow the error
+            e.printStackTrace();
+            throw e;
         }
     }
 
@@ -94,8 +95,8 @@ public class WinClientApp {
     }
 
     private static void onFileCreate(Path filePath) throws IOException {
-        File file = tempDirectory.resolve(filePath).toFile();
-        String relativePathWithinSyncFolder = file.getAbsolutePath().substring(tempDirectory.toAbsolutePath().toFile().getAbsolutePath().length());
+        File file = syncDirectory.resolve(filePath).toFile();
+        String relativePathWithinSyncFolder = file.getAbsolutePath().substring(syncDirectory.toAbsolutePath().toFile().getAbsolutePath().length());
 
         HttpEntity multipart = MultipartEntityBuilder
                 .create()
