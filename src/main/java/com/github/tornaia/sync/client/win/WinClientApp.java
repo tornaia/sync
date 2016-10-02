@@ -1,5 +1,6 @@
 package com.github.tornaia.sync.client.win;
 
+import com.github.tornaia.sync.client.win.websocket.WebSocketClientEndpoint;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHeaders;
 import org.apache.http.client.HttpClient;
@@ -11,9 +12,7 @@ import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.impl.client.HttpClientBuilder;
 
 import javax.ws.rs.core.MediaType;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
 import java.lang.management.ManagementFactory;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -35,7 +34,7 @@ public class WinClientApp {
 
     private static final String USERID = "7247234";
 
-    private static final Path SYNC_DIRECTORY = FileSystems.getDefault().getPath("C:\\mongodb\\"); // "C:\\temp\\"
+    private static final Path SYNC_DIRECTORY = FileSystems.getDefault().getPath("C:\\temp\\"); // "C:\\temp\\"
 
     private static final HttpClient HTTP_CLIENT = HttpClientBuilder.
             create()
@@ -45,21 +44,42 @@ public class WinClientApp {
 
     private static final WatchService WATCHER;
 
+    private static final File SYNC_CLIENT_STATE_FILE = new File("C:\\temp2\\sync-client-win.db");
+    private static final SyncClientState SYNC_CLIENT_STATE;
+
     static {
         try {
             WATCHER = FileSystems.getDefault().newWatchService();
         } catch (IOException e) {
             throw new RuntimeException("Cannot create watcher: ", e);
         }
+
+        if (!SYNC_CLIENT_STATE_FILE.exists()) {
+            SYNC_CLIENT_STATE = new SyncClientState();
+        } else {
+            try {
+                FileInputStream fileInputStream = new FileInputStream(SYNC_CLIENT_STATE_FILE);
+                ObjectInputStream objectInputStream = new ObjectInputStream(fileInputStream);
+                SYNC_CLIENT_STATE = (SyncClientState) objectInputStream.readObject();
+                objectInputStream.close();
+
+            } catch (ClassNotFoundException | IOException e) {
+                throw new RuntimeException("Cannot read sync state file", e);
+            }
+        }
+
+        writeSyncClientStateToDisk();
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws Exception {
         System.out.println("PID: " + ManagementFactory.getRuntimeMXBean().getName());
+        initWebSocketConnection();
 
         SYNC_DIRECTORY.register(WATCHER, new WatchEvent.Kind[]{ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY, OVERFLOW});
         registerRecursive(SYNC_DIRECTORY);
 
         while (true) {
+            writeSyncClientStateToDisk();
             WatchKey key;
             try {
                 key = WATCHER.poll(25, TimeUnit.MILLISECONDS);
@@ -97,6 +117,41 @@ public class WinClientApp {
             }
 
             Thread.yield();
+        }
+    }
+
+    private static void initWebSocketConnection() {
+        try {
+            // open webSocket // ws: http, wss: https
+            WebSocketClientEndpoint clientEndPoint = new WebSocketClientEndpoint(new URI("ws://127.0.0.1:8080/echo"));
+
+            // add listener
+            clientEndPoint.addMessageHandler(new WebSocketClientEndpoint.MessageHandler() {
+                public void handleMessage(String message) {
+                    System.out.println(message);
+                }
+            });
+
+            // send message to webSocket
+            clientEndPoint.sendMessage("{'event':'addChannel','channel':'ok_btccny_ticker'}");
+
+            // wait 5 seconds for messages from webSocket
+            Thread.sleep(5000);
+        } catch (InterruptedException ex) {
+            System.err.println("InterruptedException exception: " + ex.getMessage());
+        } catch (URISyntaxException ex) {
+            System.err.println("URISyntaxException exception: " + ex.getMessage());
+        }
+    }
+
+    private static void writeSyncClientStateToDisk() {
+        try {
+            FileOutputStream fileOutputStream = new FileOutputStream(SYNC_CLIENT_STATE_FILE);
+            ObjectOutputStream objectOutputStream = new ObjectOutputStream(fileOutputStream);
+            objectOutputStream.writeObject(SYNC_CLIENT_STATE);
+            objectOutputStream.close();
+        } catch (IOException e) {
+            throw new RuntimeException("Cannot write state to disk", e);
         }
     }
 
@@ -169,6 +224,7 @@ public class WinClientApp {
             return;
         }
         System.out.println("PUT file: " + relativePathWithinSyncFolder + " (" + toReadableFileSize(file.length()) + ")");
+        SYNC_CLIENT_STATE.put(relativePathWithinSyncFolder, file);
     }
 
     private static void deleteObject(File object) throws IOException {

@@ -18,6 +18,8 @@
         <commons-io.version>2.5</commons-io.version>
         <jackson-databind.version>2.6.6</jackson-databind.version>
         <javax.ws.rs-api.version>2.0.1</javax.ws.rs-api.version>
+        <javax.websocket-api.version>1.1</javax.websocket-api.version>
+        <tyrus.version>1.13</tyrus.version>
         <junit.version>4.12</junit.version>
 
         <maven-compiler-plugin.version>3.5.1</maven-compiler-plugin.version>
@@ -98,6 +100,24 @@
             </dependency>
 
             <dependency>
+                <groupId>javax.websocket</groupId>
+                <artifactId>javax.websocket-api</artifactId>
+                <version>${javax.websocket-api.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.glassfish.tyrus</groupId>
+                <artifactId>tyrus-client</artifactId>
+                <version>${tyrus.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.glassfish.tyrus</groupId>
+                <artifactId>tyrus-container-jdk-client</artifactId>
+                <version>${tyrus.version}</version>
+            </dependency>
+
+            <dependency>
                 <groupId>com.github.tornaia</groupId>
                 <artifactId>sync-client-win</artifactId>
                 <version>${project.version}</version>
@@ -142,6 +162,22 @@
             <groupId>javax.ws.rs</groupId>
             <artifactId>javax.ws.rs-api</artifactId>
         </dependency>
+
+        <dependency>
+            <groupId>javax.websocket</groupId>
+            <artifactId>javax.websocket-api</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.glassfish.tyrus</groupId>
+            <artifactId>tyrus-client</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.glassfish.tyrus</groupId>
+            <artifactId>tyrus-container-jdk-client</artifactId>
+        </dependency>
+
     </dependencies>
 
 </project>
