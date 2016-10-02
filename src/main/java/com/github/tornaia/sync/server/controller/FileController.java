@@ -1,18 +1,28 @@
 package com.github.tornaia.sync.server.controller;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.annotation.Resource;
+import javax.ws.rs.core.MediaType;
+
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
 import com.github.tornaia.sync.server.data.document.File;
 import com.github.tornaia.sync.server.data.repository.FileRepository;
 import com.github.tornaia.sync.shared.api.FileMetaInfo;
 import com.github.tornaia.sync.shared.util.FileSizeUtils;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-
-import javax.annotation.Resource;
-import javax.ws.rs.core.MediaType;
-import java.io.IOException;
 
 @RestController
 @RequestMapping("/api/files")
@@ -20,6 +30,18 @@ public class FileController {
 
     @Resource
     private FileRepository fileRepo;
+    
+    @RequestMapping(method = RequestMethod.GET)
+    public List<FileMetaInfo> getModifiedFiles(@RequestParam("userid") String userid, @RequestParam("modificationDateTime") long modTs){
+    	List<FileMetaInfo> result = new ArrayList<>();
+    	List<File> fileList = fileRepo.findAllModified(modTs, userid);
+    	if(fileList != null){
+    		for (File file : fileList) {
+				result.add(new FileMetaInfo(file.getId(), file.getPath(), file.getData().length, file.getCreationDate(), file.getLastModifiedDate()));
+			}
+    	}
+    	return result;
+    }
 
     @RequestMapping(method = RequestMethod.POST)
     public FileMetaInfo postFile(@RequestParam("userid") String userid, @RequestParam("creationDateTime") long creationDateTime, @RequestParam("modificationDateTime") long modificationDateTime, @RequestPart("file") MultipartFile multipartFile) throws IOException {
