@@ -2,17 +2,18 @@ package com.github.tornaia.sync.client.win.websocket;
 
 import javax.websocket.*;
 import java.net.URI;
+import java.util.Objects;
 
 @ClientEndpoint
 public class WebSocketClientEndpoint {
 
     private Session userSession;
-    private MessageHandler messageHandler;
+    private WebSocketMessageHandler messageHandler;
 
     public WebSocketClientEndpoint(URI endpointURI) {
+        System.out.println("EndpointURI: " + endpointURI);
         try {
             WebSocketContainer connection = ContainerProvider.getWebSocketContainer();
-            System.out.println("endpointURI: " + endpointURI);
             connection.connectToServer(this, endpointURI);
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -21,33 +22,31 @@ public class WebSocketClientEndpoint {
 
     @OnOpen
     public void onOpen(Session userSession) {
-        System.out.println("opening webSocket: " + userSession);
+        System.out.println("Opening webSocket: " + userSession);
         this.userSession = userSession;
     }
 
     @OnClose
     public void onClose(Session userSession, CloseReason reason) {
-        System.out.println("closing webSocket");
+        System.out.println("Closing webSocket");
         this.userSession = null;
     }
 
     @OnMessage
     public void onMessage(String message) {
-        if (this.messageHandler != null) {
-            this.messageHandler.handleMessage(message);
+        System.out.println("Incoming message: " + message);
+        if (Objects.isNull(messageHandler)) {
+            return;
         }
+        this.messageHandler.handleMessage(message);
     }
 
-    public void addMessageHandler(MessageHandler msgHandler) {
+    public void setMessageHandler(WebSocketMessageHandler msgHandler) {
         this.messageHandler = msgHandler;
     }
 
     public void sendMessage(String message) {
+        System.out.println("Outgoing message: " + message);
         this.userSession.getAsyncRemote().sendText(message);
-    }
-
-    public interface MessageHandler {
-
-        void handleMessage(String message);
     }
 }

@@ -44,6 +44,8 @@ public class WinClientApp {
 
     private static final WatchService WATCHER;
 
+    private static WebSocketClientEndpoint WEB_SOCKET_CLIENT_ENDPOINT;
+
     private static final File SYNC_CLIENT_STATE_FILE = new File("C:\\temp2\\sync-client-win.db");
     private static final SyncClientState SYNC_CLIENT_STATE;
 
@@ -122,26 +124,12 @@ public class WinClientApp {
 
     private static void initWebSocketConnection() {
         try {
-            // open webSocket // ws: http, wss: https
-            WebSocketClientEndpoint clientEndPoint = new WebSocketClientEndpoint(new URI("ws://127.0.0.1:8080/echo"));
-
-            // add listener
-            clientEndPoint.addMessageHandler(new WebSocketClientEndpoint.MessageHandler() {
-                public void handleMessage(String message) {
-                    System.out.println(message);
-                }
-            });
-
-            // send message to webSocket
-            clientEndPoint.sendMessage("{'event':'addChannel','channel':'ok_btccny_ticker'}");
-
-            // wait 5 seconds for messages from webSocket
-            Thread.sleep(5000);
-        } catch (InterruptedException ex) {
-            System.err.println("InterruptedException exception: " + ex.getMessage());
-        } catch (URISyntaxException ex) {
-            System.err.println("URISyntaxException exception: " + ex.getMessage());
+            WEB_SOCKET_CLIENT_ENDPOINT = new WebSocketClientEndpoint(new URI("ws://127.0.0.1:8080/echo"));
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
         }
+        WEB_SOCKET_CLIENT_ENDPOINT.setMessageHandler(message -> System.out.println("WebSocketMessageHandler incoming message: " + message));
+        WEB_SOCKET_CLIENT_ENDPOINT.sendMessage("{'sample-key-1':'sample-value-1','sample-key-2':'sample-value-2'}");
     }
 
     private static void writeSyncClientStateToDisk() {
