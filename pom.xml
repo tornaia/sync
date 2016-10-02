@@ -14,6 +14,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
         <java.version>1.8</java.version>
+        <commons-lang3.version>3.4</commons-lang3.version>
         <junit.version>4.12</junit.version>
 
         <maven-compiler-plugin.version>3.5.1</maven-compiler-plugin.version>
@@ -61,8 +62,21 @@
         </pluginManagement>
     </build>
 
+    <dependencies>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+        </dependency>
+    </dependencies>
+
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
+                <version>${commons-lang3.version}</version>
+            </dependency>
+
             <dependency>
                 <groupId>com.github.tornaia</groupId>
                 <artifactId>sync-shared</artifactId>
