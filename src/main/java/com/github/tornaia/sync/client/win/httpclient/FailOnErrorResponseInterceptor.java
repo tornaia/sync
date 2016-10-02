@@ -12,8 +12,8 @@ public class FailOnErrorResponseInterceptor implements HttpResponseInterceptor {
     @Override
     public void process(HttpResponse response, HttpContext context) {
         int statusCode = response.getStatusLine().getStatusCode();
-        if (!Objects.equals(statusCode, HttpStatus.SC_OK)) {
-            throw new IllegalStateException("Non-OK response: " + response);
+        if (!Objects.equals(statusCode, HttpStatus.SC_OK) && !Objects.equals(statusCode, HttpStatus.SC_CONFLICT)) {
+            throw new IllegalStateException("Unexpected response: " + response);
         }
     }
 }
