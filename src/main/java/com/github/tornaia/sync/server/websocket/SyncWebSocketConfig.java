@@ -26,6 +26,8 @@ public class SyncWebSocketConfig implements WebSocketConfigurer {
 
         @Override
         public void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
+            System.out.println("Incoming message: " + message);
+            // send back aka echo
             session.sendMessage(message);
         }
     }
