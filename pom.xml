@@ -20,6 +20,7 @@
         <commons-lang3.version>3.4</commons-lang3.version>
         <commons-io.version>2.4</commons-io.version>
         <junit.version>4.12</junit.version>
+        <org.glassfish.jersey.core.version>2.23.2</org.glassfish.jersey.core.version>
 
         <maven-compiler-plugin.version>3.5.1</maven-compiler-plugin.version>
         <maven-jar-plugin.version>2.6</maven-jar-plugin.version>
@@ -110,6 +111,12 @@
                 <version>${commons-io.version}</version>
             </dependency>
 
+			<dependency>
+				<groupId>org.glassfish.jersey.core</groupId>
+				<artifactId>jersey-common</artifactId>
+				<version>${org.glassfish.jersey.core.version}</version>
+			</dependency>
+
             <dependency>
                 <groupId>com.github.tornaia</groupId>
                 <artifactId>sync-server</artifactId>
@@ -150,6 +157,11 @@
             <groupId>javax.ws.rs</groupId>
             <artifactId>javax.ws.rs-api</artifactId>
         </dependency>
+
+		<dependency>
+			<groupId>org.glassfish.jersey.core</groupId>
+			<artifactId>jersey-common</artifactId>
+		</dependency>
 
         <dependency>
             <groupId>org.apache.commons</groupId>
