@@ -23,12 +23,13 @@ public class SyncWebSocketConfig implements WebSocketConfigurer {
     }
 
     public class EchoWebSocketHandler extends TextWebSocketHandler {
-
         @Override
         public void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
-            System.out.println("Incoming message: " + message);
-            // send back aka echo
-            session.sendMessage(message);
+            String messageStr = message.getPayload();
+            System.out.println("Message received: " + messageStr);
+            String echoResponse = "Echo! " + messageStr;
+            session.sendMessage(new TextMessage(echoResponse));
+            System.out.println("Message sent: " + echoResponse);
         }
     }
 }
