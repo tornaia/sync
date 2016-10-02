@@ -1,16 +1,16 @@
 package com.github.tornaia.sync.server.data.document;
 
-import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Date;
 
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document
 public class File {
-	
-	private static final String DELIMITER = "\\";
 	
 	@Id
 	private String id;
@@ -21,21 +21,19 @@ public class File {
 	
 	private String userId;
 	
-	private Integer revision;
+	private long creationDate;
+
+	private long lastModifiedDate;
 	
 	public File(){}
-	
-	public File(String path, byte[] data, String userId, Integer revision) {
+
+	public File(String path, byte[] data, String userId, long creationDate, long lastModifiedDate) {
 		super();
 		this.path = path;
 		this.data = data;
 		this.userId = userId;
-		this.revision = revision;
-	}
-
-	public File(String path, byte[] data){
-		this.path = path;
-		this.data = data;
+		this.creationDate = creationDate;
+		this.lastModifiedDate = lastModifiedDate;
 	}
 
 	public String getId() {
@@ -45,7 +43,6 @@ public class File {
 	public void setId(String id) {
 		this.id = id;
 	}
-
 
 	public byte[] getData() {
 		return data;
@@ -63,14 +60,6 @@ public class File {
 		this.path = path;
 	}
 
-	public Integer getRevision() {
-		return revision;
-	}
-
-	public void setRevision(Integer revision) {
-		this.revision = revision;
-	}
-
 	public String getUserId() {
 		return userId;
 	}
@@ -78,7 +67,23 @@ public class File {
 	public void setUserId(String userId) {
 		this.userId = userId;
 	}
-	
+
+	public long getCreationDate() {
+		return creationDate;
+	}
+
+	public void setCreationDate(long creationDate) {
+		this.creationDate = creationDate;
+	}
+
+	public long getLastModifiedDate() {
+		return lastModifiedDate;
+	}
+
+	public void setLastModifiedDate(long lastModifiedDate) {
+		this.lastModifiedDate = lastModifiedDate;
+	}
+
 	public String getName(){
 		if(path == null || Paths.get(getPath()).getFileName() == null) {
 			return StringUtils.EMPTY;

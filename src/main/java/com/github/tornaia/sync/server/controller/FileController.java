@@ -1,85 +1,120 @@
 package com.github.tornaia.sync.server.controller;
 
-import com.github.tornaia.sync.server.controller.dto.FileState;
-import com.github.tornaia.sync.server.data.document.File;
-import com.github.tornaia.sync.server.data.repository.FileRepository;
-import com.github.tornaia.sync.shared.api.DeleteFileRequest;
-import com.github.tornaia.sync.shared.util.FileSizeUtils;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
+import java.io.IOException;
 
 import javax.annotation.Resource;
 import javax.ws.rs.core.MediaType;
-import java.io.IOException;
+
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.github.tornaia.sync.server.data.document.File;
+import com.github.tornaia.sync.server.data.repository.FileRepository;
+import com.github.tornaia.sync.shared.api.FileMetaInfo;
+import com.github.tornaia.sync.shared.util.FileSizeUtils;
 
 @RestController
-@RequestMapping("/api/file")
+@RequestMapping("/api/files")
 public class FileController {
 
-    @Resource
-    private FileRepository fileRepo;
+	@Resource
+	private FileRepository fileRepo;
 
-    @RequestMapping(method = RequestMethod.PUT)
-    public void putFile(@RequestParam("userid") String userid, @RequestPart("file") MultipartFile multipartFile) throws IOException {
-        String path = multipartFile.getOriginalFilename();
-        File file = fileRepo.findByPath(path);
-        if (file == null) {
-            file = new File(path, multipartFile.getBytes(), userid, 1);
-            fileRepo.insert(file);
-        } else {
-            file.setRevision(file.getRevision() + 1);
-            fileRepo.save(file);
-        }
-        System.out.println("PUT file: " + path + " (" + FileSizeUtils.toReadableFileSize(file.getData().length) + ")");
-    }
+	@RequestMapping(method = RequestMethod.POST)
+	public FileMetaInfo postFile(@RequestParam("userid") String userid,
+			@RequestPart("file") MultipartFile multipartFile) throws IOException {
 
-    @RequestMapping(method = RequestMethod.DELETE)
-    public void deleteFile(DeleteFileRequest deleteDirectoryRequest) throws IOException {
-        String path = deleteDirectoryRequest.getRelativePath();
-        File file = fileRepo.findByPath(path);
-        if (file == null) {
-            throw new FileNotFoundException(path);
-        }
-        fileRepo.delete(file);
-        System.out.println("DELETE file: " + path);
-    }
+		String path = multipartFile.getOriginalFilename();
+		File file = fileRepo.findByPath(path);
+		if (file == null) {
+			file = fileRepo.insert(new File(path, multipartFile.getBytes(), userid, -1, -1));
+			System.out.println(
+					"POST file: " + path + " (" + FileSizeUtils.toReadableFileSize(file.getData().length) + ")");
+			return new FileMetaInfo(file.getId(), path, file.getData().length, file.getCreationDate(),
+					file.getLastModifiedDate());
+		}
+		throw new FileAlreadyExistsException(path);
+	}
 
-    @RequestMapping(method = RequestMethod.GET, produces = MediaType.APPLICATION_OCTET_STREAM)
-    public ResponseEntity getFile(@RequestParam("userid") String userid, @RequestParam("path") String path) throws IOException {
+	@RequestMapping(value = "/{id}", method = RequestMethod.PUT)
+	public FileMetaInfo putFile(@PathVariable String id, @RequestParam("userid") String userid,
+			@RequestPart("file") MultipartFile multipartFile) throws IOException {
+		String path = multipartFile.getOriginalFilename();
+		File file = fileRepo.findOne(id);
+		if (file == null) {
+			throw new FileNotFoundException(path);
+		} else {
+			fileRepo.save(file);
+		}
+		System.out.println("PUT file: " + path + " (" + FileSizeUtils.toReadableFileSize(file.getData().length) + ")");
+		return new FileMetaInfo(file.getId(), path, file.getData().length, file.getCreationDate(),
+				file.getLastModifiedDate());
+	}
 
-        File file = fileRepo.findByPath(path);
-        if (file == null) {
-            throw new FileNotFoundException(path);
-        }
+	@RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
+	public void deleteFile(@PathVariable String id) throws IOException {
+		File file = fileRepo.findOne(id);
+		if (file == null) {
+			throw new FileNotFoundException(id);
+		}
+		String path = file.getPath();
+		fileRepo.delete(file);
+		System.out.println("DELETE file: " + path);
+	}
 
-        HttpHeaders responseHeaders = new HttpHeaders();
-        responseHeaders.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + file.getName());
-        responseHeaders.add("X-FileRevision", file.getRevision().toString());
-        System.out.println("GET file: " + file.getPath() + ")");
-        return new ResponseEntity(file.getData(), responseHeaders, HttpStatus.OK);
-    }
+	@RequestMapping(value = "/{id}", method = RequestMethod.GET, produces = MediaType.APPLICATION_OCTET_STREAM)
+	public ResponseEntity getFile(@PathVariable String id, @RequestParam("userid") String userid) throws IOException {
 
-    @RequestMapping(value = "/state", method = RequestMethod.GET)
-    public FileState getFileState(@RequestParam("userid") String userid, @RequestParam("path") String path) throws IOException {
+		File file = fileRepo.findOne(id);
+		if (file == null) {
+			throw new FileNotFoundException(id);
+		}
+		HttpHeaders responseHeaders = new HttpHeaders();
+		responseHeaders.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + file.getName());
+		System.out.println("GET file: " + file.getPath() + ")");
+		return new ResponseEntity(file.getData(), responseHeaders, HttpStatus.OK);
+	}
 
-        File file = fileRepo.findByPath(path);
-        if (file == null) {
-            throw new FileNotFoundException(path);
-        }
+	@RequestMapping(value = "/{id}/metaInfo", method = RequestMethod.GET)
+	public FileMetaInfo getMetaInfo(@PathVariable String id, @RequestParam("userid") String userid)
+			throws IOException {
 
-        return new FileState(file);
-    }
+		File file = fileRepo.findOne(id);
+		if (file == null) {
+			throw new FileNotFoundException(id);
+		}
+		System.out.println("GET metaInfo: " + file.getPath() + " ("
+				+ FileSizeUtils.toReadableFileSize(file.getData().length) + ")");
+		return new FileMetaInfo(file.getId(), file.getPath(), file.getData().length, file.getCreationDate(),
+				file.getLastModifiedDate());
+	}
 
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    class FileNotFoundException extends RuntimeException {
+	@ResponseStatus(HttpStatus.NOT_FOUND)
+	class FileNotFoundException extends RuntimeException {
 
-        private static final long serialVersionUID = 1L;
+		private static final long serialVersionUID = 1L;
 
-        public FileNotFoundException(String path) {
-            super("Could not find file: '" + path + "'.");
-        }
-    }
+		public FileNotFoundException(String path) {
+			super("Could not find file: '" + path + "'.");
+		}
+	}
+
+	@ResponseStatus(HttpStatus.CONFLICT)
+	class FileAlreadyExistsException extends RuntimeException {
+
+		private static final long serialVersionUID = 1L;
+
+		public FileAlreadyExistsException(String path) {
+			super("File already exists: '" + path + "'.");
+		}
+	}
 }
