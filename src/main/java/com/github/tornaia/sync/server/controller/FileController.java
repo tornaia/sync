@@ -22,7 +22,7 @@ public class FileController {
     private FileRepository fileRepo;
 
     @RequestMapping(method = RequestMethod.POST)
-    public FileMetaInfo postFile(@RequestParam("userid") String userid, @RequestPart("file") MultipartFile multipartFile) throws IOException {
+    public FileMetaInfo postFile(@RequestParam("userid") String userid, @RequestParam("creationDateTime") long creationDateTime, @RequestParam("modificationDateTime") long modificationDateTime, @RequestPart("file") MultipartFile multipartFile) throws IOException {
         String path = multipartFile.getOriginalFilename();
         File file = fileRepo.findByPath(path);
         if (file == null) {
@@ -34,7 +34,7 @@ public class FileController {
     }
 
     @RequestMapping(value = "/{id}", method = RequestMethod.PUT)
-    public FileMetaInfo putFile(@PathVariable String id, @RequestParam("userid") String userid, @RequestPart("file") MultipartFile multipartFile) throws IOException {
+    public FileMetaInfo putFile(@PathVariable String id, @RequestParam("userid") String userid, @RequestParam("creationDateTime") long creationDateTime, @RequestParam("modificationDateTime") long modificationDateTime, @RequestPart("file") MultipartFile multipartFile) throws IOException {
         String path = multipartFile.getOriginalFilename();
         File file = fileRepo.findOne(id);
         if (file == null) {
