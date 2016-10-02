@@ -1,24 +1,23 @@
 package com.github.tornaia.sync.client.win.util;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.http.entity.StringEntity;
+import org.apache.http.HttpEntity;
 
-import java.io.UnsupportedEncodingException;
+import java.io.IOException;
+import java.io.InputStream;
 
 public final class SerializerUtils {
 
     private SerializerUtils() {
     }
 
-    public static StringEntity toStringEntity(Object obj) {
-        ObjectMapper mapper = new ObjectMapper();
-
+    public static <T> T toObject(HttpEntity httpEntity, Class<T> clazz) {
         try {
-            String jsonInString = mapper.writeValueAsString(obj);
-            return new StringEntity(jsonInString);
-        } catch (JsonProcessingException | UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
+            InputStream inputStream = httpEntity.getContent();
+            ObjectMapper mapper = new ObjectMapper();
+            return mapper.readValue(inputStream, clazz);
+        } catch (IOException e) {
+            throw new RuntimeException("Cannot deserialize httpEntity content", e);
         }
     }
 }

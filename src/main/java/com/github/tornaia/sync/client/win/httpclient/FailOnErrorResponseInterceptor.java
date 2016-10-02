@@ -1,4 +1,4 @@
-package com.github.tornaia.sync.client.win;
+package com.github.tornaia.sync.client.win.httpclient;
 
 import org.apache.http.HttpException;
 import org.apache.http.HttpResponse;
@@ -9,7 +9,7 @@ import org.apache.http.protocol.HttpContext;
 import java.io.IOException;
 import java.util.Objects;
 
-public class ThrowExceptionOnNonOkResponse implements HttpResponseInterceptor {
+public class FailOnErrorResponseInterceptor implements HttpResponseInterceptor {
 
     @Override
     public void process(HttpResponse response, HttpContext context) throws HttpException, IOException {
