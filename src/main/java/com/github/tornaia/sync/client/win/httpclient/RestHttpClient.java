@@ -2,11 +2,15 @@ package com.github.tornaia.sync.client.win.httpclient;
 
 import com.github.tornaia.sync.client.win.util.SerializerUtils;
 import com.github.tornaia.sync.shared.api.FileMetaInfo;
+import com.google.gson.Gson;
+import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.HttpDelete;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.utils.URIBuilder;
@@ -19,8 +23,14 @@ import javax.ws.rs.core.MediaType;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.List;
+import java.util.Objects;
+
+import static com.google.gson.internal.$Gson$Types.newParameterizedTypeWithOwner;
 
 @Component
 public class RestHttpClient {
@@ -40,7 +50,62 @@ public class RestHttpClient {
             .addInterceptorFirst(new FailOnErrorResponseInterceptor())
             .build();
 
-    public FileMetaInfo onFileCreate(FileMetaInfo fileMetaInfo, File file) {
+    public List<FileMetaInfo> getAllAfter(long timestamp) {
+        URI uri;
+        try {
+            uri = new URIBuilder()
+                    .setScheme(SERVER_SCHEME)
+                    .setHost(SERVER_HOST)
+                    .setPort(SERVER_PORT)
+                    .setPath(FILE_PATH)
+                    .addParameter("userid", USERID)
+                    .addParameter("modificationDateTime", "" + timestamp)
+                    .build();
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
+
+        HttpGet httpGet = new HttpGet(uri);
+
+        List<FileMetaInfo> response;
+        try {
+            response = httpClient.execute(httpGet, createListResponseHandler(FileMetaInfo.class));
+        } catch (IOException e) {
+            throw new RuntimeException("Get from server failed", e);
+        }
+
+        System.out.println("GET fileMetaInfos: " + response);
+        return response;
+    }
+
+    public byte[] getFile(FileMetaInfo fileMetaInfo) {
+        URI uri;
+        try {
+            uri = new URIBuilder()
+                    .setScheme(SERVER_SCHEME)
+                    .setHost(SERVER_HOST)
+                    .setPort(SERVER_PORT)
+                    .setPath(FILE_PATH + "/" + fileMetaInfo.id)
+                    .addParameter("userid", USERID)
+                    .build();
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
+
+        HttpGet httpGet = new HttpGet(uri);
+
+        byte[] response;
+        try {
+            response = IOUtils.toByteArray(httpClient.execute(httpGet).getEntity().getContent());
+        } catch (IOException e) {
+            throw new RuntimeException("Get from server failed", e);
+        }
+
+        System.out.println("GET file: " + response);
+        return response;
+    }
+
+    public SyncResult onFileCreate(FileMetaInfo fileMetaInfo, File file) {
         HttpEntity multipart = MultipartEntityBuilder
                 .create()
                 .addBinaryBody("file", file, ContentType.APPLICATION_OCTET_STREAM, fileMetaInfo.relativePath)
@@ -53,17 +118,22 @@ public class RestHttpClient {
         try {
             response = httpClient.execute(httpPost);
         } catch (FileNotFoundException e) {
-            System.out.println("File dizappeared? " + e.getMessage());
-            return null;
+            System.out.println("File disappeared meanwhile it was under upload(post)? " + e.getMessage());
+            return SyncResult.terminated(fileMetaInfo);
         } catch (IOException e) {
             throw new RuntimeException("Push to server failed", e);
         }
 
-        System.out.println("CREATE file: " + fileMetaInfo.relativePath + " (" + fileMetaInfo.length + ")");
-        return SerializerUtils.toObject(response.getEntity(), FileMetaInfo.class);
+        if (Objects.equals(response.getStatusLine().getStatusCode(), 409)) {
+            return SyncResult.conflict(fileMetaInfo);
+        }
+
+        FileMetaInfo syncedFileMetaInfo = SerializerUtils.toObject(response.getEntity(), FileMetaInfo.class);
+        System.out.println("CREATE file: " + syncedFileMetaInfo);
+        return SyncResult.ok(syncedFileMetaInfo);
     }
 
-    public void onFileModify(FileMetaInfo fileMetaInfo, File file) {
+    public SyncResult onFileModify(FileMetaInfo fileMetaInfo, File file) {
         HttpEntity multipart = MultipartEntityBuilder
                 .create()
                 .addBinaryBody("file", file, ContentType.APPLICATION_OCTET_STREAM, fileMetaInfo.relativePath)
@@ -72,15 +142,19 @@ public class RestHttpClient {
         HttpPut httpPut = new HttpPut(SERVER_URL + FILE_PATH + "/" + fileMetaInfo.id + "?userid=" + USERID + "&creationDateTime=" + fileMetaInfo.creationDateTime + "&modificationDateTime=" + fileMetaInfo.modificationDateTime);
         httpPut.setEntity(multipart);
 
+        HttpResponse response;
         try {
-            httpClient.execute(httpPut);
+            response = httpClient.execute(httpPut);
         } catch (FileNotFoundException e) {
-            System.out.println("File disappeared? " + e.getMessage());
-            return;
+            System.out.println("File disappeared meanwhile it was under upload(put)? " + e.getMessage());
+            return SyncResult.terminated(fileMetaInfo);
         } catch (IOException e) {
             throw new RuntimeException("Push to server failed", e);
         }
-        System.out.println("PUT file: " + fileMetaInfo.relativePath + " (" + fileMetaInfo.length + ")");
+
+        FileMetaInfo syncedFileMetaInfo = SerializerUtils.toObject(response.getEntity(), FileMetaInfo.class);
+        System.out.println("PUT file: " + syncedFileMetaInfo);
+        return SyncResult.ok(syncedFileMetaInfo);
     }
 
     public void onFileDelete(FileMetaInfo fileMetaInfo) {
@@ -105,6 +179,15 @@ public class RestHttpClient {
         } catch (IOException e) {
             throw new RuntimeException("Delete from server failed", e);
         }
-        System.out.println("DELETE file: " + fileMetaInfo.relativePath);
+        System.out.println("DELETE file: " + fileMetaInfo);
+    }
+
+    private static <T> ResponseHandler<List<T>> createListResponseHandler(Class<T> clazz) {
+        return response -> {
+            InputStreamReader inputStreamReader = new InputStreamReader(response.getEntity().getContent());
+            String content = IOUtils.toString(inputStreamReader);
+            Type type = newParameterizedTypeWithOwner(null, List.class, clazz);
+            return new Gson().fromJson(content, type);
+        };
     }
 }

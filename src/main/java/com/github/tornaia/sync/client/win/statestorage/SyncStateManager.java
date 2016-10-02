@@ -1,14 +1,26 @@
 package com.github.tornaia.sync.client.win.statestorage;
 
+import com.github.tornaia.sync.client.win.httpclient.RestHttpClient;
+import com.github.tornaia.sync.client.win.watchservice.DiskWatchService;
 import com.github.tornaia.sync.shared.api.FileMetaInfo;
+import org.apache.commons.io.IOUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import java.io.*;
+import java.util.List;
 
 @Component
 public class SyncStateManager {
 
     private static final String STATE_FILE_PATH = "C:\\temp2\\sync-client-win.db";
+
+    @Autowired
+    private RestHttpClient restHttpClient;
+
+    @Autowired
+    private DiskWatchService diskWatchService;
 
     private SyncStateSnapshot syncStateSnapshot;
 
@@ -23,6 +35,21 @@ public class SyncStateManager {
             }
         }
 
+        writeSyncClientStateToDisk();
+    }
+
+    @PostConstruct
+    public void init() {
+        long when = System.currentTimeMillis();
+        List<FileMetaInfo> allAfter = restHttpClient.getAllAfter(syncStateSnapshot.lastServerInfoAt);
+
+        for (FileMetaInfo fileMetaInfo : allAfter) {
+            byte[] content = restHttpClient.getFile(fileMetaInfo);
+            diskWatchService.writeToDisk(fileMetaInfo, content);
+            syncStateSnapshot.put(fileMetaInfo);
+        }
+
+        syncStateSnapshot.lastServerInfoAt = when;
         writeSyncClientStateToDisk();
     }
 
