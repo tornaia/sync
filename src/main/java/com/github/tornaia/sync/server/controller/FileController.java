@@ -1,28 +1,22 @@
 package com.github.tornaia.sync.server.controller;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.annotation.Resource;
-import javax.ws.rs.core.MediaType;
-
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RequestPart;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.multipart.MultipartFile;
-
 import com.github.tornaia.sync.server.data.document.File;
 import com.github.tornaia.sync.server.data.repository.FileRepository;
 import com.github.tornaia.sync.shared.api.FileMetaInfo;
 import com.github.tornaia.sync.shared.util.FileSizeUtils;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import javax.annotation.Resource;
+import javax.ws.rs.core.MediaType;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/files")
@@ -30,17 +24,15 @@ public class FileController {
 
     @Resource
     private FileRepository fileRepo;
-    
+
     @RequestMapping(method = RequestMethod.GET)
-    public List<FileMetaInfo> getModifiedFiles(@RequestParam("userid") String userid, @RequestParam("modificationDateTime") long modTs){
-    	List<FileMetaInfo> result = new ArrayList<>();
-    	List<File> fileList = fileRepo.findAllModified(modTs, userid);
-    	if(fileList != null){
-    		for (File file : fileList) {
-				result.add(new FileMetaInfo(file.getId(), file.getPath(), file.getData().length, file.getCreationDate(), file.getLastModifiedDate()));
-			}
-    	}
-    	return result;
+    public List<FileMetaInfo> getModifiedFiles(@RequestParam("userid") String userid, @RequestParam("modificationDateTime") long modTs) {
+        List<FileMetaInfo> result = new ArrayList<>();
+        List<File> fileList = fileRepo.findAllModified(userid, modTs);
+        if (!Objects.isNull(fileList)) {
+            result.addAll(fileList.stream().map(file -> new FileMetaInfo(file.getId(), file.getPath(), file.getData().length, file.getCreationDate(), file.getLastModifiedDate())).collect(Collectors.toList()));
+        }
+        return result;
     }
 
     @RequestMapping(method = RequestMethod.POST)
@@ -48,7 +40,7 @@ public class FileController {
         String path = multipartFile.getOriginalFilename();
         File file = fileRepo.findByPath(path);
         if (file == null) {
-            file = fileRepo.insert(new File(path, multipartFile.getBytes(), userid, -1, -1));
+            file = fileRepo.insert(new File(path, multipartFile.getBytes(), userid, creationDateTime, modificationDateTime));
             System.out.println("POST file: " + path + " (" + FileSizeUtils.toReadableFileSize(file.getData().length) + ")");
             return new FileMetaInfo(file.getId(), path, file.getData().length, file.getCreationDate(), file.getLastModifiedDate());
         }
@@ -62,10 +54,15 @@ public class FileController {
         if (file == null) {
             throw new FileNotFoundException(path);
         } else {
+            file.setCreationDate(creationDateTime);
+            file.setLastModifiedDate(modificationDateTime);
+            file.setData(multipartFile.getBytes());
             fileRepo.save(file);
         }
-        System.out.println("PUT file: " + path + " (" + FileSizeUtils.toReadableFileSize(file.getData().length) + ")");
-        return new FileMetaInfo(file.getId(), path, file.getData().length, file.getCreationDate(), file.getLastModifiedDate());
+
+        FileMetaInfo fileMetaInfo = new FileMetaInfo(file.getId(), path, file.getData().length, file.getCreationDate(), file.getLastModifiedDate());
+        System.out.println("PUT file: " + fileMetaInfo);
+        return fileMetaInfo;
     }
 
     @RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
@@ -87,7 +84,7 @@ public class FileController {
         }
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + file.getName());
-        System.out.println("GET file: " + file.getPath() + ")");
+        System.out.println("GET file: " + file.getPath());
         return new ResponseEntity(file.getData(), responseHeaders, HttpStatus.OK);
     }
 
@@ -97,8 +94,10 @@ public class FileController {
         if (file == null) {
             throw new FileNotFoundException(id);
         }
-        System.out.println("GET metaInfo: " + file.getPath() + " (" + FileSizeUtils.toReadableFileSize(file.getData().length) + ")");
-        return new FileMetaInfo(file.getId(), file.getPath(), file.getData().length, file.getCreationDate(), file.getLastModifiedDate());
+
+        FileMetaInfo fileMetaInfo = new FileMetaInfo(file.getId(), file.getPath(), file.getData().length, file.getCreationDate(), file.getLastModifiedDate());
+        System.out.println("GET metaInfo: " + fileMetaInfo);
+        return fileMetaInfo;
     }
 
     @ResponseStatus(HttpStatus.NOT_FOUND)
@@ -107,7 +106,7 @@ public class FileController {
         private static final long serialVersionUID = 1L;
 
         public FileNotFoundException(String path) {
-            super("Could not find file: '" + path + "'.");
+            super("Could not find file: " + path);
         }
     }
 
@@ -117,7 +116,7 @@ public class FileController {
         private static final long serialVersionUID = 1L;
 
         public FileAlreadyExistsException(String path) {
-            super("File already exists: '" + path + "'.");
+            super("File already exists: " + path);
         }
     }
 }
