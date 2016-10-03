@@ -10,8 +10,9 @@ public class SyncResult {
         TRANSFER_FAILED
     }
 
-    public final FileMetaInfo fileMetaInfo;
     public final Status status;
+
+    public final FileMetaInfo fileMetaInfo;
 
     public SyncResult(Status status, FileMetaInfo fileMetaInfo) {
         this.status = status;

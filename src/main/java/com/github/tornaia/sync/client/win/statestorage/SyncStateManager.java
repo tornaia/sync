@@ -1,15 +1,14 @@
 package com.github.tornaia.sync.client.win.statestorage;
 
 import com.github.tornaia.sync.client.win.httpclient.RestHttpClient;
+import com.github.tornaia.sync.client.win.httpclient.SyncChangesResponse;
 import com.github.tornaia.sync.client.win.watchservice.DiskWatchService;
 import com.github.tornaia.sync.shared.api.FileMetaInfo;
-import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.io.*;
-import java.util.List;
 
 @Component
 public class SyncStateManager {
@@ -41,9 +40,13 @@ public class SyncStateManager {
     @PostConstruct
     public void init() {
         long when = System.currentTimeMillis();
-        List<FileMetaInfo> allAfter = restHttpClient.getAllAfter(syncStateSnapshot.lastServerInfoAt);
+        SyncChangesResponse syncChangesResponse = restHttpClient.getAllAfter(syncStateSnapshot.lastServerInfoAt);
+        if (syncChangesResponse.status == SyncChangesResponse.Status.TRANSFER_FAILED) {
+            System.out.println("Client is offline! Cannot get updates from server!");
+            return;
+        }
 
-        for (FileMetaInfo fileMetaInfo : allAfter) {
+        for (FileMetaInfo fileMetaInfo : syncChangesResponse.fileMetaInfos) {
             byte[] content = restHttpClient.getFile(fileMetaInfo);
             diskWatchService.writeToDisk(fileMetaInfo, content);
             syncStateSnapshot.put(fileMetaInfo);

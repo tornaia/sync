@@ -50,10 +50,9 @@ public class RestHttpClient {
             .addInterceptorFirst(new FailOnErrorResponseInterceptor())
             .build();
 
-    public List<FileMetaInfo> getAllAfter(long timestamp) {
-        URI uri;
+    public SyncChangesResponse getAllAfter(long timestamp) {
         try {
-            uri = new URIBuilder()
+            URI uri = new URIBuilder()
                     .setScheme(SERVER_SCHEME)
                     .setHost(SERVER_HOST)
                     .setPort(SERVER_PORT)
@@ -61,21 +60,15 @@ public class RestHttpClient {
                     .addParameter("userid", USERID)
                     .addParameter("modificationDateTime", "" + timestamp)
                     .build();
-        } catch (URISyntaxException e) {
-            throw new RuntimeException(e);
+
+            HttpGet httpGet = new HttpGet(uri);
+
+            List<FileMetaInfo> response = httpClient.execute(httpGet, createListResponseHandler(FileMetaInfo.class));
+            System.out.println("GET fileMetaInfos: " + response);
+            return SyncChangesResponse.ok(response);
+        } catch (URISyntaxException | IOException e) {
+            return SyncChangesResponse.transferFailed(e.getMessage());
         }
-
-        HttpGet httpGet = new HttpGet(uri);
-
-        List<FileMetaInfo> response;
-        try {
-            response = httpClient.execute(httpGet, createListResponseHandler(FileMetaInfo.class));
-        } catch (IOException e) {
-            throw new RuntimeException("Get from server failed", e);
-        }
-
-        System.out.println("GET fileMetaInfos: " + response);
-        return response;
     }
 
     public byte[] getFile(FileMetaInfo fileMetaInfo) {
