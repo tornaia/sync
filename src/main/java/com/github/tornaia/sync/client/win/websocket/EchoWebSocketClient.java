@@ -1,5 +1,6 @@
 package com.github.tornaia.sync.client.win.websocket;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;

@@ -1,7 +1,7 @@
 package com.github.tornaia.sync.client.win.statestorage;
 
 import com.github.tornaia.sync.client.win.httpclient.RestHttpClient;
-import com.github.tornaia.sync.client.win.httpclient.SyncChangesResponse;
+import com.github.tornaia.sync.client.win.httpclient.RecentChangesResponse;
 import com.github.tornaia.sync.client.win.watchservice.DiskWatchService;
 import com.github.tornaia.sync.shared.api.FileMetaInfo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,16 +37,17 @@ public class SyncStateManager {
         writeSyncClientStateToDisk();
     }
 
+    // TODO remove this, use websocket and send on connection init the lastServerInfoAt timestamp and the the server will push back the filemetainfo message
     @PostConstruct
-    public void init() {
+    public void pollServer() {
         long when = System.currentTimeMillis();
-        SyncChangesResponse syncChangesResponse = restHttpClient.getAllAfter(syncStateSnapshot.lastServerInfoAt);
-        if (syncChangesResponse.status == SyncChangesResponse.Status.TRANSFER_FAILED) {
+        RecentChangesResponse recentChangesResponse = restHttpClient.getAllAfter(syncStateSnapshot.lastServerInfoAt);
+        if (recentChangesResponse.status == RecentChangesResponse.Status.TRANSFER_FAILED) {
             System.out.println("Client is offline! Cannot get updates from server!");
             return;
         }
 
-        for (FileMetaInfo fileMetaInfo : syncChangesResponse.fileMetaInfos) {
+        for (FileMetaInfo fileMetaInfo : recentChangesResponse.fileMetaInfos) {
             byte[] content = restHttpClient.getFile(fileMetaInfo);
             diskWatchService.writeToDisk(fileMetaInfo, content);
             syncStateSnapshot.put(fileMetaInfo);

@@ -7,6 +7,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.HttpDelete;
@@ -17,6 +18,7 @@ import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.ws.rs.core.MediaType;
@@ -35,14 +37,19 @@ import static com.google.gson.internal.$Gson$Types.newParameterizedTypeWithOwner
 @Component
 public class RestHttpClient {
 
-    private static final String SERVER_SCHEME = "http";
-    private static final String SERVER_HOST = "127.0.0.1";
-    private static final int SERVER_PORT = 8080;
-    private static final String SERVER_URL = SERVER_SCHEME + "://" + SERVER_HOST + ":" + SERVER_PORT;
-
     private static final String FILE_PATH = "/api/files";
 
-    private static final String USERID = "7247234";
+    @Value("#{systemProperties['server.scheme.http'] ?: 'http'}")
+    private String serverSchemeHttp;
+
+    @Value("#{systemProperties['server.host'] ?: '127.0.0.1'}")
+    private String serverHost;
+
+    @Value("#{systemProperties['server.port'] ?: '8080'}")
+    private int serverPort;
+
+    @Value("#{systemProperties['frosch-sync.user.id'] ?: '7247234'}")
+    private String userid;
 
     private final HttpClient httpClient = HttpClientBuilder.
             create()
@@ -50,14 +57,14 @@ public class RestHttpClient {
             .addInterceptorFirst(new FailOnErrorResponseInterceptor())
             .build();
 
-    public SyncChangesResponse getAllAfter(long timestamp) {
+    public RecentChangesResponse getAllAfter(long timestamp) {
         try {
             URI uri = new URIBuilder()
-                    .setScheme(SERVER_SCHEME)
-                    .setHost(SERVER_HOST)
-                    .setPort(SERVER_PORT)
+                    .setScheme(serverSchemeHttp)
+                    .setHost(serverHost)
+                    .setPort(serverPort)
                     .setPath(FILE_PATH)
-                    .addParameter("userid", USERID)
+                    .addParameter("userid", userid)
                     .addParameter("modificationDateTime", "" + timestamp)
                     .build();
 
@@ -65,9 +72,9 @@ public class RestHttpClient {
 
             List<FileMetaInfo> response = httpClient.execute(httpGet, createListResponseHandler(FileMetaInfo.class));
             System.out.println("GET fileMetaInfos: " + response);
-            return SyncChangesResponse.ok(response);
+            return RecentChangesResponse.ok(response);
         } catch (URISyntaxException | IOException e) {
-            return SyncChangesResponse.transferFailed(e.getMessage());
+            return RecentChangesResponse.transferFailed(e.getMessage());
         }
     }
 
@@ -75,11 +82,11 @@ public class RestHttpClient {
         URI uri;
         try {
             uri = new URIBuilder()
-                    .setScheme(SERVER_SCHEME)
-                    .setHost(SERVER_HOST)
-                    .setPort(SERVER_PORT)
+                    .setScheme(serverSchemeHttp)
+                    .setHost(serverHost)
+                    .setPort(serverPort)
                     .setPath(FILE_PATH + "/" + fileMetaInfo.id)
-                    .addParameter("userid", USERID)
+                    .addParameter("userid", userid)
                     .build();
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
@@ -98,13 +105,13 @@ public class RestHttpClient {
         return response;
     }
 
-    public SyncResult onFileCreate(FileMetaInfo fileMetaInfo, File file) {
+    public FileCreateResponse onFileCreate(FileMetaInfo fileMetaInfo, File file) {
         HttpEntity multipart = MultipartEntityBuilder
                 .create()
                 .addBinaryBody("file", file, ContentType.APPLICATION_OCTET_STREAM, fileMetaInfo.relativePath)
                 .build();
 
-        HttpPost httpPost = new HttpPost(SERVER_URL + FILE_PATH + "?userid=" + USERID + "&creationDateTime=" + fileMetaInfo.creationDateTime + "&modificationDateTime=" + fileMetaInfo.modificationDateTime);
+        HttpPost httpPost = new HttpPost(getServerUrl() + FILE_PATH + "?userid=" + userid + "&creationDateTime=" + fileMetaInfo.creationDateTime + "&modificationDateTime=" + fileMetaInfo.modificationDateTime);
         httpPost.setEntity(multipart);
 
         HttpResponse response;
@@ -112,27 +119,28 @@ public class RestHttpClient {
             response = httpClient.execute(httpPost);
         } catch (FileNotFoundException e) {
             System.out.println("File disappeared meanwhile it was under upload(post)? " + e.getMessage());
-            return SyncResult.terminated(fileMetaInfo);
+            return FileCreateResponse.transferFailed(e.getMessage());
         } catch (IOException e) {
-            throw new RuntimeException("Push to server failed", e);
+            return FileCreateResponse.transferFailed(e.getMessage());
         }
 
-        if (Objects.equals(response.getStatusLine().getStatusCode(), 409)) {
-            return SyncResult.conflict(fileMetaInfo);
+        if (Objects.equals(response.getStatusLine().getStatusCode(), HttpStatus.SC_CONFLICT)) {
+            return FileCreateResponse.conflict(fileMetaInfo);
         }
 
         FileMetaInfo syncedFileMetaInfo = SerializerUtils.toObject(response.getEntity(), FileMetaInfo.class);
         System.out.println("CREATE file: " + syncedFileMetaInfo);
-        return SyncResult.ok(syncedFileMetaInfo);
+        return FileCreateResponse.ok(syncedFileMetaInfo);
     }
 
-    public SyncResult onFileModify(FileMetaInfo fileMetaInfo, File file) {
+
+    public FileCreateResponse onFileModify(FileMetaInfo fileMetaInfo, File file) {
         HttpEntity multipart = MultipartEntityBuilder
                 .create()
                 .addBinaryBody("file", file, ContentType.APPLICATION_OCTET_STREAM, fileMetaInfo.relativePath)
                 .build();
 
-        HttpPut httpPut = new HttpPut(SERVER_URL + FILE_PATH + "/" + fileMetaInfo.id + "?userid=" + USERID + "&creationDateTime=" + fileMetaInfo.creationDateTime + "&modificationDateTime=" + fileMetaInfo.modificationDateTime);
+        HttpPut httpPut = new HttpPut(getServerUrl() + FILE_PATH + "/" + fileMetaInfo.id + "?userid=" + userid + "&creationDateTime=" + fileMetaInfo.creationDateTime + "&modificationDateTime=" + fileMetaInfo.modificationDateTime);
         httpPut.setEntity(multipart);
 
         HttpResponse response;
@@ -140,25 +148,25 @@ public class RestHttpClient {
             response = httpClient.execute(httpPut);
         } catch (FileNotFoundException e) {
             System.out.println("File disappeared meanwhile it was under upload(put)? " + e.getMessage());
-            return SyncResult.terminated(fileMetaInfo);
+            return FileCreateResponse.transferFailed(e.getMessage());
         } catch (IOException e) {
-            throw new RuntimeException("Push to server failed", e);
+            return FileCreateResponse.transferFailed(e.getMessage());
         }
 
         FileMetaInfo syncedFileMetaInfo = SerializerUtils.toObject(response.getEntity(), FileMetaInfo.class);
         System.out.println("PUT file: " + syncedFileMetaInfo);
-        return SyncResult.ok(syncedFileMetaInfo);
+        return FileCreateResponse.ok(syncedFileMetaInfo);
     }
 
     public void onFileDelete(FileMetaInfo fileMetaInfo) {
         URI uri;
         try {
             uri = new URIBuilder()
-                    .setScheme(SERVER_SCHEME)
-                    .setHost(SERVER_HOST)
-                    .setPort(SERVER_PORT)
+                    .setScheme(serverSchemeHttp)
+                    .setHost(serverHost)
+                    .setPort(serverPort)
                     .setPath(FILE_PATH + "/" + fileMetaInfo.id)
-                    .addParameter("userid", USERID)
+                    .addParameter("userid", userid)
                     .build();
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
@@ -182,5 +190,9 @@ public class RestHttpClient {
             Type type = newParameterizedTypeWithOwner(null, List.class, clazz);
             return new Gson().fromJson(content, type);
         };
+    }
+
+    private String getServerUrl() {
+        return serverSchemeHttp + "://" + serverHost + ":" + serverPort;
     }
 }

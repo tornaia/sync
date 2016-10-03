@@ -1,7 +1,7 @@
 package com.github.tornaia.sync.client.win.watchservice;
 
 import com.github.tornaia.sync.client.win.httpclient.RestHttpClient;
-import com.github.tornaia.sync.client.win.httpclient.SyncResult;
+import com.github.tornaia.sync.client.win.httpclient.FileCreateResponse;
 import com.github.tornaia.sync.client.win.statestorage.SyncStateManager;
 import com.github.tornaia.sync.shared.api.FileMetaInfo;
 import org.apache.commons.io.FileUtils;
@@ -134,15 +134,15 @@ public class DiskWatchService {
                 return;
             }
 
-            SyncResult syncResult = restHttpClient.onFileCreate(newFileMetaInfo, file);
-            if (syncResult.status == SyncResult.Status.TRANSFER_FAILED) {
+            FileCreateResponse fileCreateResponse = restHttpClient.onFileCreate(newFileMetaInfo, file);
+            if (fileCreateResponse.status == FileCreateResponse.Status.TRANSFER_FAILED) {
                 // the app cannot read the file, maybe its in use, or removed during upload, network problem, etc..
                 // more sophisticated logic needed here
                 return;
             }
 
-            syncStateManager.onFileModify(syncResult.fileMetaInfo);
-            if (syncResult.status == SyncResult.Status.CONFLICT) {
+            syncStateManager.onFileModify(fileCreateResponse.fileMetaInfo);
+            if (fileCreateResponse.status == FileCreateResponse.Status.CONFLICT) {
                 handleConflict(newFileMetaInfo);
             }
         } else if (file.isDirectory()) {
@@ -185,13 +185,13 @@ public class DiskWatchService {
                 return;
             }
 
-            SyncResult syncResult = restHttpClient.onFileModify(updatedFileMetaInfo, file);
-            if (syncResult.status == SyncResult.Status.CONFLICT) {
+            FileCreateResponse fileCreateResponse = restHttpClient.onFileModify(updatedFileMetaInfo, file);
+            if (fileCreateResponse.status == FileCreateResponse.Status.CONFLICT) {
                 handleConflict(fileMetaInfo);
                 return;
             }
 
-            syncStateManager.onFileModify(syncResult.fileMetaInfo);
+            syncStateManager.onFileModify(fileCreateResponse.fileMetaInfo);
         } else {
             System.out.println("Unknown file type. File does not exist? " + file);
         }

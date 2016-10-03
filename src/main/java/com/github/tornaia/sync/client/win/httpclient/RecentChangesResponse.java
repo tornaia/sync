@@ -4,7 +4,7 @@ import com.github.tornaia.sync.shared.api.FileMetaInfo;
 
 import java.util.List;
 
-public class SyncChangesResponse {
+public class RecentChangesResponse {
 
     public enum Status {
         OK,
@@ -17,17 +17,17 @@ public class SyncChangesResponse {
 
     public final String reason;
 
-    public SyncChangesResponse(Status status, List<FileMetaInfo> fileMetaInfos, String reason) {
+    public RecentChangesResponse(Status status, List<FileMetaInfo> fileMetaInfos, String reason) {
         this.status = status;
         this.fileMetaInfos = fileMetaInfos;
         this.reason = reason;
     }
 
-    public static SyncChangesResponse ok(List<FileMetaInfo> fileMetaInfos) {
-        return new SyncChangesResponse(Status.OK, fileMetaInfos, null);
+    public static RecentChangesResponse ok(List<FileMetaInfo> fileMetaInfos) {
+        return new RecentChangesResponse(Status.OK, fileMetaInfos, null);
     }
 
-    public static SyncChangesResponse transferFailed(String reason) {
-        return new SyncChangesResponse(Status.TRANSFER_FAILED, null, reason);
+    public static RecentChangesResponse transferFailed(String reason) {
+        return new RecentChangesResponse(Status.TRANSFER_FAILED, null, reason);
     }
 }
