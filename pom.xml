@@ -112,11 +112,11 @@
                 <version>${commons-io.version}</version>
             </dependency>
 
-			<dependency>
-				<groupId>org.glassfish.jersey.core</groupId>
-				<artifactId>jersey-common</artifactId>
-				<version>${org.glassfish.jersey.core.version}</version>
-			</dependency>
+            <dependency>
+                <groupId>org.glassfish.jersey.core</groupId>
+                <artifactId>jersey-common</artifactId>
+                <version>${org.glassfish.jersey.core.version}</version>
+            </dependency>
 
             <dependency>
                 <groupId>com.github.tornaia</groupId>
@@ -131,12 +131,11 @@
                 <version>${junit.version}</version>
             </dependency>
 
-          <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <version>${org.springframework.boot.version}</version>
-            <scope>test</scope>
-          </dependency>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-test</artifactId>
+                <scope>test</scope>
+            </dependency>
 
         </dependencies>
     </dependencyManagement>
@@ -172,10 +171,10 @@
             <artifactId>javax.ws.rs-api</artifactId>
         </dependency>
 
-		<dependency>
-			<groupId>org.glassfish.jersey.core</groupId>
-			<artifactId>jersey-common</artifactId>
-		</dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.core</groupId>
+            <artifactId>jersey-common</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>org.apache.commons</groupId>
@@ -187,10 +186,16 @@
             <artifactId>commons-io</artifactId>
         </dependency>
 
-      <dependency>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-test</artifactId>
-      </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <version>${org.springframework.boot.version}</version>
+        </dependency>
 
     </dependencies>
 
