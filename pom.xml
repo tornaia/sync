@@ -131,7 +131,7 @@
 
             <dependency>
                 <groupId>org.glassfish.tyrus</groupId>
-                <artifactId>tyrus-container-grizzly-client</artifactId>
+                <artifactId>tyrus-container-jdk-client</artifactId>
                 <version>${tyrus.version}</version>
             </dependency>
 
@@ -209,7 +209,7 @@
 
         <dependency>
             <groupId>org.glassfish.tyrus</groupId>
-            <artifactId>tyrus-container-grizzly-client</artifactId>
+            <artifactId>tyrus-container-jdk-client</artifactId>
         </dependency>
 
         <dependency>
