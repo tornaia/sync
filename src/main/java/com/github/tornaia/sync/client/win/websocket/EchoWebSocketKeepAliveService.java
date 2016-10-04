@@ -17,19 +17,19 @@ public class EchoWebSocketKeepAliveService {
 
     private static final Logger LOG = LoggerFactory.getLogger(EchoWebSocketKeepAliveService.class);
 
-    @Value("#{systemProperties['server.scheme.web.socket'] ?: 'ws'}")
+    @Value("${server.scheme.web.socket:ws}")
     private String serverSchemeWebSocket;
 
-    @Value("#{systemProperties['server.host'] ?: '127.0.0.1'}")
+    @Value("${server.host:127.0.0.1}")
     private String serverHost;
 
-    @Value("#{systemProperties['server.port'] ?: '8080'}")
+    @Value("${server.port:8080}")
     private int serverPort;
 
-    @Value("#{systemProperties['server.web.socket.path'] ?: '/echo'}")
+    @Value("${server.web.socket.path:/echo}")
     private String webSocketPath;
 
-    @Value("#{systemProperties['frosch-sync.user.id'] ?: '7247234'}")
+    @Value("${frosch-sync.user.id:7247234}")
     private String userid;
 
     @Autowired

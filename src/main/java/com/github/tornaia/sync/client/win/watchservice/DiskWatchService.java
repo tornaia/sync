@@ -9,6 +9,7 @@ import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -29,7 +30,8 @@ public class DiskWatchService {
 
     private static final Logger LOG = LoggerFactory.getLogger(DiskWatchService.class);
 
-    private static final String SYNC_DIRECTORY_PATH = "C:\\temp\\";
+    @Value("${client.sync.directory.path:C:\\temp\\client\\}")
+    private String syncDirectoryPath;
 
     @Autowired
     private SyncStateManager syncStateManager;
@@ -44,11 +46,12 @@ public class DiskWatchService {
     @PostConstruct
     public void startDiskWatch() throws IOException {
         this.watchService = FileSystems.getDefault().newWatchService();
-        this.syncDirectory = FileSystems.getDefault().getPath(SYNC_DIRECTORY_PATH);
-
+        this.syncDirectory = FileSystems.getDefault().getPath(syncDirectoryPath);
+        Files.createDirectories(syncDirectory);
         register(syncDirectory);
         registerChildrenRecursively(syncDirectory);
 
+        // TODO ugly solution
         new Thread(() -> runInBackground()).start();
     }
 
@@ -246,7 +249,7 @@ public class DiskWatchService {
         }
     }
 
-    private static String getRelativePath(File directory) {
-        return directory.getAbsolutePath().substring(new File(SYNC_DIRECTORY_PATH).getAbsolutePath().length());
+    private String getRelativePath(File directory) {
+        return directory.getAbsolutePath().substring(new File(syncDirectoryPath).getAbsolutePath().length());
     }
 }

@@ -44,16 +44,16 @@ public class RestHttpClient {
 
     private static final String FILE_PATH = "/api/files";
 
-    @Value("#{systemProperties['server.scheme.http'] ?: 'http'}")
+    @Value("${server.scheme.http:http}")
     private String serverSchemeHttp;
 
-    @Value("#{systemProperties['server.host'] ?: '127.0.0.1'}")
+    @Value("${server.host:127.0.0.1}")
     private String serverHost;
 
-    @Value("#{systemProperties['server.port'] ?: '8080'}")
+    @Value("${server.port:8080}")
     private int serverPort;
 
-    @Value("#{systemProperties['frosch-sync.user.id'] ?: '7247234'}")
+    @Value("${frosch-sync.user.id:7247234}")
     private String userid;
 
     private final HttpClient httpClient = HttpClientBuilder.

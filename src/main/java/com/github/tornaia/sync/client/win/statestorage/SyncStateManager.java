@@ -7,6 +7,7 @@ import com.github.tornaia.sync.shared.api.FileMetaInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -17,7 +18,8 @@ public class SyncStateManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(SyncStateManager.class);
 
-    private static final String STATE_FILE_PATH = "C:\\temp2\\sync-client-win.db";
+    @Value("${client.state.file.path:C:\\temp2\\client.db}")
+    private String stateFilePath;
 
     @Autowired
     private RestHttpClient restHttpClient;
@@ -27,11 +29,12 @@ public class SyncStateManager {
 
     private SyncStateSnapshot syncStateSnapshot;
 
-    public SyncStateManager() {
-        if (!new File(STATE_FILE_PATH).exists()) {
+    @PostConstruct
+    public void init() {
+        if (!new File(stateFilePath).exists()) {
             syncStateSnapshot = new SyncStateSnapshot();
         } else {
-            try (ObjectInputStream objectInputStream = new ObjectInputStream(new FileInputStream(STATE_FILE_PATH))) {
+            try (ObjectInputStream objectInputStream = new ObjectInputStream(new FileInputStream(stateFilePath))) {
                 syncStateSnapshot = (SyncStateSnapshot) objectInputStream.readObject();
             } catch (ClassNotFoundException | IOException e) {
                 throw new RuntimeException("Cannot read sync syncStateSnapshot file", e);
@@ -39,10 +42,11 @@ public class SyncStateManager {
         }
 
         writeSyncClientStateToDisk();
+
+        fetchAllDataSinceLastUpdate();
     }
 
     // TODO remove this, use webSocket and send on connection init the lastServerInfoAt timestamp and the the server will push back the filemetainfo message
-    @PostConstruct
     public void fetchAllDataSinceLastUpdate() {
         long when = System.currentTimeMillis();
         RecentChangesResponse recentChangesResponse = restHttpClient.getAllAfter(syncStateSnapshot.lastServerInfoAt);
@@ -76,7 +80,7 @@ public class SyncStateManager {
     }
 
     private void writeSyncClientStateToDisk() {
-        try (ObjectOutputStream objectOutputStream = new ObjectOutputStream(new FileOutputStream(STATE_FILE_PATH))) {
+        try (ObjectOutputStream objectOutputStream = new ObjectOutputStream(new FileOutputStream(stateFilePath))) {
             objectOutputStream.writeObject(syncStateSnapshot);
             objectOutputStream.close();
         } catch (IOException e) {
