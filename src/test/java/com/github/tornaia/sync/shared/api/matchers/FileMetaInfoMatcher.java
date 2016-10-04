@@ -19,13 +19,13 @@ public class FileMetaInfoMatcher extends AbstractSyncMatcher<FileMetaInfo> {
 
   private Matcher<Long> modificationDateTime = new IsAnything<>();
 
-  public FileMetaInfoMatcher id(Matcher<String> id) {
-    this.id = id;
+  public FileMetaInfoMatcher id(String id) {
+    this.id = is(id);
     return this;
   }
 
-  public FileMetaInfoMatcher relativePath(Matcher<String> relativePath) {
-    this.relativePath = relativePath;
+  public FileMetaInfoMatcher relativePath(String relativePath) {
+    this.relativePath = is(relativePath);
     return this;
   }
 
