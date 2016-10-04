@@ -1,29 +1,45 @@
 package com.github.tornaia.sync.client.win.websocket;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.web.socket.TextMessage;
-import org.springframework.web.socket.WebSocketSession;
-import org.springframework.web.socket.handler.TextWebSocketHandler;
+import com.github.tornaia.sync.client.win.statestorage.SyncStateManager;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
-import java.io.IOException;
+import javax.websocket.*;
 
-public class EchoWebSocketClient extends TextWebSocketHandler {
+@Component
+@ClientEndpoint
+public class EchoWebSocketClient {
 
-    private WebSocketSession session;
+    @Autowired
+    private EchoWebSocketKeepAliveService echoWebSocketKeepAliveService;
 
-    @Override
-    public void afterConnectionEstablished(WebSocketSession session) throws Exception {
+    private Session session;
+
+    @OnOpen
+    public void open(Session session) {
         this.session = session;
-        sendMessage("WebSocket connection established");
+        System.out.println("New session opened: " + session);
     }
 
-    @Override
-    public void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
-        System.out.println("Message received: " + message.getPayload());
+    @OnMessage
+    public void onMessage(String message) {
+        System.out.println("Received msg: " + message);
     }
 
-    public void sendMessage(String message) throws IOException {
-        session.sendMessage(new TextMessage(message));
-        System.out.println("Message sent: " + message);
+    public void sendMessage(String message) {
+        session.getAsyncRemote().sendText(message);
+        System.out.println("Sent msg: " + message);
+    }
+
+    @OnClose
+    public void closedConnection(Session session) {
+        System.out.println("session closed: " + session);
+        echoWebSocketKeepAliveService.reconnect();
+    }
+
+    @OnError
+    public void error(Session session, Throwable t) {
+        System.err.println("Error on session " + session);
+        echoWebSocketKeepAliveService.reconnect();
     }
 }

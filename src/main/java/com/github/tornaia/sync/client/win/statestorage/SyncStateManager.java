@@ -37,9 +37,9 @@ public class SyncStateManager {
         writeSyncClientStateToDisk();
     }
 
-    // TODO remove this, use websocket and send on connection init the lastServerInfoAt timestamp and the the server will push back the filemetainfo message
+    // TODO remove this, use webSocket and send on connection init the lastServerInfoAt timestamp and the the server will push back the filemetainfo message
     @PostConstruct
-    public void pollServer() {
+    public void fetchAllDataSinceLastUpdate() {
         long when = System.currentTimeMillis();
         RecentChangesResponse recentChangesResponse = restHttpClient.getAllAfter(syncStateSnapshot.lastServerInfoAt);
         if (recentChangesResponse.status == RecentChangesResponse.Status.TRANSFER_FAILED) {
