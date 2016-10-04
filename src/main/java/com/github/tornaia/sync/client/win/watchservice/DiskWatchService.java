@@ -1,11 +1,13 @@
 package com.github.tornaia.sync.client.win.watchservice;
 
-import com.github.tornaia.sync.client.win.httpclient.RestHttpClient;
 import com.github.tornaia.sync.client.win.httpclient.FileCreateResponse;
+import com.github.tornaia.sync.client.win.httpclient.RestHttpClient;
 import com.github.tornaia.sync.client.win.statestorage.SyncStateManager;
 import com.github.tornaia.sync.shared.api.FileMetaInfo;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -24,6 +26,8 @@ import static java.nio.file.StandardWatchEventKinds.*;
 
 @Component
 public class DiskWatchService {
+
+    private static final Logger LOG = LoggerFactory.getLogger(DiskWatchService.class);
 
     private static final String SYNC_DIRECTORY_PATH = "C:\\temp\\";
 
@@ -148,7 +152,7 @@ public class DiskWatchService {
         } else if (file.isDirectory()) {
             registerChildrenRecursively(filePath.toAbsolutePath());
         } else {
-            System.out.println("Unknown file type. File does not exist? " + file);
+            LOG.info("Unknown file type. File does not exist? " + file);
         }
     }
 
@@ -158,7 +162,7 @@ public class DiskWatchService {
             FileUtils.moveFile(fileToRename.toFile(), new File(fileToRename.toFile().getAbsolutePath() + "_conflict" + System.currentTimeMillis()));
             downloadOtherFile(fileMetaInfo.relativePath);
         } catch (IOException e) {
-            System.out.println("Cannot rename file: " + e);
+            LOG.warn("Cannot rename file: " + e);
         }
     }
 
@@ -193,14 +197,14 @@ public class DiskWatchService {
 
             syncStateManager.onFileModify(fileCreateResponse.fileMetaInfo);
         } else {
-            System.out.println("Unknown file type. File does not exist? " + file);
+            LOG.info("Unknown file type. File does not exist? " + file);
         }
     }
 
     private void onFileDelete(Path filePath) {
         File file = filePath.toFile();
         if (file.exists()) {
-            System.out.println("File exist when we want to sync a delete event? " + file);
+            LOG.info("File exist when we want to sync a delete event? " + file);
             return;
         }
         String relativePath = getRelativePath(file);
@@ -217,7 +221,7 @@ public class DiskWatchService {
         try {
             syncDirectory.register(watchService, new WatchEvent.Kind[]{ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY, OVERFLOW});
         } catch (IOException e) {
-            System.out.println("Cannot register watcher: " + e);
+            LOG.warn("Cannot register watcher: " + e);
         }
     }
 
@@ -226,14 +230,14 @@ public class DiskWatchService {
             Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
                 @Override
                 public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-                    System.out.println("WatchService registered for dir: " + dir.getFileName());
+                    LOG.info("WatchService registered for dir: " + dir.toFile().getAbsolutePath());
                     register(dir);
                     return FileVisitResult.CONTINUE;
                 }
 
                 @Override
                 public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
-                    System.out.println("VISIT FAILED: " + file + ", exception: " + exc.getMessage());
+                    LOG.warn("VISIT FAILED: " + file + ", exception: " + exc.getMessage());
                     return FileVisitResult.CONTINUE;
                 }
             });

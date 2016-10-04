@@ -1,5 +1,6 @@
 package com.github.tornaia.sync.client.win.httpclient;
 
+import com.github.tornaia.sync.client.win.WinClientApp;
 import com.github.tornaia.sync.client.win.util.SerializerUtils;
 import com.github.tornaia.sync.shared.api.FileMetaInfo;
 import com.google.gson.Gson;
@@ -18,6 +19,8 @@ import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -36,6 +39,8 @@ import static com.google.gson.internal.$Gson$Types.newParameterizedTypeWithOwner
 
 @Component
 public class RestHttpClient {
+
+    private static final Logger LOG = LoggerFactory.getLogger(WinClientApp.class);
 
     private static final String FILE_PATH = "/api/files";
 
@@ -71,7 +76,7 @@ public class RestHttpClient {
             HttpGet httpGet = new HttpGet(uri);
 
             List<FileMetaInfo> response = httpClient.execute(httpGet, createListResponseHandler(FileMetaInfo.class));
-            System.out.println("GET fileMetaInfos: " + response);
+            LOG.info("GET fileMetaInfos: " + response);
             return RecentChangesResponse.ok(response);
         } catch (URISyntaxException | IOException e) {
             return RecentChangesResponse.transferFailed(e.getMessage());
@@ -101,7 +106,7 @@ public class RestHttpClient {
             throw new RuntimeException("Get from server failed", e);
         }
 
-        System.out.println("GET file: " + response);
+        LOG.info("GET file: " + fileMetaInfo);
         return response;
     }
 
@@ -118,7 +123,7 @@ public class RestHttpClient {
         try {
             response = httpClient.execute(httpPost);
         } catch (FileNotFoundException e) {
-            System.out.println("File disappeared meanwhile it was under upload(post)? " + e.getMessage());
+            LOG.info("File disappeared meanwhile it was under upload(post)? " + e.getMessage());
             return FileCreateResponse.transferFailed(e.getMessage());
         } catch (IOException e) {
             return FileCreateResponse.transferFailed(e.getMessage());
@@ -129,7 +134,7 @@ public class RestHttpClient {
         }
 
         FileMetaInfo syncedFileMetaInfo = SerializerUtils.toObject(response.getEntity(), FileMetaInfo.class);
-        System.out.println("CREATE file: " + syncedFileMetaInfo);
+        LOG.info("CREATE file: " + syncedFileMetaInfo);
         return FileCreateResponse.ok(syncedFileMetaInfo);
     }
 
@@ -147,14 +152,14 @@ public class RestHttpClient {
         try {
             response = httpClient.execute(httpPut);
         } catch (FileNotFoundException e) {
-            System.out.println("File disappeared meanwhile it was under upload(put)? " + e.getMessage());
+            LOG.info("File disappeared meanwhile it was under upload(put)? " + e.getMessage());
             return FileCreateResponse.transferFailed(e.getMessage());
         } catch (IOException e) {
             return FileCreateResponse.transferFailed(e.getMessage());
         }
 
         FileMetaInfo syncedFileMetaInfo = SerializerUtils.toObject(response.getEntity(), FileMetaInfo.class);
-        System.out.println("PUT file: " + syncedFileMetaInfo);
+        LOG.info("PUT file: " + syncedFileMetaInfo);
         return FileCreateResponse.ok(syncedFileMetaInfo);
     }
 
@@ -180,7 +185,7 @@ public class RestHttpClient {
         } catch (IOException e) {
             throw new RuntimeException("Delete from server failed", e);
         }
-        System.out.println("DELETE file: " + fileMetaInfo);
+        LOG.info("DELETE file: " + fileMetaInfo);
     }
 
     private static <T> ResponseHandler<List<T>> createListResponseHandler(Class<T> clazz) {

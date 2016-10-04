@@ -1,21 +1,19 @@
 package com.github.tornaia.sync.client.win;
 
-import org.springframework.boot.CommandLineRunner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 
 import java.lang.management.ManagementFactory;
 
 @SpringBootApplication
-public class WinClientApp implements CommandLineRunner {
+public class WinClientApp {
 
-    @Override
-    public void run(String... args) {
-    }
+    private static final Logger LOG = LoggerFactory.getLogger(WinClientApp.class);
 
-    public static void main(String[] args) throws Exception {
-        System.out.println("PID: " + ManagementFactory.getRuntimeMXBean().getName());
+    public static void main(String[] args) {
+        LOG.info("PID: " + ManagementFactory.getRuntimeMXBean().getName());
         new SpringApplicationBuilder(WinClientApp.class).web(false).headless(false).run(args);
-        Thread.sleep(Long.MAX_VALUE);
     }
 }

@@ -1,5 +1,7 @@
 package com.github.tornaia.sync.client.win.websocket;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.event.ContextRefreshedEvent;
@@ -12,6 +14,8 @@ import java.net.URI;
 
 @Component
 public class EchoWebSocketKeepAliveService {
+
+    private static final Logger LOG = LoggerFactory.getLogger(EchoWebSocketKeepAliveService.class);
 
     @Value("#{systemProperties['server.scheme.web.socket'] ?: 'ws'}")
     private String serverSchemeWebSocket;
@@ -33,21 +37,22 @@ public class EchoWebSocketKeepAliveService {
 
     @EventListener({ContextRefreshedEvent.class})
     public void contextRefreshedEvent() {
-        System.out.println("Context refreshed event happened");
+        LOG.info("Context refreshed event happened");
         reconnect();
     }
 
     public void reconnect() {
-        System.out.println("Reconnect webSocket");
+        LOG.info("Reconnect webSocket");
         WebSocketContainer container = ContainerProvider.getWebSocketContainer();
         new Thread(() -> {
             while (true) {
                 try {
+                    LOG.info("Reconnecting webSocket...");
                     container.connectToServer(echoWebSocketClient, URI.create(getWebSocketUri()));
-                    System.out.println("Successfully connected to webSocket!");
+                    LOG.info("Successfully connected to webSocket!");
                     break;
                 } catch (Exception e) {
-                    System.out.println("Failed to connect to webSocket!");
+                    LOG.warn("Failed to connect to webSocket!");
                 }
             }
         }).start();

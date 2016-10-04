@@ -1,9 +1,11 @@
 package com.github.tornaia.sync.client.win.statestorage;
 
-import com.github.tornaia.sync.client.win.httpclient.RestHttpClient;
 import com.github.tornaia.sync.client.win.httpclient.RecentChangesResponse;
+import com.github.tornaia.sync.client.win.httpclient.RestHttpClient;
 import com.github.tornaia.sync.client.win.watchservice.DiskWatchService;
 import com.github.tornaia.sync.shared.api.FileMetaInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -12,6 +14,8 @@ import java.io.*;
 
 @Component
 public class SyncStateManager {
+
+    private static final Logger LOG = LoggerFactory.getLogger(SyncStateManager.class);
 
     private static final String STATE_FILE_PATH = "C:\\temp2\\sync-client-win.db";
 
@@ -43,7 +47,7 @@ public class SyncStateManager {
         long when = System.currentTimeMillis();
         RecentChangesResponse recentChangesResponse = restHttpClient.getAllAfter(syncStateSnapshot.lastServerInfoAt);
         if (recentChangesResponse.status == RecentChangesResponse.Status.TRANSFER_FAILED) {
-            System.out.println("Client is offline! Cannot get updates from server!");
+            LOG.warn("Client is offline! Cannot get updates from server!");
             return;
         }
 
