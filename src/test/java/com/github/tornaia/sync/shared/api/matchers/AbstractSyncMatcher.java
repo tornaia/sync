@@ -6,14 +6,14 @@ import org.hamcrest.TypeSafeDiagnosingMatcher;
 
 public abstract class AbstractSyncMatcher<T> extends TypeSafeDiagnosingMatcher<T> {
 
-  protected <X> boolean matches(Matcher<? extends X> matcher, X value, String attribute, Description mismatchDescription) {
-    if (!matcher.matches(value)) {
-      mismatchDescription.appendText(" " + attribute + " ");
-      matcher.describeMismatch(value, mismatchDescription);
-      return false;
-    } else {
-      return true;
+    protected <X> boolean matches(Matcher<? extends X> matcher, X value, String attribute, Description mismatchDescription) {
+        if (!matcher.matches(value)) {
+            mismatchDescription.appendText(" " + attribute + " ");
+            matcher.describeMismatch(value, mismatchDescription);
+            return false;
+        } else {
+            return true;
+        }
     }
-  }
 
 }
