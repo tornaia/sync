@@ -2,40 +2,40 @@ package com.github.tornaia.sync.e2e;
 
 import com.github.tornaia.sync.client.win.WinClientApp;
 import com.github.tornaia.sync.server.ServerApp;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.embedded.LocalServerPort;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import static org.junit.Assert.assertNotNull;
-
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = {ServerApp.class, WinClientApp.class}, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class WinClientAndServerIntTests {
 
     private static final Logger LOG = LoggerFactory.getLogger(WinClientAndServerIntTests.class);
 
-    @Autowired
-    private ServerApp serverApp;
+    @Before
+    public void initServerWith2Clients() {
+        new SpringApplicationBuilder(ServerApp.class).headless(false).run();
 
-    @Autowired
-    private WinClientApp winClientApp;
+        new SpringApplicationBuilder(WinClientApp.class)
+                .web(false)
+                .headless(false)
+                .run("--client.sync.directory.path=C:\\temp\\client-1\\",
+                        "--client.state.file.path=C:\\temp2\\client-1.db");
 
-    @LocalServerPort
-    private int serverPort;
+        new SpringApplicationBuilder(WinClientApp.class)
+                .web(false)
+                .headless(false)
+                .run("--client.sync.directory.path=C:\\temp\\client-2\\",
+                        "--client.state.file.path=C:\\temp2\\client-2.db");
+    }
 
     @Test
     public void bothCanStart() throws InterruptedException {
-        LOG.info("Server.port: " + serverPort);
-        assertNotNull(serverApp);
-        assertNotNull(winClientApp);
-        Thread.sleep(1000L);
-        LOG.info("Now do your manipulations");
+        LOG.info("Do manipulate");
         Thread.sleep(5000L);
-        LOG.info("Assert then over");
+        LOG.info("Do assert");
     }
 }
