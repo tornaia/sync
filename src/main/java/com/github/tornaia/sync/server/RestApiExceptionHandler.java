@@ -1,6 +1,8 @@
 package com.github.tornaia.sync.server;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.servlet.ModelAndView;
@@ -13,6 +15,8 @@ import java.util.Objects;
 @ControllerAdvice
 public final class RestApiExceptionHandler {
 
+    private final static Logger LOG = LoggerFactory.getLogger(RestApiExceptionHandler.class);
+
     @ExceptionHandler(value = Throwable.class)
     public static ModelAndView handle(HttpServletResponse response, Exception e) throws Exception {
         Throwable rootCause = ExceptionUtils.getRootCause(e);
@@ -20,14 +24,14 @@ public final class RestApiExceptionHandler {
 
         if (rootCause instanceof EOFException) {
             if (Objects.equals("Unexpected EOF read on the socket", message)) {
-                System.out.println("Client interrupted exception #1");
+                LOG.info("Client interrupted exception #1");
                 return null;
             }
         }
 
         if (rootCause instanceof IOException) {
             if (Objects.equals("An existing connection was forcibly closed by the remote host", message)) {
-                System.out.println("Client interrupted exception #2");
+                LOG.info("Client interrupted exception #2");
                 return null;
             }
         }

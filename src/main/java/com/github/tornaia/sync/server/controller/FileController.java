@@ -4,6 +4,8 @@ import com.github.tornaia.sync.server.data.document.File;
 import com.github.tornaia.sync.server.data.repository.FileRepository;
 import com.github.tornaia.sync.shared.api.FileMetaInfo;
 import com.github.tornaia.sync.shared.util.FileSizeUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +23,8 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/files")
 public class FileController {
+
+    private static final Logger LOG = LoggerFactory.getLogger(FileController.class);
 
     @Resource
     private FileRepository fileRepo;
@@ -41,7 +45,7 @@ public class FileController {
         File file = fileRepo.findByPath(path);
         if (file == null) {
             file = fileRepo.insert(new File(path, multipartFile.getBytes(), userid, creationDateTime, modificationDateTime));
-            System.out.println("POST file: " + path + " (" + FileSizeUtils.toReadableFileSize(file.getData().length) + ")");
+            LOG.info("POST file: " + path + " (" + FileSizeUtils.toReadableFileSize(file.getData().length) + ")");
             return new FileMetaInfo(file.getId(), path, file.getData().length, file.getCreationDate(), file.getLastModifiedDate());
         }
         throw new FileAlreadyExistsException(path);
@@ -61,7 +65,7 @@ public class FileController {
         }
 
         FileMetaInfo fileMetaInfo = new FileMetaInfo(file.getId(), path, file.getData().length, file.getCreationDate(), file.getLastModifiedDate());
-        System.out.println("PUT file: " + fileMetaInfo);
+        LOG.info("PUT file: " + fileMetaInfo);
         return fileMetaInfo;
     }
 
@@ -73,7 +77,7 @@ public class FileController {
         }
         String path = file.getPath();
         fileRepo.delete(file);
-        System.out.println("DELETE file: " + path);
+        LOG.info("DELETE file: " + path);
     }
 
     @RequestMapping(value = "/{id}", method = RequestMethod.GET, produces = MediaType.APPLICATION_OCTET_STREAM)
@@ -84,7 +88,7 @@ public class FileController {
         }
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + file.getName());
-        System.out.println("GET file: " + file.getPath());
+        LOG.info("GET file: " + file.getPath());
         return new ResponseEntity(file.getData(), responseHeaders, HttpStatus.OK);
     }
 
@@ -96,7 +100,7 @@ public class FileController {
         }
 
         FileMetaInfo fileMetaInfo = new FileMetaInfo(file.getId(), file.getPath(), file.getData().length, file.getCreationDate(), file.getLastModifiedDate());
-        System.out.println("GET metaInfo: " + fileMetaInfo);
+        LOG.info("GET metaInfo: " + fileMetaInfo);
         return fileMetaInfo;
     }
 

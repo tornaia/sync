@@ -1,7 +1,11 @@
 package com.github.tornaia.sync.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
+
+import java.lang.management.ManagementFactory;
 
 import static org.springframework.boot.SpringApplication.run;
 
@@ -9,7 +13,10 @@ import static org.springframework.boot.SpringApplication.run;
 @SpringBootApplication
 public class ServerApp {
 
-    public static void main(String[] args) throws Exception {
+    private static final Logger LOG = LoggerFactory.getLogger(ServerApp.class);
+
+    public static void main(String[] args) {
+        LOG.info("PID: " + ManagementFactory.getRuntimeMXBean().getName());
         run(ServerApp.class, args);
     }
 }
