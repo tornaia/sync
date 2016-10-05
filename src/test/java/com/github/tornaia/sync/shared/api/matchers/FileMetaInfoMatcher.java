@@ -11,6 +11,8 @@ public class FileMetaInfoMatcher extends AbstractSyncMatcher<FileMetaInfo> {
 
     private Matcher<String> id = new IsAnything<>();
 
+    private Matcher<String> userid = new IsAnything<>();
+
     private Matcher<String> relativePath = new IsAnything<>();
 
     private Matcher<Long> length = new IsAnything<>();
@@ -24,22 +26,27 @@ public class FileMetaInfoMatcher extends AbstractSyncMatcher<FileMetaInfo> {
         return this;
     }
 
+    public FileMetaInfoMatcher userid(String userid) {
+        this.userid = is(userid);
+        return this;
+    }
+
     public FileMetaInfoMatcher relativePath(String relativePath) {
         this.relativePath = is(relativePath);
         return this;
     }
 
-    public FileMetaInfoMatcher length(Long length) {
+    public FileMetaInfoMatcher length(long length) {
         this.length = is(length);
         return this;
     }
 
-    public FileMetaInfoMatcher creationDateTime(Long creationDateTime) {
+    public FileMetaInfoMatcher creationDateTime(long creationDateTime) {
         this.creationDateTime = is(creationDateTime);
         return this;
     }
 
-    public FileMetaInfoMatcher modificationDateTime(Long modificationDateTime) {
+    public FileMetaInfoMatcher modificationDateTime(long modificationDateTime) {
         this.modificationDateTime = is(modificationDateTime);
         return this;
     }
@@ -47,6 +54,7 @@ public class FileMetaInfoMatcher extends AbstractSyncMatcher<FileMetaInfo> {
     @Override
     protected boolean matchesSafely(FileMetaInfo item, Description mismatchDescription) {
         return matches(id, item.id, "id value: ", mismatchDescription) &&
+                matches(userid, item.userid, "userid value: ", mismatchDescription) &&
                 matches(relativePath, item.relativePath, "relativePath value: ", mismatchDescription) &&
                 matches(length, item.length, "length value: ", mismatchDescription) &&
                 matches(creationDateTime, item.creationDateTime, "creationDateTime value: ", mismatchDescription) &&
@@ -57,6 +65,7 @@ public class FileMetaInfoMatcher extends AbstractSyncMatcher<FileMetaInfo> {
     public void describeTo(Description description) {
         description.appendText(FileMetaInfo.class.getSimpleName())
                 .appendText(", id: ").appendDescriptionOf(id)
+                .appendText(", userid: ").appendDescriptionOf(userid)
                 .appendText(", relativePath: ").appendDescriptionOf(relativePath)
                 .appendText(", length: ").appendDescriptionOf(length)
                 .appendText(", creationDateTime: ").appendDescriptionOf(creationDateTime)

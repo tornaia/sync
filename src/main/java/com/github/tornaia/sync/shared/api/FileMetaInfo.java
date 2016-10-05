@@ -14,6 +14,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 public class FileMetaInfo implements Serializable {
 
     public final String id;
+    public final String userid;
     public final String relativePath;
     public final long length;
     public final long creationDateTime;
@@ -21,18 +22,20 @@ public class FileMetaInfo implements Serializable {
 
     public FileMetaInfo() {
         this.id = null;
+        this.userid = null;
         this.relativePath = null;
         this.length = -1;
         this.creationDateTime = -1;
         this.modificationDateTime = -1;
     }
 
-    public static FileMetaInfo createNonSyncedFileMetaInfo(String relativePath, File file) {
-        return new FileMetaInfo(null, relativePath, file);
+    public static FileMetaInfo createNonSyncedFileMetaInfo(String userid, String relativePath, File file) {
+        return new FileMetaInfo(null, userid, relativePath, file);
     }
 
-    public FileMetaInfo(String id, String relativePath, File file) {
+    public FileMetaInfo(String id, String userid, String relativePath, File file) {
         this.id = id;
+        this.userid = userid;
         this.relativePath = relativePath;
         BasicFileAttributes attr;
         try {
@@ -45,8 +48,9 @@ public class FileMetaInfo implements Serializable {
         this.modificationDateTime = attr.lastModifiedTime().toMillis();
     }
 
-    public FileMetaInfo(String id, String relativePath, long length, long creationDateTime, long modificationDateTime) {
+    public FileMetaInfo(String id, String userid, String relativePath, long length, long creationDateTime, long modificationDateTime) {
         this.id = id;
+        this.userid = userid;
         this.relativePath = relativePath;
         this.length = length;
         this.creationDateTime = creationDateTime;
@@ -56,6 +60,7 @@ public class FileMetaInfo implements Serializable {
     @Override
     public int hashCode() {
         return new HashCodeBuilder()
+                .append(userid)
                 .append(relativePath)
                 .append(length)
                 .append(creationDateTime)
@@ -72,6 +77,7 @@ public class FileMetaInfo implements Serializable {
         FileMetaInfo other = (FileMetaInfo) obj;
 
         return new EqualsBuilder()
+                .append(userid, other.userid)
                 .append(relativePath, other.relativePath)
                 .append(length, other.length)
                 .append(creationDateTime, other.creationDateTime)
@@ -84,6 +90,7 @@ public class FileMetaInfo implements Serializable {
         return new ToStringBuilder("FileMetaInfo", ToStringStyle.JSON_STYLE)
                 .append("FileMetaInfo", "")
                 .append("id", id)
+                .append("userid", userid)
                 .append("relativePath", relativePath)
                 .append("length", length)
                 .append("creationDateTime", creationDateTime)
