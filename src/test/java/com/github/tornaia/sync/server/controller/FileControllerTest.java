@@ -2,6 +2,7 @@ package com.github.tornaia.sync.server.controller;
 
 import com.github.tornaia.sync.server.data.document.File;
 import com.github.tornaia.sync.server.data.repository.FileRepository;
+import com.github.tornaia.sync.server.websocket.SyncWebSocketHandler;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,66 +22,68 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(FileController.class)
 public class FileControllerTest {
 
-  @MockBean
-  private FileRepository fileRepository;
+    @MockBean
+    private FileRepository fileRepository;
 
-  @Autowired
-  private MockMvc mvc;
+    @MockBean
+    private SyncWebSocketHandler syncWebSocketHandler;
 
-  @Test
-  public void createFile() throws Exception {
-    MockMultipartFile file = new MockMultipartFile("file", "file.png", "image/png", "test".getBytes());
+    @Autowired
+    private MockMvc mvc;
 
-    given(fileRepository.findByPath(file.getOriginalFilename()))
-      .willReturn(null);
-    given(fileRepository.insert(any(File.class)))
-      .willReturn(new File(file.getOriginalFilename(), file.getBytes(), "userid", 1L, 2L));
+    @Test
+    public void createFile() throws Exception {
+        MockMultipartFile file = new MockMultipartFile("file", "file.png", "image/png", "test".getBytes());
 
-    mvc.perform(
-      fileUpload("/api/files")
-        .file(file)
-        .param("userid", "userid")
-        .param("creationDateTime", "1")
-        .param("modificationDateTime", "2"))
-      .andExpect(status().isOk());
-  }
+        given(fileRepository.findByPath(file.getOriginalFilename()))
+                .willReturn(null);
+        given(fileRepository.insert(any(File.class)))
+                .willReturn(new File("userid", file.getOriginalFilename(), file.getBytes(), 1L, 2L));
 
-  @Test
-  public void createIfFileExists() throws Exception {
-    MockMultipartFile file = new MockMultipartFile("file", "file.png", "image/png", "test".getBytes());
+        mvc.perform(
+                fileUpload("/api/files")
+                        .file(file)
+                        .param("userid", "userid")
+                        .param("creationDateTime", "1")
+                        .param("modificationDateTime", "2"))
+                .andExpect(status().isOk());
+    }
 
-    given(fileRepository.findByPath(file.getOriginalFilename()))
-      .willReturn(new File());
+    @Test
+    public void createIfFileExists() throws Exception {
+        MockMultipartFile file = new MockMultipartFile("file", "file.png", "image/png", "test".getBytes());
 
-    mvc.perform(
-      fileUpload("/api/files")
-        .file(file)
-        .param("userid", "userid")
-        .param("creationDateTime", "1")
-        .param("modificationDateTime", "2"))
-      .andExpect(status().isConflict());
-  }
+        given(fileRepository.findByPath(file.getOriginalFilename()))
+                .willReturn(new File());
 
-  @Test
-  public void getIfFileDoesNotExist() throws Exception {
-    given(fileRepository.findOne("12"))
-      .willReturn(null);
+        mvc.perform(
+                fileUpload("/api/files")
+                        .file(file)
+                        .param("userid", "userid")
+                        .param("creationDateTime", "1")
+                        .param("modificationDateTime", "2"))
+                .andExpect(status().isConflict());
+    }
 
-    mvc.perform(
-      get("/api/files/12")
-        .param("userid", "userid"))
-      .andExpect(status().isNotFound());
-  }
+    @Test
+    public void getIfFileDoesNotExist() throws Exception {
+        given(fileRepository.findOne("12"))
+                .willReturn(null);
 
-  @Test
-  public void getIfMetaInfoDoesNotExist() throws Exception {
-    given(fileRepository.findOne("12"))
-      .willReturn(null);
+        mvc.perform(
+                get("/api/files/12")
+                        .param("userid", "userid"))
+                .andExpect(status().isNotFound());
+    }
 
-    mvc.perform(
-      get("/api/files/12/metaInfo")
-        .param("userid", "userid"))
-      .andExpect(status().isNotFound());
-  }
+    @Test
+    public void getIfMetaInfoDoesNotExist() throws Exception {
+        given(fileRepository.findOne("12"))
+                .willReturn(null);
 
+        mvc.perform(
+                get("/api/files/12/metaInfo")
+                        .param("userid", "userid"))
+                .andExpect(status().isNotFound());
+    }
 }

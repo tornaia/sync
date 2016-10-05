@@ -1,94 +1,91 @@
 package com.github.tornaia.sync.server.data.document;
 
-import java.nio.file.Paths;
-import java.util.Date;
-
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.mongodb.core.mapping.Document;
+
+import java.nio.file.Paths;
 
 @Document
 public class File {
-	
-	@Id
-	private String id;
-	
-	private String path;
-	
-	private byte[] data;
-	
-	private String userId;
-	
-	private long creationDate;
 
-	private long lastModifiedDate;
-	
-	public File(){}
+    @Id
+    private String id;
 
-	public File(String path, byte[] data, String userId, long creationDate, long lastModifiedDate) {
-		super();
-		this.path = path;
-		this.data = data;
-		this.userId = userId;
-		this.creationDate = creationDate;
-		this.lastModifiedDate = lastModifiedDate;
-	}
+    private String userid;
 
-	public String getId() {
-		return id;
-	}
+    private String path;
 
-	public void setId(String id) {
-		this.id = id;
-	}
+    private byte[] data;
 
-	public byte[] getData() {
-		return data;
-	}
+    private long creationDate;
 
-	public void setData(byte[] data) {
-		this.data = data;
-	}
+    private long lastModifiedDate;
 
-	public String getPath() {
-		return path;
-	}
+    public File() {
+    }
 
-	public void setPath(String path) {
-		this.path = path;
-	}
+    public File(String userid, String path, byte[] data, long creationDate, long lastModifiedDate) {
+        this.userid = userid;
+        this.path = path;
+        this.data = data;
+        this.creationDate = creationDate;
+        this.lastModifiedDate = lastModifiedDate;
+    }
 
-	public String getUserId() {
-		return userId;
-	}
+    public String getId() {
+        return id;
+    }
 
-	public void setUserId(String userId) {
-		this.userId = userId;
-	}
+    public void setId(String id) {
+        this.id = id;
+    }
 
-	public long getCreationDate() {
-		return creationDate;
-	}
+    public String getUserid() {
+        return userid;
+    }
 
-	public void setCreationDate(long creationDate) {
-		this.creationDate = creationDate;
-	}
+    public void setUserid(String userid) {
+        this.userid = userid;
+    }
 
-	public long getLastModifiedDate() {
-		return lastModifiedDate;
-	}
+    public String getPath() {
+        return path;
+    }
 
-	public void setLastModifiedDate(long lastModifiedDate) {
-		this.lastModifiedDate = lastModifiedDate;
-	}
+    public void setPath(String path) {
+        this.path = path;
+    }
 
-	public String getName(){
-		if(path == null || Paths.get(getPath()).getFileName() == null) {
-			return StringUtils.EMPTY;
-		}
-		return Paths.get(getPath()).getFileName().toString();
-	}
-	
+    public byte[] getData() {
+        return data;
+    }
+
+    public void setData(byte[] data) {
+        this.data = data;
+    }
+
+    public long getCreationDate() {
+        return creationDate;
+    }
+
+    public void setCreationDate(long creationDate) {
+        this.creationDate = creationDate;
+    }
+
+    public long getLastModifiedDate() {
+        return lastModifiedDate;
+    }
+
+    public void setLastModifiedDate(long lastModifiedDate) {
+        this.lastModifiedDate = lastModifiedDate;
+    }
+
+    public String getName() {
+        if (path == null || Paths.get(getPath()).getFileName() == null) {
+            return StringUtils.EMPTY;
+        }
+        return Paths.get(getPath()).getFileName().toString();
+    }
+
 }

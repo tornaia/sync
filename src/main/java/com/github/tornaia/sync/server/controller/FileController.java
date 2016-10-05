@@ -2,10 +2,11 @@ package com.github.tornaia.sync.server.controller;
 
 import com.github.tornaia.sync.server.data.document.File;
 import com.github.tornaia.sync.server.data.repository.FileRepository;
+import com.github.tornaia.sync.server.websocket.SyncWebSocketHandler;
 import com.github.tornaia.sync.shared.api.FileMetaInfo;
-import com.github.tornaia.sync.shared.util.FileSizeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,12 +30,22 @@ public class FileController {
     @Resource
     private FileRepository fileRepo;
 
+    @Autowired
+    private SyncWebSocketHandler syncWebSocketHandler;
+
+    @RequestMapping(path = "/reset", method = RequestMethod.GET)
+    public void resetDatabase() {
+        List<File> files = fileRepo.findAll();
+        files.forEach(fileRepo::delete);
+        LOG.info("Just all files from DB: " + files.size());
+    }
+
     @RequestMapping(method = RequestMethod.GET)
     public List<FileMetaInfo> getModifiedFiles(@RequestParam("userid") String userid, @RequestParam("modificationDateTime") long modTs) {
         List<FileMetaInfo> result = new ArrayList<>();
         List<File> fileList = fileRepo.findAllModified(userid, modTs);
         if (!Objects.isNull(fileList)) {
-            result.addAll(fileList.stream().map(file -> new FileMetaInfo(file.getId(), file.getPath(), file.getData().length, file.getCreationDate(), file.getLastModifiedDate())).collect(Collectors.toList()));
+            result.addAll(fileList.stream().map(file -> new FileMetaInfo(file.getId(), userid, file.getPath(), file.getData().length, file.getCreationDate(), file.getLastModifiedDate())).collect(Collectors.toList()));
         }
         return result;
     }
@@ -44,9 +55,20 @@ public class FileController {
         String path = multipartFile.getOriginalFilename();
         File file = fileRepo.findByPath(path);
         if (file == null) {
-            file = fileRepo.insert(new File(path, multipartFile.getBytes(), userid, creationDateTime, modificationDateTime));
-            LOG.info("POST file: " + path + " (" + FileSizeUtils.toReadableFileSize(file.getData().length) + ")");
-            return new FileMetaInfo(file.getId(), path, file.getData().length, file.getCreationDate(), file.getLastModifiedDate());
+            file = fileRepo.insert(new File(userid, path, multipartFile.getBytes(), creationDateTime, modificationDateTime));
+            FileMetaInfo fileMetaInfo = new FileMetaInfo(file.getId(), userid, path, file.getData().length, file.getCreationDate(), file.getLastModifiedDate());
+            LOG.info("POST file: " + fileMetaInfo);
+
+            // TODO see SyncWebSocketHandler.notifyClients
+            new Thread(() -> {
+                try {
+                    Thread.sleep(500L);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                syncWebSocketHandler.notifyClients(fileMetaInfo);
+            }).start();
+            return fileMetaInfo;
         }
         throw new FileAlreadyExistsException(path);
     }
@@ -64,7 +86,7 @@ public class FileController {
             fileRepo.save(file);
         }
 
-        FileMetaInfo fileMetaInfo = new FileMetaInfo(file.getId(), path, file.getData().length, file.getCreationDate(), file.getLastModifiedDate());
+        FileMetaInfo fileMetaInfo = new FileMetaInfo(file.getId(), userid, path, file.getData().length, file.getCreationDate(), file.getLastModifiedDate());
         LOG.info("PUT file: " + fileMetaInfo);
         return fileMetaInfo;
     }
@@ -99,7 +121,7 @@ public class FileController {
             throw new FileNotFoundException(id);
         }
 
-        FileMetaInfo fileMetaInfo = new FileMetaInfo(file.getId(), file.getPath(), file.getData().length, file.getCreationDate(), file.getLastModifiedDate());
+        FileMetaInfo fileMetaInfo = new FileMetaInfo(file.getId(), file.getUserid(), file.getPath(), file.getData().length, file.getCreationDate(), file.getLastModifiedDate());
         LOG.info("GET metaInfo: " + fileMetaInfo);
         return fileMetaInfo;
     }

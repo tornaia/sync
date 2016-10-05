@@ -11,9 +11,9 @@ public interface FileRepository extends MongoRepository<File, String> {
     @Query("{'path' : ?0}")
     File findByPath(String path);
 
-    @Query("{'id' : ?0, 'userId' : ?1}")
-    File findByIdAndUserId(String path, String userId);
+    @Query("{'id' : ?0, 'userid' : ?1}")
+    File findByIdAndUserId(String path, String userid);
 
-    @Query("{'userId' : ?0}, 'lastModifiedDate' : {$gt : ?1}")
-    List<File> findAllModified(String userId, long lastModifiedDate);
+    @Query("{'userid' : ?0}, 'lastModifiedDate' : {$gt : ?1}")
+    List<File> findAllModified(String userid, long lastModifiedDate);
 }
