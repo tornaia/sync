@@ -10,7 +10,7 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 public abstract class AbstractSyncServerIntTest {
 
   @Autowired
-  private MongoTemplate mongoTemplate;
+  protected MongoTemplate mongoTemplate;
 
   @After
   public void cleanMongoDB() {

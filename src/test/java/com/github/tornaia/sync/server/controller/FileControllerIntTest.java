@@ -1,5 +1,6 @@
 package com.github.tornaia.sync.server.controller;
 
+import com.github.tornaia.sync.server.data.document.File;
 import com.github.tornaia.sync.shared.api.FileMetaInfo;
 import com.github.tornaia.sync.shared.api.matchers.FileMetaInfoMatcher;
 import org.junit.Rule;
@@ -11,6 +12,7 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.junit4.SpringRunner;
 import utils.AbstractSyncServerIntTest;
 
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 
 @RunWith(SpringRunner.class)
@@ -69,6 +71,18 @@ public class FileControllerIntTest extends AbstractSyncServerIntTest {
       .length(5L);
 
     assertThat(result, expected);
+  }
+
+  @Test
+  public void deleteFile() throws Exception {
+    MockMultipartFile file = new MockMultipartFile("test", "test.png", "image/png", "TEST".getBytes());
+    FileMetaInfo createdFile = fileController.postFile("userid", 1L, 2L, file);
+
+    fileController.deleteFile(createdFile.id);
+
+    //TODO nxjohny: We can wrap it in the corresponding driver and hide mongotemplate op. The interface throws exception in case of null file, so i have to use the template to validate the delete whether was successful or not.
+    File result = mongoTemplate.findById(createdFile.id, File.class);
+    assertNull(result);
   }
 
 }
