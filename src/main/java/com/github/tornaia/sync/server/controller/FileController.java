@@ -89,7 +89,7 @@ public class FileController {
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + file.getName());
         LOG.info("GET file: " + file.getPath());
-        return new ResponseEntity(file.getData(), responseHeaders, HttpStatus.OK);
+        return new ResponseEntity<>(file.getData(), responseHeaders, HttpStatus.OK);
     }
 
     @RequestMapping(value = "/{id}/metaInfo", method = RequestMethod.GET)
@@ -105,21 +105,21 @@ public class FileController {
     }
 
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    class FileNotFoundException extends RuntimeException {
+    private class FileNotFoundException extends RuntimeException {
 
         private static final long serialVersionUID = 1L;
 
-        public FileNotFoundException(String path) {
+        FileNotFoundException(String path) {
             super("Could not find file: " + path);
         }
     }
 
     @ResponseStatus(HttpStatus.CONFLICT)
-    class FileAlreadyExistsException extends RuntimeException {
+    private class FileAlreadyExistsException extends RuntimeException {
 
         private static final long serialVersionUID = 1L;
 
-        public FileAlreadyExistsException(String path) {
+        FileAlreadyExistsException(String path) {
             super("File already exists: " + path);
         }
     }
