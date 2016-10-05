@@ -13,9 +13,9 @@ import javax.websocket.WebSocketContainer;
 import java.net.URI;
 
 @Component
-public class EchoWebSocketKeepAliveService {
+public class SyncWebSocketKeepAliveService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(EchoWebSocketKeepAliveService.class);
+    private static final Logger LOG = LoggerFactory.getLogger(SyncWebSocketKeepAliveService.class);
 
     @Value("${server.scheme.web.socket:ws}")
     private String serverSchemeWebSocket;
@@ -29,11 +29,11 @@ public class EchoWebSocketKeepAliveService {
     @Value("${server.web.socket.path:/echo}")
     private String webSocketPath;
 
-    @Value("${frosch-sync.user.id:7247234}")
+    @Value("${frosch-sync.userid:7247234}")
     private String userid;
 
     @Autowired
-    private EchoWebSocketClient echoWebSocketClient;
+    private SyncWebSocketClient syncWebSocketClient;
 
     @EventListener({ContextRefreshedEvent.class})
     public void contextRefreshedEvent() {
@@ -48,7 +48,7 @@ public class EchoWebSocketKeepAliveService {
             while (true) {
                 try {
                     LOG.info("Reconnecting webSocket...");
-                    container.connectToServer(echoWebSocketClient, URI.create(getWebSocketUri()));
+                    container.connectToServer(syncWebSocketClient, URI.create(getWebSocketUri()));
                     LOG.info("Successfully connected to webSocket!");
                     break;
                 } catch (Exception e) {

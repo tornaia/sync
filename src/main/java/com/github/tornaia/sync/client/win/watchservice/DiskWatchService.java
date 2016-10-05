@@ -33,6 +33,9 @@ public class DiskWatchService {
     @Value("${client.sync.directory.path:C:\\temp\\client\\}")
     private String syncDirectoryPath;
 
+    @Value("${frosch-sync.userid:7247234}")
+    private String userid;
+
     @Autowired
     private SyncStateManager syncStateManager;
 
@@ -134,7 +137,7 @@ public class DiskWatchService {
         String relativePath = getRelativePath(file);
 
         if (file.isFile()) {
-            FileMetaInfo newFileMetaInfo = FileMetaInfo.createNonSyncedFileMetaInfo(relativePath, file);
+            FileMetaInfo newFileMetaInfo = FileMetaInfo.createNonSyncedFileMetaInfo(userid, relativePath, file);
             FileMetaInfo isMaybeKnown = syncStateManager.getFileMetaInfo(newFileMetaInfo.relativePath);
             if (Objects.equals(isMaybeKnown, newFileMetaInfo)) {
                 // nothing to do
@@ -186,7 +189,7 @@ public class DiskWatchService {
                 return;
             }
 
-            FileMetaInfo updatedFileMetaInfo = new FileMetaInfo(fileMetaInfo.id, relativePath, file);
+            FileMetaInfo updatedFileMetaInfo = new FileMetaInfo(fileMetaInfo.id, userid, relativePath, file);
             boolean fileIsInASyncedStateSoItsADummyEventOnlySoWeCanIgnoreIt = Objects.equals(updatedFileMetaInfo, fileMetaInfo);
             if (fileIsInASyncedStateSoItsADummyEventOnlySoWeCanIgnoreIt) {
                 return;

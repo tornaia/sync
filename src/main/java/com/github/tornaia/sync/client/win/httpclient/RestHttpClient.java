@@ -53,7 +53,7 @@ public class RestHttpClient {
     @Value("${server.port:8080}")
     private int serverPort;
 
-    @Value("${frosch-sync.user.id:7247234}")
+    @Value("${frosch-sync.userid:7247234}")
     private String userid;
 
     private final HttpClient httpClient = HttpClientBuilder.

@@ -149,6 +149,13 @@
             </dependency>
 
             <dependency>
+                <groupId>com.github.tornaia</groupId>
+                <artifactId>sync-shared</artifactId>
+                <version>${project.version}</version>
+                <type>test-jar</type>
+            </dependency>
+
+            <dependency>
                 <groupId>junit</groupId>
                 <artifactId>junit</artifactId>
                 <version>${junit.version}</version>
@@ -215,6 +222,19 @@
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.tornaia</groupId>
+            <artifactId>sync-shared</artifactId>
+            <type>test-jar</type>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 

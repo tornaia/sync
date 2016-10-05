@@ -56,13 +56,21 @@ public class SyncStateManager {
         }
 
         for (FileMetaInfo fileMetaInfo : recentChangesResponse.fileMetaInfos) {
-            byte[] content = restHttpClient.getFile(fileMetaInfo);
-            diskWatchService.writeToDisk(fileMetaInfo, content);
-            syncStateSnapshot.put(fileMetaInfo);
+            fetch(fileMetaInfo);
         }
 
         syncStateSnapshot.lastServerInfoAt = when;
         writeSyncClientStateToDisk();
+    }
+
+    public void fetch(FileMetaInfo fileMetaInfo) {
+        FileMetaInfo fileMetaInfoOfPath = syncStateSnapshot.syncState.get(fileMetaInfo.relativePath);
+        if (fileMetaInfo.equals(fileMetaInfoOfPath)) {
+            return;
+        }
+        byte[] content = restHttpClient.getFile(fileMetaInfo);
+        diskWatchService.writeToDisk(fileMetaInfo, content);
+        syncStateSnapshot.put(fileMetaInfo);
     }
 
     public FileMetaInfo getFileMetaInfo(String relativePath) {
