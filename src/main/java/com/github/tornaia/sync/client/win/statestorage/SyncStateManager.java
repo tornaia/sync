@@ -1,7 +1,7 @@
 package com.github.tornaia.sync.client.win.statestorage;
 
-import com.github.tornaia.sync.client.win.httpclient.RecentChangesResponse;
-import com.github.tornaia.sync.client.win.httpclient.RestHttpClient;
+import com.github.tornaia.sync.client.win.rest.RestManager;
+import com.github.tornaia.sync.client.win.rest.httpclient.RecentChangesResponse;
 import com.github.tornaia.sync.client.win.watchservice.DiskWatchService;
 import com.github.tornaia.sync.shared.api.FileMetaInfo;
 import org.slf4j.Logger;
@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import java.io.*;
 import java.util.Objects;
+import java.util.concurrent.ExecutionException;
 
 @Component
 public class SyncStateManager {
@@ -23,7 +24,7 @@ public class SyncStateManager {
     private String stateFilePath;
 
     @Autowired
-    private RestHttpClient restHttpClient;
+    private RestManager restManager;
 
     @Autowired
     private DiskWatchService diskWatchService;
@@ -31,7 +32,7 @@ public class SyncStateManager {
     private SyncStateSnapshot syncStateSnapshot;
 
     @PostConstruct
-    public void init() {
+    public void init() throws ExecutionException, InterruptedException {
         if (!new File(stateFilePath).exists()) {
             syncStateSnapshot = new SyncStateSnapshot();
         } else {
@@ -48,17 +49,15 @@ public class SyncStateManager {
     }
 
     // TODO remove this, use webSocket and send on connection init the lastServerInfoAt timestamp and the the server will push back the filemetainfo message
-    public void fetchAllDataSinceLastUpdate() {
+    public void fetchAllDataSinceLastUpdate() throws ExecutionException, InterruptedException {
         long when = System.currentTimeMillis();
-        RecentChangesResponse recentChangesResponse = restHttpClient.getAllAfter(syncStateSnapshot.lastServerInfoAt);
+        RecentChangesResponse recentChangesResponse = restManager.getAllAfter(syncStateSnapshot.lastServerInfoAt).get();
         if (recentChangesResponse.status == RecentChangesResponse.Status.TRANSFER_FAILED) {
             LOG.warn("Client is offline! Cannot get updates from server!");
             return;
         }
 
-        for (FileMetaInfo fileMetaInfo : recentChangesResponse.fileMetaInfos) {
-            fetch(fileMetaInfo);
-        }
+        recentChangesResponse.fileMetaInfos.forEach(this::fetch);
 
         syncStateSnapshot.lastServerInfoAt = when;
         writeSyncClientStateToDisk();
@@ -81,9 +80,11 @@ public class SyncStateManager {
             syncStateSnapshot.put(newFileMetaInfo);
             return;
         }
-        byte[] content = restHttpClient.getFile(newFileMetaInfo);
-        diskWatchService.writeToDisk(newFileMetaInfo, content);
-        syncStateSnapshot.put(newFileMetaInfo);
+
+        restManager.getFile(newFileMetaInfo).thenAccept(fileContent -> {
+            diskWatchService.writeToDisk(newFileMetaInfo, fileContent);
+            syncStateSnapshot.put(newFileMetaInfo);
+        });
     }
 
     public FileMetaInfo getFileMetaInfo(String relativePath) {

@@ -1,7 +1,7 @@
 package com.github.tornaia.sync.client.win.watchservice;
 
-import com.github.tornaia.sync.client.win.httpclient.FileCreateResponse;
-import com.github.tornaia.sync.client.win.httpclient.RestHttpClient;
+import com.github.tornaia.sync.client.win.rest.RestManager;
+import com.github.tornaia.sync.client.win.rest.httpclient.FileCreateResponse;
 import com.github.tornaia.sync.client.win.statestorage.SyncStateManager;
 import com.github.tornaia.sync.shared.api.FileMetaInfo;
 import org.apache.commons.io.FileUtils;
@@ -40,7 +40,7 @@ public class DiskWatchService {
     private SyncStateManager syncStateManager;
 
     @Autowired
-    private RestHttpClient restHttpClient;
+    private RestManager restManager;
 
     private WatchService watchService;
 
@@ -170,17 +170,18 @@ public class DiskWatchService {
                 return;
             }
 
-            FileCreateResponse fileCreateResponse = restHttpClient.onFileCreate(newFileMetaInfo, file);
-            if (fileCreateResponse.status == FileCreateResponse.Status.TRANSFER_FAILED) {
-                // the app cannot read the file, maybe its in use, or removed during upload, network problem, etc..
-                // more sophisticated logic needed here
-                return;
-            }
+            restManager.onFileCreate(newFileMetaInfo, file).thenAccept(fileCreateResponse -> {
+                if (fileCreateResponse.status == FileCreateResponse.Status.TRANSFER_FAILED) {
+                    // the app cannot read the file, maybe its in use, or removed during upload, network problem, etc..
+                    // more sophisticated logic needed here
+                    return;
+                }
 
-            syncStateManager.onFileModify(fileCreateResponse.fileMetaInfo);
-            if (fileCreateResponse.status == FileCreateResponse.Status.CONFLICT) {
-                handleConflict(newFileMetaInfo);
-            }
+                syncStateManager.onFileModify(fileCreateResponse.fileMetaInfo);
+                if (fileCreateResponse.status == FileCreateResponse.Status.CONFLICT) {
+                    handleConflict(newFileMetaInfo);
+                }
+            });
         } else if (file.isDirectory()) {
             registerChildrenRecursively(filePath.toAbsolutePath());
         } else {
@@ -221,13 +222,14 @@ public class DiskWatchService {
                 return;
             }
 
-            FileCreateResponse fileCreateResponse = restHttpClient.onFileModify(updatedFileMetaInfo, file);
-            if (fileCreateResponse.status == FileCreateResponse.Status.CONFLICT) {
-                handleConflict(fileMetaInfo);
-                return;
-            }
+            restManager.onFileModify(updatedFileMetaInfo, file).thenAccept(fileModifyResponse -> {
+                if (fileModifyResponse.status == FileCreateResponse.Status.CONFLICT) {
+                    handleConflict(fileMetaInfo);
+                    return;
+                }
 
-            syncStateManager.onFileModify(fileCreateResponse.fileMetaInfo);
+                syncStateManager.onFileModify(fileModifyResponse.fileMetaInfo);
+            });
         } else {
             LOG.info("Unknown file type. File does not exist? " + file);
         }
@@ -245,8 +247,9 @@ public class DiskWatchService {
         if (clientDoesNotKnowAnythingAboutThisFile) {
             return;
         }
-        restHttpClient.onFileDelete(fileMetaInfo);
-        syncStateManager.onFileDelete(relativePath);
+
+        restManager.onFileDelete(fileMetaInfo).thenAccept(fileDeleteResponse -> {
+        });
     }
 
     private void register(Path syncDirectory) {

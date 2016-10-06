@@ -1,4 +1,4 @@
-package com.github.tornaia.sync.client.win.httpclient;
+package com.github.tornaia.sync.client.win.rest.httpclient;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpResponseInterceptor;
