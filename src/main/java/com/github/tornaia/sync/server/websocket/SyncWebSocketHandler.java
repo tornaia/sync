@@ -1,7 +1,6 @@
 package com.github.tornaia.sync.server.websocket;
 
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tornaia.sync.shared.api.FileMetaInfo;
 import org.slf4j.Logger;
@@ -13,10 +12,7 @@ import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Component
 public class SyncWebSocketHandler extends TextWebSocketHandler {
@@ -66,7 +62,11 @@ public class SyncWebSocketHandler extends TextWebSocketHandler {
     }
 
     public void notifyClients(FileMetaInfo fileMetaInfo) {
-        usersAndSessions.get(fileMetaInfo.userid).stream()
+        List<WebSocketSession> webSocketSessionsToNofity = usersAndSessions.get(fileMetaInfo.userid);
+        if (Objects.isNull(webSocketSessionsToNofity)) {
+            return;
+        }
+        webSocketSessionsToNofity.stream()
                 .forEach(session -> {
                     try {
                         LOG.info("Notifying client " + session.getId() + " about a new file: " + fileMetaInfo);
@@ -75,6 +75,7 @@ public class SyncWebSocketHandler extends TextWebSocketHandler {
                         // or maybe works, I dont know at the moment
                         mapper.configure(JsonGenerator.Feature.WRITE_NUMBERS_AS_STRINGS, true);
                         String fileMetaInfoAsJson = mapper.writeValueAsString(fileMetaInfo);
+                        // TODO  here we send messages in synchronous way I guess... thats baaad.
                         session.sendMessage(new TextMessage(fileMetaInfoAsJson));
                     } catch (IOException e) {
                         throw new RuntimeException(e);

@@ -12,77 +12,70 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.junit4.SpringRunner;
 import utils.AbstractSyncServerIntTest;
 
+import java.util.List;
+
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 
 @RunWith(SpringRunner.class)
 public class FileControllerIntTest extends AbstractSyncServerIntTest {
 
-  @Autowired
-  private FileController fileController;
+    @Autowired
+    private FileController fileController;
 
-  @Rule
-  public ExpectedException expectedException = ExpectedException.none();
+    @Rule
+    public ExpectedException expectedException = ExpectedException.none();
 
-  @Test
-  public void createFile() throws Exception {
-    MockMultipartFile file = new MockMultipartFile("test", "test.png", "image/png", "TEST".getBytes());
-    FileMetaInfo result = fileController.postFile("userid", 1L, 2L, file);
+    @Test
+    public void getMetaInfo() throws Exception {
+        MockMultipartFile file = new MockMultipartFile("test", "test.png", "image/png", "TEST".getBytes());
+        fileController.postFile("userid", 1L, 2L, file);
 
-    FileMetaInfoMatcher expected = new FileMetaInfoMatcher()
-      .relativePath("test.png")
-      .creationDateTime(1L)
-      .modificationDateTime(2L)
-      .length(4L);
+        List<FileMetaInfo> modifiedFiles = fileController.getModifiedFiles("userid", -1);
+        FileMetaInfo result = fileController.getMetaInfo(modifiedFiles.get(0).id, "userid");
 
-    assertThat(result, expected);
+        FileMetaInfoMatcher expected = new FileMetaInfoMatcher()
+                .relativePath("test.png")
+                .creationDateTime(1L)
+                .modificationDateTime(2L)
+                .length(4L);
 
-  }
+        assertThat(result, expected);
 
-  @Test
-  public void getMetaInfo() throws Exception {
-    MockMultipartFile file = new MockMultipartFile("test", "test.png", "image/png", "TEST".getBytes());
-    FileMetaInfo createdFile = fileController.postFile("userid", 1L, 2L, file);
+    }
 
-    FileMetaInfo result = fileController.getMetaInfo(createdFile.id, "userid");
+    @Test
+    public void putFile() throws Exception {
+        MockMultipartFile file = new MockMultipartFile("test", "test.png", "image/png", "TEST".getBytes());
+        fileController.postFile("userid", 2L, 3L, file);
 
-    FileMetaInfoMatcher expected = new FileMetaInfoMatcher()
-      .relativePath("test.png")
-      .creationDateTime(1L)
-      .modificationDateTime(2L)
-      .length(4L);
+        List<FileMetaInfo> modifiedFiles = fileController.getModifiedFiles("userid", -1);
+        FileMetaInfo fileMetaInfo = fileController.getMetaInfo(modifiedFiles.get(0).id, "userid");
 
-    assertThat(result, expected);
+        MockMultipartFile updatedFile = new MockMultipartFile("test", "test.png", "image/png", "TEST2".getBytes());
+        FileMetaInfo result = fileController.putFile(fileMetaInfo.id, "userid", 3L, 4L, updatedFile);
 
-  }
+        FileMetaInfoMatcher expected = new FileMetaInfoMatcher()
+                .relativePath("test.png")
+                .creationDateTime(3L)
+                .modificationDateTime(4L)
+                .length(5L);
 
-  @Test
-  public void putFile() throws Exception {
-    MockMultipartFile file = new MockMultipartFile("test", "test.png", "image/png", "TEST".getBytes());
-    FileMetaInfo createdFile = fileController.postFile("userid", 2L, 3L, file);
+        assertThat(result, expected);
+    }
 
-    MockMultipartFile updatedFile = new MockMultipartFile("test", "test.png", "image/png", "TEST2".getBytes());
-    FileMetaInfo result = fileController.putFile(createdFile.id, "userid", 3L, 4L, updatedFile);
+    @Test
+    public void deleteFile() throws Exception {
+        MockMultipartFile file = new MockMultipartFile("test", "test.png", "image/png", "TEST".getBytes());
+        fileController.postFile("userid", 1L, 2L, file);
 
-    FileMetaInfoMatcher expected = new FileMetaInfoMatcher()
-      .relativePath("test.png")
-      .creationDateTime(3L)
-      .modificationDateTime(4L)
-      .length(5L);
+        List<FileMetaInfo> modifiedFiles = fileController.getModifiedFiles("userid", -1);
+        FileMetaInfo createdFile = fileController.getMetaInfo(modifiedFiles.get(0).id, "userid");
 
-    assertThat(result, expected);
-  }
+        fileController.deleteFile(createdFile.id);
 
-  @Test
-  public void deleteFile() throws Exception {
-    MockMultipartFile file = new MockMultipartFile("test", "test.png", "image/png", "TEST".getBytes());
-    FileMetaInfo createdFile = fileController.postFile("userid", 1L, 2L, file);
-
-    fileController.deleteFile(createdFile.id);
-
-    //TODO nxjohny: We can wrap it in the corresponding driver and hide mongotemplate op. The interface throws exception in case of null file, so i have to use the template to validate the delete whether was successful or not.
-    File result = mongoTemplate.findById(createdFile.id, File.class);
-    assertNull(result);
-  }
-
+        //TODO nxjohny: We can wrap it in the corresponding driver and hide mongotemplate op. The interface throws exception in case of null file, so i have to use the template to validate the delete whether was successful or not.
+        File result = mongoTemplate.findById(createdFile.id, File.class);
+        assertNull(result);
+    }
 }

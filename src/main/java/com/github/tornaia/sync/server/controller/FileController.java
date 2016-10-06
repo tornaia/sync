@@ -51,26 +51,17 @@ public class FileController {
     }
 
     @RequestMapping(method = RequestMethod.POST)
-    public FileMetaInfo postFile(@RequestParam("userid") String userid, @RequestParam("creationDateTime") long creationDateTime, @RequestParam("modificationDateTime") long modificationDateTime, @RequestPart("file") MultipartFile multipartFile) throws IOException {
+    public void postFile(@RequestParam("userid") String userid, @RequestParam("creationDateTime") long creationDateTime, @RequestParam("modificationDateTime") long modificationDateTime, @RequestPart("file") MultipartFile multipartFile) throws IOException {
         String path = multipartFile.getOriginalFilename();
         File file = fileRepo.findByPath(path);
-        if (file == null) {
-            file = fileRepo.insert(new File(userid, path, multipartFile.getBytes(), creationDateTime, modificationDateTime));
-            FileMetaInfo fileMetaInfo = new FileMetaInfo(file.getId(), userid, path, file.getData().length, file.getCreationDate(), file.getLastModifiedDate());
-            LOG.info("POST file: " + fileMetaInfo);
-
-            // TODO see SyncWebSocketHandler.notifyClients
-            new Thread(() -> {
-                try {
-                    Thread.sleep(500L);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                syncWebSocketHandler.notifyClients(fileMetaInfo);
-            }).start();
-            return fileMetaInfo;
+        if (file != null) {
+            throw new FileAlreadyExistsException(path);
         }
-        throw new FileAlreadyExistsException(path);
+        
+        file = fileRepo.insert(new File(userid, path, multipartFile.getBytes(), creationDateTime, modificationDateTime));
+        FileMetaInfo fileMetaInfo = new FileMetaInfo(file.getId(), userid, path, file.getData().length, file.getCreationDate(), file.getLastModifiedDate());
+        syncWebSocketHandler.notifyClients(fileMetaInfo);
+        LOG.info("POST file: " + fileMetaInfo);
     }
 
     @RequestMapping(value = "/{id}", method = RequestMethod.PUT)
