@@ -79,7 +79,7 @@ public class FileControllerTest {
     @Test
     public void getIfMetaInfoDoesNotExist() throws Exception {
         doThrow(FileNotFoundException.class)
-                .when(fileQueryService).getMetaInfoById("12");
+                .when(fileQueryService).getFileMetaInfoById("12");
 
         mvc.perform(
                 get("/api/files/12/metaInfo")

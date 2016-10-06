@@ -3,17 +3,19 @@ package com.github.tornaia.sync.server.service;
 import com.github.tornaia.sync.server.data.document.File;
 import com.github.tornaia.sync.server.data.repository.FileRepository;
 import com.github.tornaia.sync.server.service.exception.FileNotFoundException;
+import com.github.tornaia.sync.server.utils.FileUtil;
 import com.github.tornaia.sync.shared.api.FileMetaInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
+
+import static com.github.tornaia.sync.server.utils.FileUtil.getFileMetaInfo;
+import static java.util.Collections.emptyList;
+import static java.util.stream.Collectors.toList;
 
 @Component
 public class FileQueryService {
@@ -24,12 +26,12 @@ public class FileQueryService {
     private FileRepository fileRepository;
 
     public List<FileMetaInfo> getModifiedFiles(String userid, long modTs) {
-        List<FileMetaInfo> result = new ArrayList<>();
         List<File> fileList = fileRepository.findByUserIdAndLastModifiedDateAfter(userid, modTs);
-        if (!Objects.isNull(fileList)) {
-            result.addAll(fileList.stream().map(file -> new FileMetaInfo(file.getId(), userid, file.getPath(), file.getData().length, file.getCreationDate(), file.getLastModifiedDate())).collect(Collectors.toList()));
+        if (Objects.isNull(fileList)) {
+            return emptyList();
         }
-        return result;
+
+        return fileList.stream().map(FileUtil::getFileMetaInfo).collect(toList());
     }
 
     public File getFileById(String id) {
@@ -41,23 +43,17 @@ public class FileQueryService {
         return file;
     }
 
-    public FileMetaInfo getMetaInfoById(String id) throws IOException {
-        File file = fileRepository.findOne(id);
-        if (file == null) {
-            throw new FileNotFoundException(id);
-        }
-
-        FileMetaInfo fileMetaInfo = new FileMetaInfo(file.getId(), file.getUserid(), file.getPath(), file.getData().length, file.getCreationDate(), file.getLastModifiedDate());
-        LOG.info("GET metaInfo: " + fileMetaInfo);
-        return fileMetaInfo;
+    public FileMetaInfo getFileMetaInfoById(String id) {
+        File file = getFileById(id);
+        return getFileMetaInfo(file);
     }
 
     public FileMetaInfo getFileMetaInfoByPath(String path) {
         File file = fileRepository.findByPath(path);
         if (file == null) {
-            throw new FileNotFoundException(file.getPath());
+            throw new FileNotFoundException(path);
         }
 
-        return new FileMetaInfo(file.getId(), file.getUserid(), file.getPath(), file.getData().length, file.getCreationDate(), file.getLastModifiedDate());
+        return getFileMetaInfo(file);
     }
 }

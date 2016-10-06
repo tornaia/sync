@@ -68,7 +68,7 @@ public class FileController {
 
     @RequestMapping(value = "/{id}/metaInfo", method = RequestMethod.GET)
     public FileMetaInfo getMetaInfo(@PathVariable String id, @RequestParam("userid") String userid) throws IOException {
-        return fileQueryService.getMetaInfoById(id);
+        return fileQueryService.getFileMetaInfoById(id);
     }
 
     @ResponseStatus(HttpStatus.NOT_FOUND)
