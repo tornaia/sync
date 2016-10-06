@@ -124,18 +124,16 @@ public class RestHttpClient {
             response = httpClient.execute(httpPost);
         } catch (FileNotFoundException e) {
             LOG.info("File disappeared meanwhile it was under upload(post)? " + e.getMessage());
-            return FileCreateResponse.transferFailed(e.getMessage());
+            return FileCreateResponse.transferFailed(fileMetaInfo, e.getMessage());
         } catch (IOException e) {
-            return FileCreateResponse.transferFailed(e.getMessage());
+            return FileCreateResponse.transferFailed(fileMetaInfo, e.getMessage());
         }
 
         if (Objects.equals(response.getStatusLine().getStatusCode(), HttpStatus.SC_CONFLICT)) {
             return FileCreateResponse.conflict(fileMetaInfo);
         }
 
-        FileMetaInfo syncedFileMetaInfo = SerializerUtils.toObject(response.getEntity(), FileMetaInfo.class);
-        LOG.info("CREATE file: " + syncedFileMetaInfo);
-        return FileCreateResponse.ok(syncedFileMetaInfo);
+        return FileCreateResponse.ok(fileMetaInfo);
     }
 
 
@@ -153,9 +151,9 @@ public class RestHttpClient {
             response = httpClient.execute(httpPut);
         } catch (FileNotFoundException e) {
             LOG.info("File disappeared meanwhile it was under upload(put)? " + e.getMessage());
-            return FileCreateResponse.transferFailed(e.getMessage());
+            return FileCreateResponse.transferFailed(fileMetaInfo, e.getMessage());
         } catch (IOException e) {
-            return FileCreateResponse.transferFailed(e.getMessage());
+            return FileCreateResponse.transferFailed(fileMetaInfo, e.getMessage());
         }
 
         FileMetaInfo syncedFileMetaInfo = SerializerUtils.toObject(response.getEntity(), FileMetaInfo.class);

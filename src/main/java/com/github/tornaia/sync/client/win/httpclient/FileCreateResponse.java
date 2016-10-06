@@ -30,7 +30,7 @@ public class FileCreateResponse {
         return new FileCreateResponse(Status.CONFLICT, fileMetaInfo, null);
     }
 
-    public static FileCreateResponse transferFailed(String message) {
-        return new FileCreateResponse(Status.TRANSFER_FAILED, null, message);
+    public static FileCreateResponse transferFailed(FileMetaInfo fileMetaInfo, String message) {
+        return new FileCreateResponse(Status.TRANSFER_FAILED, fileMetaInfo, message);
     }
 }

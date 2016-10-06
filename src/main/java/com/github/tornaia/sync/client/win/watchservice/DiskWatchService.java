@@ -132,6 +132,32 @@ public class DiskWatchService {
         }
     }
 
+    public boolean isFileOnDisk(FileMetaInfo fileMetaInfo) {
+        Path fileOnDiskPath = syncDirectory.resolve(fileMetaInfo.relativePath.substring(1));
+        File fileOnDisk = fileOnDiskPath.toFile();
+        if (!fileOnDisk.exists()) {
+            return false;
+        }
+
+        BasicFileAttributes attr;
+        try {
+            attr = Files.readAttributes(fileOnDisk.toPath(), BasicFileAttributes.class);
+        } catch (IOException e) {
+            LOG.warn("Cannot access to file: " + fileOnDisk.getAbsolutePath());
+            return false;
+        }
+        long length = attr.size();
+        long creationDateTime = attr.creationTime().toMillis();
+        long modificationDateTime = attr.lastModifiedTime().toMillis();
+
+        if (Objects.equals(fileMetaInfo.length, length) && Objects.equals(fileMetaInfo.creationDateTime, creationDateTime) && Objects.equals(fileMetaInfo.modificationDateTime, modificationDateTime)) {
+            return true;
+        }
+
+        return false;
+
+    }
+
     private void onFileCreate(Path filePath) {
         File file = filePath.toFile();
         String relativePath = getRelativePath(file);

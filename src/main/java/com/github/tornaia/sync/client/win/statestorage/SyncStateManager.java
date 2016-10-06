@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.io.*;
+import java.util.Objects;
 
 @Component
 public class SyncStateManager {
@@ -63,18 +64,30 @@ public class SyncStateManager {
         writeSyncClientStateToDisk();
     }
 
-    public void fetch(FileMetaInfo fileMetaInfo) {
-        FileMetaInfo fileMetaInfoOfPath = syncStateSnapshot.syncState.get(fileMetaInfo.relativePath);
-        if (fileMetaInfo.equals(fileMetaInfoOfPath)) {
+    public void fetch(FileMetaInfo newFileMetaInfo) {
+        FileMetaInfo oldFileMetaInfo = syncStateSnapshot.get(newFileMetaInfo.relativePath);
+        if (newFileMetaInfo.equals(oldFileMetaInfo)) {
+            if (Objects.isNull(oldFileMetaInfo.id)) {
+                syncStateSnapshot.replace(oldFileMetaInfo, newFileMetaInfo);
+                LOG.info("SyncStateSnapshot updated. Old: " + oldFileMetaInfo + ", new: " + newFileMetaInfo);
+                return;
+            } else {
+                LOG.info("SyncStateSnapshot already knew about. Old: " + oldFileMetaInfo + ", new: " + newFileMetaInfo);
+            }
             return;
         }
-        byte[] content = restHttpClient.getFile(fileMetaInfo);
-        diskWatchService.writeToDisk(fileMetaInfo, content);
-        syncStateSnapshot.put(fileMetaInfo);
+        if (diskWatchService.isFileOnDisk(newFileMetaInfo)) {
+            LOG.info("SyncStateSnapshot knows about this file.");
+            syncStateSnapshot.put(newFileMetaInfo);
+            return;
+        }
+        byte[] content = restHttpClient.getFile(newFileMetaInfo);
+        diskWatchService.writeToDisk(newFileMetaInfo, content);
+        syncStateSnapshot.put(newFileMetaInfo);
     }
 
     public FileMetaInfo getFileMetaInfo(String relativePath) {
-        return syncStateSnapshot.syncState.get(relativePath);
+        return syncStateSnapshot.get(relativePath);
     }
 
     public void onFileModify(FileMetaInfo fileMetaInfo) {
