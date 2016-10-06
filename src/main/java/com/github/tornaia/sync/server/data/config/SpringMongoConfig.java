@@ -3,12 +3,16 @@ package com.github.tornaia.sync.server.data.config;
 import com.mongodb.Mongo;
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoDatabase;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.mongodb.config.AbstractMongoConfiguration;
 
 @Configuration
 public class SpringMongoConfig extends AbstractMongoConfiguration {
+
+    private static final Logger LOG = LoggerFactory.getLogger(SpringMongoConfig.class);
 
     private static final String COLLECTION_NAME = "sync-collection";
     private static final String DATABASE_NAME = "sync-database";
@@ -25,6 +29,7 @@ public class SpringMongoConfig extends AbstractMongoConfiguration {
     @Bean
     @Override
     public Mongo mongo() throws Exception {
+        LOG.info("Reset db on start? " + resetDbOnStart);
         MongoClient mongoClient = new MongoClient(HOST, PORT);
         MongoDatabase mongoDatabase = mongoClient.getDatabase(DATABASE_NAME);
         if (resetDbOnStart) {

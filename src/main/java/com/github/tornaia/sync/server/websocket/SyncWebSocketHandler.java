@@ -2,7 +2,7 @@ package com.github.tornaia.sync.server.websocket;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.tornaia.sync.shared.api.FileMetaInfo;
+import com.github.tornaia.sync.shared.api.RemoteFileEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -61,22 +61,22 @@ public class SyncWebSocketHandler extends TextWebSocketHandler {
                 .remove(session);
     }
 
-    public void notifyClients(FileMetaInfo fileMetaInfo) {
-        List<WebSocketSession> webSocketSessionsToNofity = usersAndSessions.get(fileMetaInfo.userid);
-        if (Objects.isNull(webSocketSessionsToNofity)) {
+    public void notifyClients(RemoteFileEvent remoteFileEvent) {
+        List<WebSocketSession> webSocketSessionsToNotify = usersAndSessions.get(remoteFileEvent.fileMetaInfo.userid);
+        if (Objects.isNull(webSocketSessionsToNotify)) {
             return;
         }
-        webSocketSessionsToNofity.stream()
+        webSocketSessionsToNotify.stream()
                 .forEach(session -> {
                     try {
-                        LOG.info("Notifying client " + session.getId() + " about a new file: " + fileMetaInfo);
+                        LOG.info("Notifying session " + session.getId() + " about a new event: " + remoteFileEvent);
                         ObjectMapper mapper = new ObjectMapper();
                         // TODO move object mapper to a common place and write a test String, int -> "xx", 34 but should be "xx", "34" otherwise client will not able to parse it
                         // or maybe works, I dont know at the moment
                         mapper.configure(JsonGenerator.Feature.WRITE_NUMBERS_AS_STRINGS, true);
-                        String fileMetaInfoAsJson = mapper.writeValueAsString(fileMetaInfo);
+                        String remoteFileEventAsJson = mapper.writeValueAsString(remoteFileEvent);
                         // TODO  here we send messages in synchronous way I guess... thats baaad.
-                        session.sendMessage(new TextMessage(fileMetaInfoAsJson));
+                        session.sendMessage(new TextMessage(remoteFileEventAsJson));
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
