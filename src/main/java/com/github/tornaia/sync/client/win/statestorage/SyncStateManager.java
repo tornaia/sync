@@ -2,7 +2,6 @@ package com.github.tornaia.sync.client.win.statestorage;
 
 import com.github.tornaia.sync.client.win.rest.RestManager;
 import com.github.tornaia.sync.client.win.rest.httpclient.RecentChangesResponse;
-import com.github.tornaia.sync.client.win.watchservice.DiskWatchService;
 import com.github.tornaia.sync.shared.api.FileMetaInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,8 +25,8 @@ public class SyncStateManager {
     @Autowired
     private RestManager restManager;
 
-    @Autowired
-    private DiskWatchService diskWatchService;
+//    @Autowired
+//    private DiskWatchService diskWatchService;
 
     private SyncStateSnapshot syncStateSnapshot;
 
@@ -75,16 +74,16 @@ public class SyncStateManager {
             }
             return;
         }
-        if (diskWatchService.isFileOnDisk(newFileMetaInfo)) {
-            LOG.info("SyncStateSnapshot knows about this file.");
-            syncStateSnapshot.put(newFileMetaInfo);
-            return;
-        }
+//        if (diskWatchService.isFileOnDisk(newFileMetaInfo)) {
+//            LOG.info("SyncStateSnapshot knows about this file: " + newFileMetaInfo);
+//            syncStateSnapshot.put(newFileMetaInfo);
+//            return;
+//        }
 
-        restManager.getFile(newFileMetaInfo).thenAccept(fileContent -> {
-            diskWatchService.writeToDisk(newFileMetaInfo, fileContent);
-            syncStateSnapshot.put(newFileMetaInfo);
-        });
+//        restManager.getFile(newFileMetaInfo).thenAccept(fileContent -> {
+//            diskWatchService.writeToDisk(newFileMetaInfo, fileContent);
+//            syncStateSnapshot.put(newFileMetaInfo);
+//        });
     }
 
     public FileMetaInfo getFileMetaInfo(String relativePath) {

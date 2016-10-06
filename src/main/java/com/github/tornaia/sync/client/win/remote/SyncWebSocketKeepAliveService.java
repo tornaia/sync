@@ -1,4 +1,4 @@
-package com.github.tornaia.sync.client.win.websocket;
+package com.github.tornaia.sync.client.win.remote;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,7 +42,6 @@ public class SyncWebSocketKeepAliveService {
     }
 
     public void reconnect() {
-        LOG.info("Reconnect webSocket");
         WebSocketContainer container = ContainerProvider.getWebSocketContainer();
         new Thread(() -> {
             while (true) {
@@ -53,6 +52,11 @@ public class SyncWebSocketKeepAliveService {
                     break;
                 } catch (Exception e) {
                     LOG.warn("Failed to connect to webSocket!");
+                    try {
+                        Thread.sleep(2000L);
+                    } catch (InterruptedException ie) {
+                        LOG.warn("Sleep interrupted", ie);
+                    }
                 }
             }
         }).start();

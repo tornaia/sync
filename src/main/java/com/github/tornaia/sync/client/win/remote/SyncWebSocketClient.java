@@ -1,6 +1,5 @@
-package com.github.tornaia.sync.client.win.websocket;
+package com.github.tornaia.sync.client.win.remote;
 
-import com.github.tornaia.sync.client.win.statestorage.SyncStateManager;
 import com.github.tornaia.sync.shared.api.FileMetaInfo;
 import com.google.gson.Gson;
 import org.slf4j.Logger;
@@ -10,6 +9,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.websocket.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Component
 @ClientEndpoint
@@ -23,8 +24,7 @@ public class SyncWebSocketClient {
     @Autowired
     private SyncWebSocketKeepAliveService syncWebSocketKeepAliveService;
 
-    @Autowired
-    private SyncStateManager syncStateManager;
+    private final List<RemoteFileEvent> events = new ArrayList<>();
 
     private Session session;
 
@@ -38,8 +38,7 @@ public class SyncWebSocketClient {
     @OnMessage
     public void onMessage(String message) {
         LOG.info("Received msg: " + message);
-        FileMetaInfo fileMetaInfo = new Gson().fromJson(message, FileMetaInfo.class);
-        syncStateManager.fetch(fileMetaInfo);
+        RemoteFileEvent remoteFileEvent = new Gson().fromJson(message, RemoteFileEvent.class);
     }
 
     public void sendMessage(String message) {
