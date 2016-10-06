@@ -1,8 +1,9 @@
 package com.github.tornaia.sync.server.controller;
 
-import com.github.tornaia.sync.server.data.document.File;
-import com.github.tornaia.sync.server.data.repository.FileRepository;
-import com.github.tornaia.sync.server.websocket.SyncWebSocketHandler;
+import com.github.tornaia.sync.server.service.FileCommandService;
+import com.github.tornaia.sync.server.service.FileQueryService;
+import com.github.tornaia.sync.server.service.exception.FileAlreadyExistsException;
+import com.github.tornaia.sync.server.service.exception.FileNotFoundException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,8 +13,9 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.*;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.fileUpload;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -23,10 +25,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class FileControllerTest {
 
     @MockBean
-    private FileRepository fileRepository;
+    private FileCommandService fileCommandService;
 
     @MockBean
-    private SyncWebSocketHandler syncWebSocketHandler;
+    private FileQueryService fileQueryService;
 
     @Autowired
     private MockMvc mvc;
@@ -35,10 +37,8 @@ public class FileControllerTest {
     public void createFile() throws Exception {
         MockMultipartFile file = new MockMultipartFile("file", "file.png", "image/png", "test".getBytes());
 
-        given(fileRepository.findByPath(file.getOriginalFilename()))
-                .willReturn(null);
-        given(fileRepository.insert(any(File.class)))
-                .willReturn(new File("userid", file.getOriginalFilename(), file.getBytes(), 1L, 2L));
+        doNothing()
+                .when(fileCommandService).createFile(anyString(), anyLong(), anyLong(), anyString(), any(byte[].class));
 
         mvc.perform(
                 fileUpload("/api/files")
@@ -53,8 +53,8 @@ public class FileControllerTest {
     public void createIfFileExists() throws Exception {
         MockMultipartFile file = new MockMultipartFile("file", "file.png", "image/png", "test".getBytes());
 
-        given(fileRepository.findByPath(file.getOriginalFilename()))
-                .willReturn(new File());
+        doThrow(FileAlreadyExistsException.class)
+                .when(fileCommandService).createFile(anyString(), anyLong(), anyLong(), anyString(), any(byte[].class));
 
         mvc.perform(
                 fileUpload("/api/files")
@@ -67,8 +67,8 @@ public class FileControllerTest {
 
     @Test
     public void getIfFileDoesNotExist() throws Exception {
-        given(fileRepository.findOne("12"))
-                .willReturn(null);
+        doThrow(FileNotFoundException.class)
+                .when(fileQueryService).getFileById("12");
 
         mvc.perform(
                 get("/api/files/12")
@@ -78,8 +78,8 @@ public class FileControllerTest {
 
     @Test
     public void getIfMetaInfoDoesNotExist() throws Exception {
-        given(fileRepository.findOne("12"))
-                .willReturn(null);
+        doThrow(FileNotFoundException.class)
+                .when(fileQueryService).getMetaInfoById("12");
 
         mvc.perform(
                 get("/api/files/12/metaInfo")

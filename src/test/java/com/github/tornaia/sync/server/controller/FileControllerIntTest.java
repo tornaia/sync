@@ -3,6 +3,7 @@ package com.github.tornaia.sync.server.controller;
 import com.github.tornaia.sync.server.data.document.File;
 import com.github.tornaia.sync.shared.api.FileMetaInfo;
 import com.github.tornaia.sync.shared.api.matchers.FileMetaInfoMatcher;
+import org.hamcrest.Matchers;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -16,6 +17,7 @@ import java.util.List;
 
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
+import static org.junit.rules.ExpectedException.none;
 
 @RunWith(SpringRunner.class)
 public class FileControllerIntTest extends AbstractSyncServerIntTest {
@@ -24,7 +26,7 @@ public class FileControllerIntTest extends AbstractSyncServerIntTest {
     private FileController fileController;
 
     @Rule
-    public ExpectedException expectedException = ExpectedException.none();
+    public ExpectedException expectedException = none();
 
     @Test
     public void getMetaInfo() throws Exception {
@@ -78,4 +80,24 @@ public class FileControllerIntTest extends AbstractSyncServerIntTest {
         File result = mongoTemplate.findById(createdFile.id, File.class);
         assertNull(result);
     }
+
+    @Test
+    public void getModifiedFiles() throws Exception {
+        MockMultipartFile file = new MockMultipartFile("test", "test.png", "image/png", "TEST".getBytes());
+        fileController.postFile("userid", 1L, 1L, file);
+
+        MockMultipartFile file2 = new MockMultipartFile("test2", "test2.png", "image/png", "TEST2".getBytes());
+        fileController.postFile("userid", 3L, 3L, file2);
+
+        List<FileMetaInfo> result = fileController.getModifiedFiles("userid", 2L);
+
+        FileMetaInfoMatcher expected = new FileMetaInfoMatcher()
+                .relativePath("test2.png")
+                .creationDateTime(3L)
+                .modificationDateTime(3L)
+                .length(5L);
+
+        assertThat(result, Matchers.contains(expected));
+    }
+
 }
