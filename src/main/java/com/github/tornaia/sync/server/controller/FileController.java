@@ -4,6 +4,8 @@ import com.github.tornaia.sync.server.data.document.File;
 import com.github.tornaia.sync.server.data.repository.FileRepository;
 import com.github.tornaia.sync.server.websocket.SyncWebSocketHandler;
 import com.github.tornaia.sync.shared.api.FileMetaInfo;
+import com.github.tornaia.sync.shared.api.RemoteEventType;
+import com.github.tornaia.sync.shared.api.RemoteFileEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,7 +62,7 @@ public class FileController {
         
         file = fileRepo.insert(new File(userid, path, multipartFile.getBytes(), creationDateTime, modificationDateTime));
         FileMetaInfo fileMetaInfo = new FileMetaInfo(file.getId(), userid, path, file.getData().length, file.getCreationDate(), file.getLastModifiedDate());
-        syncWebSocketHandler.notifyClients(fileMetaInfo);
+        syncWebSocketHandler.notifyClients(new RemoteFileEvent(RemoteEventType.CREATED, fileMetaInfo));
         LOG.info("POST file: " + fileMetaInfo);
     }
 
@@ -79,6 +81,7 @@ public class FileController {
 
         FileMetaInfo fileMetaInfo = new FileMetaInfo(file.getId(), userid, path, file.getData().length, file.getCreationDate(), file.getLastModifiedDate());
         LOG.info("PUT file: " + fileMetaInfo);
+        syncWebSocketHandler.notifyClients(new RemoteFileEvent(RemoteEventType.MODIFIED, fileMetaInfo));
         return fileMetaInfo;
     }
 
@@ -90,6 +93,8 @@ public class FileController {
         }
         String path = file.getPath();
         fileRepo.delete(file);
+
+        syncWebSocketHandler.notifyClients(new RemoteFileEvent(RemoteEventType.DELETED, new FileMetaInfo(file.getId(), file.getUserid(), file.getPath(), file.getData().length, file.getCreationDate(), file.getLastModifiedDate())));
         LOG.info("DELETE file: " + path);
     }
 
