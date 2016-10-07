@@ -4,11 +4,18 @@ import com.github.tornaia.sync.server.service.FileCommandService;
 import com.github.tornaia.sync.server.service.FileQueryService;
 import com.github.tornaia.sync.server.service.exception.FileAlreadyExistsException;
 import com.github.tornaia.sync.server.service.exception.FileNotFoundException;
+import com.github.tornaia.sync.shared.api.CreateFileRequest;
+import com.github.tornaia.sync.shared.api.GetFileMetaInfoRequest;
+import com.github.tornaia.sync.shared.api.GetFileRequest;
+import com.github.tornaia.sync.shared.api.UpdateFileRequest;
+import com.google.gson.Gson;
+import com.sun.org.apache.xpath.internal.SourceTree;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
@@ -39,14 +46,12 @@ public class FileControllerTest {
 
         doNothing()
                 .when(fileCommandService).createFile(anyString(), anyLong(), anyLong(), anyString(), any(byte[].class));
-
+        Gson gson = new Gson();
         mvc.perform(
                 fileUpload("/api/files")
-                        .file(file)
-                        .param("userid", "userid")
-                        .param("creationDateTime", "1")
-                        .param("modificationDateTime", "2"))
-                .andExpect(status().isOk());
+                        .file(file).contentType(MediaType.APPLICATION_JSON_UTF8)
+                        .content(gson.toJson(new CreateFileRequest("userid", 1L, 2L))))
+                .andExpect(status().isOk()).andDo(System.out::println);
     }
 
     @Test
@@ -55,13 +60,11 @@ public class FileControllerTest {
 
         doThrow(FileAlreadyExistsException.class)
                 .when(fileCommandService).createFile(anyString(), anyLong(), anyLong(), anyString(), any(byte[].class));
-
+        Gson gson = new Gson();
         mvc.perform(
                 fileUpload("/api/files")
-                        .file(file)
-                        .param("userid", "userid")
-                        .param("creationDateTime", "1")
-                        .param("modificationDateTime", "2"))
+                        .file(file).contentType(MediaType.APPLICATION_JSON_UTF8)
+                        .content(gson.toJson(new CreateFileRequest("userid", 1L, 2L))))
                 .andExpect(status().isConflict());
     }
 
@@ -69,10 +72,10 @@ public class FileControllerTest {
     public void getIfFileDoesNotExist() throws Exception {
         doThrow(FileNotFoundException.class)
                 .when(fileQueryService).getFileById("12");
-
+        Gson gson = new Gson();
         mvc.perform(
-                get("/api/files/12")
-                        .param("userid", "userid"))
+                get("/api/files/12").content(gson.toJson(new GetFileRequest("userid")))
+                        .contentType(MediaType.APPLICATION_JSON_UTF8))
                 .andExpect(status().isNotFound());
     }
 
@@ -80,10 +83,11 @@ public class FileControllerTest {
     public void getIfMetaInfoDoesNotExist() throws Exception {
         doThrow(FileNotFoundException.class)
                 .when(fileQueryService).getFileMetaInfoById("12");
-
+        Gson gson = new Gson();
         mvc.perform(
                 get("/api/files/12/metaInfo")
-                        .param("userid", "userid"))
+                        .contentType(MediaType.APPLICATION_JSON_UTF8)
+                        .content(gson.toJson(new GetFileMetaInfoRequest("userid"))))
                 .andExpect(status().isNotFound());
     }
 }

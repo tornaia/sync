@@ -1,7 +1,7 @@
 package com.github.tornaia.sync.server.controller;
 
 import com.github.tornaia.sync.server.data.document.File;
-import com.github.tornaia.sync.shared.api.FileMetaInfo;
+import com.github.tornaia.sync.shared.api.*;
 import com.github.tornaia.sync.shared.api.matchers.FileMetaInfoMatcher;
 import org.hamcrest.Matchers;
 import org.junit.Rule;
@@ -28,10 +28,10 @@ public class FileControllerIntTest extends AbstractSyncServerIntTest {
     @Test
     public void getMetaInfo() throws Exception {
         MockMultipartFile file = new MockMultipartFile("test", "test.png", "image/png", "TEST".getBytes());
-        fileController.postFile("userid", 1L, 2L, file);
+        fileController.postFile(new CreateFileRequest("userid", 1L, 2L), file);
 
-        List<FileMetaInfo> modifiedFiles = fileController.getModifiedFiles("userid", -1);
-        FileMetaInfo result = fileController.getMetaInfo(modifiedFiles.get(0).id, "userid");
+        List<FileMetaInfo> modifiedFiles = fileController.getModifiedFiles(new GetModifiedFilesRequest("userid", -1L));
+        FileMetaInfo result = fileController.getMetaInfo(modifiedFiles.get(0).id, new GetFileMetaInfoRequest("userid"));
 
         FileMetaInfoMatcher expected = new FileMetaInfoMatcher()
                 .relativePath("test.png")
@@ -46,13 +46,14 @@ public class FileControllerIntTest extends AbstractSyncServerIntTest {
     @Test
     public void putFile() throws Exception {
         MockMultipartFile file = new MockMultipartFile("test", "test.png", "image/png", "TEST".getBytes());
-        fileController.postFile("userid", 2L, 3L, file);
+        fileController.postFile(new CreateFileRequest("userid", 2L, 3L), file);
 
-        List<FileMetaInfo> modifiedFiles = fileController.getModifiedFiles("userid", -1);
-        FileMetaInfo fileMetaInfo = fileController.getMetaInfo(modifiedFiles.get(0).id, "userid");
+        List<FileMetaInfo> modifiedFiles = fileController.getModifiedFiles(new GetModifiedFilesRequest("userid", -1L));
+        FileMetaInfo fileMetaInfo = fileController.getMetaInfo(modifiedFiles.get(0).id, new GetFileMetaInfoRequest("userid"));
 
         MockMultipartFile updatedFile = new MockMultipartFile("test", "test.png", "image/png", "TEST2".getBytes());
-        FileMetaInfo result = fileController.putFile(fileMetaInfo.id, "userid", 3L, 4L, updatedFile);
+
+        FileMetaInfo result = fileController.putFile(fileMetaInfo.id, new UpdateFileRequest( "userid", 3L, 4L), updatedFile);
 
         FileMetaInfoMatcher expected = new FileMetaInfoMatcher()
                 .relativePath("test.png")
@@ -66,10 +67,10 @@ public class FileControllerIntTest extends AbstractSyncServerIntTest {
     @Test
     public void deleteFile() throws Exception {
         MockMultipartFile file = new MockMultipartFile("test", "test.png", "image/png", "TEST".getBytes());
-        fileController.postFile("userid", 1L, 2L, file);
+        fileController.postFile(new CreateFileRequest("userid", 1L, 2L), file);
 
-        List<FileMetaInfo> modifiedFiles = fileController.getModifiedFiles("userid", -1);
-        FileMetaInfo createdFile = fileController.getMetaInfo(modifiedFiles.get(0).id, "userid");
+        List<FileMetaInfo> modifiedFiles = fileController.getModifiedFiles(new GetModifiedFilesRequest("userid", -1L));
+        FileMetaInfo createdFile = fileController.getMetaInfo(modifiedFiles.get(0).id, new GetFileMetaInfoRequest("userid"));
 
         fileController.deleteFile(createdFile.id);
 
@@ -81,12 +82,12 @@ public class FileControllerIntTest extends AbstractSyncServerIntTest {
     @Test
     public void getModifiedFiles() throws Exception {
         MockMultipartFile file = new MockMultipartFile("test", "test.png", "image/png", "TEST".getBytes());
-        fileController.postFile("userid", 1L, 1L, file);
+        fileController.postFile(new CreateFileRequest("userid", 1L, 1L), file);
 
         MockMultipartFile file2 = new MockMultipartFile("test2", "test2.png", "image/png", "TEST2".getBytes());
-        fileController.postFile("userid", 3L, 3L, file2);
+        fileController.postFile(new CreateFileRequest("userid", 3L, 3L), file2);
 
-        List<FileMetaInfo> result = fileController.getModifiedFiles("userid", 2L);
+        List<FileMetaInfo> result = fileController.getModifiedFiles(new GetModifiedFilesRequest("userid", 2L));
 
         FileMetaInfoMatcher expected = new FileMetaInfoMatcher()
                 .relativePath("test2.png")

@@ -30,22 +30,22 @@ public class FileCommandService {
     @Autowired
     private SyncWebSocketHandler syncWebSocketHandler;
 
-    public void createFile(String userid, long creationDateTime, long modificationDateTime, String path, byte[] content) throws IOException {
+    public void createFile(String userId, long creationDateTime, long modificationDateTime, String path, byte[] content) throws IOException {
         File file = fileRepository.findByPath(path);
         if (!Objects.isNull(file)) {
             throw new FileAlreadyExistsException(path);
         }
 
-        file = fileRepository.insert(new File(userid, path, content, creationDateTime, modificationDateTime));
+        file = fileRepository.insert(new File(userId, path, content, creationDateTime, modificationDateTime));
         FileMetaInfo fileMetaInfo = getFileMetaInfo(file);
         syncWebSocketHandler.notifyClients(new RemoteFileEvent(CREATED, fileMetaInfo));
         LOG.info("POST file: " + fileMetaInfo);
     }
 
-    public void updateFile(String path, long creationDateTime, long modificationDateTime, byte[] content) throws IOException {
-        File file = fileRepository.findByPath(path);
+    public void updateFile(String id, long creationDateTime, long modificationDateTime, byte[] content) throws IOException {
+        File file = fileRepository.findOne(id);
         if (Objects.isNull(file)) {
-            throw new FileNotFoundException(path);
+            throw new FileNotFoundException(id);
         } else {
             file.setCreationDate(creationDateTime);
             file.setLastModifiedDate(modificationDateTime);

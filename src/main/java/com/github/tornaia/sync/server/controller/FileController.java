@@ -5,7 +5,7 @@ import com.github.tornaia.sync.server.service.FileCommandService;
 import com.github.tornaia.sync.server.service.FileQueryService;
 import com.github.tornaia.sync.server.service.exception.FileAlreadyExistsException;
 import com.github.tornaia.sync.server.service.exception.FileNotFoundException;
-import com.github.tornaia.sync.shared.api.FileMetaInfo;
+import com.github.tornaia.sync.shared.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,19 +37,19 @@ public class FileController {
     }
 
     @RequestMapping(method = RequestMethod.GET)
-    public List<FileMetaInfo> getModifiedFiles(@RequestParam("userid") String userid, @RequestParam("modificationDateTime") long modTs) {
-        return fileQueryService.getModifiedFiles(userid, modTs);
+    public List<FileMetaInfo> getModifiedFiles(@RequestBody GetModifiedFilesRequest request) {
+        return fileQueryService.getModifiedFiles(request.getUserId(), request.getModTs());
     }
 
     @RequestMapping(method = RequestMethod.POST)
-    public void postFile(@RequestParam("userid") String userid, @RequestParam("creationDateTime") long creationDateTime, @RequestParam("modificationDateTime") long modificationDateTime, @RequestPart("file") MultipartFile multipartFile) throws IOException {
-        fileCommandService.createFile(userid, creationDateTime, modificationDateTime, multipartFile.getOriginalFilename(), multipartFile.getBytes());
+    public void postFile(@RequestBody CreateFileRequest request, @RequestPart("file") MultipartFile multipartFile) throws IOException {
+        fileCommandService.createFile(request.getUserId(), request.getCreationDateTime(), request.getModificationDateTime(), multipartFile.getOriginalFilename(), multipartFile.getBytes());
     }
 
     @RequestMapping(value = "/{id}", method = RequestMethod.PUT)
-    public FileMetaInfo putFile(@PathVariable String id, @RequestParam("userid") String userid, @RequestParam("creationDateTime") long creationDateTime, @RequestParam("modificationDateTime") long modificationDateTime, @RequestPart("file") MultipartFile multipartFile) throws IOException {
-        fileCommandService.updateFile(multipartFile.getOriginalFilename(), creationDateTime, modificationDateTime, multipartFile.getBytes());
-        return fileQueryService.getFileMetaInfoByPath(multipartFile.getOriginalFilename());
+    public FileMetaInfo putFile(@PathVariable String id, @RequestBody UpdateFileRequest request, @RequestPart("file") MultipartFile multipartFile) throws IOException {
+        fileCommandService.updateFile(id, request.getCreationDateTime(), request.getModificationDateTime(), multipartFile.getBytes());
+        return fileQueryService.getFileMetaInfoById(id);
     }
 
     @RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
@@ -58,7 +58,8 @@ public class FileController {
     }
 
     @RequestMapping(value = "/{id}", method = RequestMethod.GET, produces = MediaType.APPLICATION_OCTET_STREAM)
-    public ResponseEntity getFile(@PathVariable String id, @RequestParam("userid") String userid) throws IOException {
+    public ResponseEntity getFile(@PathVariable String id, @RequestBody GetFileRequest request) throws IOException {
+        String userId = request.getUserId();
         File file = fileQueryService.getFileById(id);
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + file.getName());
@@ -67,7 +68,8 @@ public class FileController {
     }
 
     @RequestMapping(value = "/{id}/metaInfo", method = RequestMethod.GET)
-    public FileMetaInfo getMetaInfo(@PathVariable String id, @RequestParam("userid") String userid) throws IOException {
+    public FileMetaInfo getMetaInfo(@PathVariable String id, @RequestBody GetFileMetaInfoRequest request) throws IOException {
+        String userId = request.getUserId();
         return fileQueryService.getFileMetaInfoById(id);
     }
 
