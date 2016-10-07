@@ -21,7 +21,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.contains;
 import static org.junit.Assert.assertThat;
 import static org.junit.rules.ExpectedException.none;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class FileQueryServiceTest {
@@ -48,6 +48,9 @@ public class FileQueryServiceTest {
         List<FileMetaInfo> result = fileQueryService.getModifiedFiles("userid", 1L);
 
         assertThat(result.isEmpty(), is(true));
+
+        verify(fileRepository).findByUserIdAndLastModifiedDateAfter("userid", 1L);
+        verifyNoMoreInteractions(fileRepository);
     }
 
     @Test
@@ -61,6 +64,9 @@ public class FileQueryServiceTest {
         List<FileMetaInfo> result = fileQueryService.getModifiedFiles("userid", 2L);
 
         assertThat(result, contains(expected));
+
+        verify(fileRepository).findByUserIdAndLastModifiedDateAfter("userid", 2L);
+        verifyNoMoreInteractions(fileRepository);
     }
 
     @Test
