@@ -1,16 +1,15 @@
 package com.github.tornaia.sync.shared.api;
 
-import org.springframework.web.multipart.MultipartFile;
-
 /**
  * Created by Bence on 07-Oct-16.
  */
 public class CreateFileRequest extends FileModificationRequest {
 
-    public CreateFileRequest(String userId, long creationDateTime, long modificationDateTime, MultipartFile multipartFile){
+    public CreateFileRequest(){}
+
+    public CreateFileRequest(String userId, long creationDateTime, long modificationDateTime){
         this.userId = userId;
         this.creationDateTime = creationDateTime;
         this.modificationDateTime = modificationDateTime;
-        this.multipartFile = multipartFile;
     }
 }

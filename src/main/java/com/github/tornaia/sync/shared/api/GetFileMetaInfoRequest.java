@@ -5,6 +5,9 @@ package com.github.tornaia.sync.shared.api;
  */
 public class GetFileMetaInfoRequest extends AbstractRequest {
 
+    public GetFileMetaInfoRequest() {
+    }
+
     public GetFileMetaInfoRequest(String userId) {
         this.userId = userId;
     }

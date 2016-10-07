@@ -5,6 +5,9 @@ package com.github.tornaia.sync.shared.api;
  */
 public class GetFileRequest extends AbstractRequest {
 
+    public GetFileRequest() {
+    }
+
     public GetFileRequest(String userId) {
         this.userId = userId;
     }

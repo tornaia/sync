@@ -1,7 +1,5 @@
 package com.github.tornaia.sync.shared.api;
 
-import org.springframework.web.multipart.MultipartFile;
-
 import javax.validation.constraints.NotNull;
 
 /**
@@ -9,14 +7,19 @@ import javax.validation.constraints.NotNull;
  */
 public abstract class FileModificationRequest extends AbstractRequest {
 
+    public FileModificationRequest(){}
+
+    public FileModificationRequest(Long creationDateTime, Long modificationDateTime) {
+        this.creationDateTime = creationDateTime;
+        this.modificationDateTime = modificationDateTime;
+    }
+
     @NotNull
     protected Long creationDateTime;
 
     @NotNull
     protected Long modificationDateTime;
 
-    @NotNull
-    protected MultipartFile multipartFile;
 
     public long getCreationDateTime() {
         return creationDateTime;
@@ -34,11 +37,4 @@ public abstract class FileModificationRequest extends AbstractRequest {
         this.modificationDateTime = modificationDateTime;
     }
 
-    public MultipartFile getMultipartFile() {
-        return multipartFile;
-    }
-
-    public void setMultipartFile(MultipartFile multipartFile) {
-        this.multipartFile = multipartFile;
-    }
 }

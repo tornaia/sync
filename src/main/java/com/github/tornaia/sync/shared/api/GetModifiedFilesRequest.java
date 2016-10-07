@@ -10,6 +10,9 @@ public class GetModifiedFilesRequest extends AbstractRequest {
     @NotNull
     private Long modTs;
 
+    public GetModifiedFilesRequest() {
+    }
+
     public GetModifiedFilesRequest(String userId, Long modTs) {
         this.userId = userId;
         this.modTs = modTs;
