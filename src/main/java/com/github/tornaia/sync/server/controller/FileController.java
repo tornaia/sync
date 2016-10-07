@@ -71,12 +71,12 @@ public class FileController {
         return fileQueryService.getFileMetaInfoById(id);
     }
 
-    @ResponseStatus(HttpStatus.NOT_FOUND)
+    @ResponseStatus(value = HttpStatus.NOT_FOUND, reason = "File was not found")
     @ExceptionHandler({FileNotFoundException.class})
     private void fileNotFoundExceptionHandler() {
     }
 
-    @ResponseStatus(HttpStatus.CONFLICT)
+    @ResponseStatus(value = HttpStatus.CONFLICT, reason = "File already exists")
     @ExceptionHandler({FileAlreadyExistsException.class})
     private void fileAlreadyExistsExceptionHandler() {
     }
