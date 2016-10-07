@@ -23,7 +23,7 @@
         <org.glassfish.jersey.core.version>2.23.2</org.glassfish.jersey.core.version>
         <org.springframework.boot.version>1.4.1.RELEASE</org.springframework.boot.version>
         <com.github.fakemongo.version>2.0.6</com.github.fakemongo.version>
-		<gson.version>2.7</gson.version>
+        <gson.version>2.7</gson.version>
 
         <maven-compiler-plugin.version>3.5.1</maven-compiler-plugin.version>
         <maven-jar-plugin.version>2.6</maven-jar-plugin.version>
@@ -139,18 +139,18 @@
                 <scope>test</scope>
             </dependency>
 
-          <dependency>
-            <groupId>com.github.fakemongo</groupId>
-            <artifactId>fongo</artifactId>
-            <version>${com.github.fakemongo.version}</version>
-            <scope>test</scope>
-          </dependency>
-		  
-		  <dependency>
+            <dependency>
+                <groupId>com.github.fakemongo</groupId>
+                <artifactId>fongo</artifactId>
+                <version>${com.github.fakemongo.version}</version>
+                <scope>test</scope>
+            </dependency>
+
+            <dependency>
                 <groupId>com.google.code.gson</groupId>
                 <artifactId>gson</artifactId>
                 <version>${gson.version}</version>
-				<scope>test</scope>
+                <scope>test</scope>
             </dependency>
 
         </dependencies>
@@ -220,11 +220,11 @@
             <groupId>com.github.fakemongo</groupId>
             <artifactId>fongo</artifactId>
         </dependency>
-		
-		            <dependency>
-                <groupId>com.google.code.gson</groupId>
-                <artifactId>gson</artifactId>
-            </dependency>
+
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+        </dependency>
 
     </dependencies>
 
