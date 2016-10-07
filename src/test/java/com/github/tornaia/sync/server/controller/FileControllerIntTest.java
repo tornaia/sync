@@ -25,9 +25,6 @@ public class FileControllerIntTest extends AbstractSyncServerIntTest {
     @Autowired
     private FileController fileController;
 
-    @Rule
-    public ExpectedException expectedException = none();
-
     @Test
     public void getMetaInfo() throws Exception {
         MockMultipartFile file = new MockMultipartFile("test", "test.png", "image/png", "TEST".getBytes());
