@@ -15,6 +15,7 @@ import java.util.Objects;
 
 import static com.github.tornaia.sync.server.utils.FileUtil.getFileMetaInfo;
 import static java.util.Collections.emptyList;
+import static java.util.Objects.isNull;
 import static java.util.stream.Collectors.toList;
 
 @Component
@@ -27,7 +28,7 @@ public class FileQueryService {
 
     public List<FileMetaInfo> getModifiedFiles(String userid, long modTs) {
         List<File> fileList = fileRepository.findByUserIdAndLastModifiedDateAfter(userid, modTs);
-        if (Objects.isNull(fileList)) {
+        if (isNull(fileList)) {
             return emptyList();
         }
 
@@ -55,5 +56,14 @@ public class FileQueryService {
         }
 
         return getFileMetaInfo(file);
+    }
+
+    public List<FileMetaInfo> getAllFileMetaInfo(String userid) {
+        List<File> fileList = fileRepository.findByUserid(userid);
+        if (isNull(fileList)) {
+            return emptyList();
+        }
+
+        return fileList.stream().map(FileUtil::getFileMetaInfo).collect(toList());
     }
 }
