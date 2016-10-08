@@ -29,20 +29,15 @@ public class FileMetaInfo implements Serializable {
         this.modificationDateTime = -1;
     }
 
-    public static FileMetaInfo createNonSyncedFileMetaInfo(String userid, String relativePath, File file) {
+    public static FileMetaInfo createNonSyncedFileMetaInfo(String userid, String relativePath, File file) throws IOException {
         return new FileMetaInfo(null, userid, relativePath, file);
     }
 
-    public FileMetaInfo(String id, String userid, String relativePath, File file) {
+    public FileMetaInfo(String id, String userid, String relativePath, File file) throws IOException {
         this.id = id;
         this.userid = userid;
         this.relativePath = relativePath;
-        BasicFileAttributes attr;
-        try {
-            attr = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
-        } catch (IOException e) {
-            throw new RuntimeException("Cannot create FileMetaInfo", e);
-        }
+        BasicFileAttributes attr = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
         this.length = attr.size();
         this.creationDateTime = attr.creationTime().toMillis();
         this.modificationDateTime = attr.lastModifiedTime().toMillis();

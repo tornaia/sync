@@ -2,18 +2,14 @@ package com.github.tornaia.sync.shared.api;
 
 import javax.validation.constraints.NotNull;
 
-/**
- * Created by Bence on 07-Oct-16.
- */
 public abstract class FileModificationRequest extends AbstractRequest {
 
-    public FileModificationRequest(){}
-
-    public FileModificationRequest(Long creationDateTime, Long modificationDateTime) {
-        this.creationDateTime = creationDateTime;
-        this.modificationDateTime = modificationDateTime;
+    // TODO if its used by only tests then create a builder in the test folder and do not add production code only used by tests
+    // and if so then the default constructor is not needed any more to be declared explicitly
+    public FileModificationRequest() {
     }
 
+    // TODO are we sure that it is really used? what about using long instead of Long
     @NotNull
     protected Long creationDateTime;
 
@@ -36,5 +32,4 @@ public abstract class FileModificationRequest extends AbstractRequest {
     public void setModificationDateTime(Long modificationDateTime) {
         this.modificationDateTime = modificationDateTime;
     }
-
 }
