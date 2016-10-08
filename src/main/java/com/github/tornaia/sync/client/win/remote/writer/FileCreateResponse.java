@@ -1,4 +1,4 @@
-package com.github.tornaia.sync.client.win.rest.httpclient;
+package com.github.tornaia.sync.client.win.remote.writer;
 
 import com.github.tornaia.sync.shared.api.FileMetaInfo;
 

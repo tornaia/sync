@@ -1,5 +1,6 @@
-package com.github.tornaia.sync.client.win.local;
+package com.github.tornaia.sync.client.win.local.reader;
 
+import com.github.tornaia.sync.shared.api.FileMetaInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,9 +19,9 @@ import java.util.concurrent.TimeUnit;
 import static java.nio.file.StandardWatchEventKinds.*;
 
 @Component
-public class DiskWatchService {
+public class LocalReaderService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(DiskWatchService.class);
+    private static final Logger LOG = LoggerFactory.getLogger(LocalReaderService.class);
 
     @Value("${client.sync.directory.path:C:\\temp\\client\\}")
     private String syncDirectoryPath;
@@ -42,7 +43,9 @@ public class DiskWatchService {
         register(syncDirectory);
         registerChildrenRecursively(syncDirectory);
 
-        new Thread(() -> runInBackground()).start();
+        Thread thread = new Thread(() -> runInBackground());
+        thread.setDaemon(true);
+        thread.start();
     }
 
     public synchronized Optional<LocalFileEvent> getNext() {
@@ -50,6 +53,26 @@ public class DiskWatchService {
             return Optional.empty();
         }
         return Optional.of(events.remove(0));
+    }
+
+    public Optional<FileMetaInfo> getFileMetaInfo(String relativePath) {
+        Path absolutePath = getAbsolutePath(relativePath);
+        try {
+            if (!exists(relativePath)) {
+                return Optional.empty();
+            }
+            File file = absolutePath.toFile();
+            FileMetaInfo fileMetaInfo = new FileMetaInfo(null, userid, relativePath, file);
+            return Optional.of(fileMetaInfo);
+        } catch (IOException e) {
+            LOG.warn("Cannot read file from disk! Does not exist or locked?", e);
+            return Optional.empty();
+        }
+    }
+
+    public boolean exists(String relativePath) {
+        Path absolutePath = getAbsolutePath(relativePath);
+        return absolutePath.toFile().exists();
     }
 
     private synchronized void addNewEvent(LocalFileEvent localFileEvent) {
@@ -169,5 +192,9 @@ public class DiskWatchService {
     // always without leading slash
     private String getRelativePath(File directory) {
         return directory.getAbsolutePath().substring(new File(syncDirectoryPath).getAbsolutePath().length() + 1);
+    }
+
+    private Path getAbsolutePath(String relativePath) {
+        return syncDirectory.resolve(relativePath);
     }
 }

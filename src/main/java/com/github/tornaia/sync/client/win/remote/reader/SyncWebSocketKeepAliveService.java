@@ -1,4 +1,4 @@
-package com.github.tornaia.sync.client.win.remote;
+package com.github.tornaia.sync.client.win.remote.reader;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,7 +33,7 @@ public class SyncWebSocketKeepAliveService {
     private String userid;
 
     @Autowired
-    private SyncWebSocketClient syncWebSocketClient;
+    private RemoteReaderService remoteReaderService;
 
     @EventListener({ContextRefreshedEvent.class})
     public void contextRefreshedEvent() {
@@ -43,11 +43,11 @@ public class SyncWebSocketKeepAliveService {
 
     public void reconnect() {
         WebSocketContainer container = ContainerProvider.getWebSocketContainer();
-        new Thread(() -> {
+        Thread thread = new Thread(() -> {
             while (true) {
                 try {
                     LOG.info("Reconnecting webSocket...");
-                    container.connectToServer(syncWebSocketClient, URI.create(getWebSocketUri()));
+                    container.connectToServer(remoteReaderService, URI.create(getWebSocketUri()));
                     LOG.info("Successfully connected to webSocket!");
                     break;
                 } catch (Exception e) {
@@ -59,7 +59,9 @@ public class SyncWebSocketKeepAliveService {
                     }
                 }
             }
-        }).start();
+        });
+        thread.setDaemon(true);
+        thread.start();
     }
 
     private String getWebSocketUri() {

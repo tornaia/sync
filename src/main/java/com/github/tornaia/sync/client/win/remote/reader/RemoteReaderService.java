@@ -1,6 +1,7 @@
-package com.github.tornaia.sync.client.win.remote;
+package com.github.tornaia.sync.client.win.remote.reader;
 
 import com.github.tornaia.sync.shared.api.FileMetaInfo;
+import com.github.tornaia.sync.shared.api.RemoteFileEvent;
 import com.google.gson.Gson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,12 +12,14 @@ import org.springframework.stereotype.Component;
 import javax.websocket.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 @Component
 @ClientEndpoint
-public class SyncWebSocketClient {
+public class RemoteReaderService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(SyncWebSocketClient.class);
+    private static final Logger LOG = LoggerFactory.getLogger(RemoteReaderService.class);
 
     @Value("${frosch-sync.userid:7247234}")
     private String userid;
@@ -24,9 +27,18 @@ public class SyncWebSocketClient {
     @Autowired
     private SyncWebSocketKeepAliveService syncWebSocketKeepAliveService;
 
+    @Autowired
+    private RemoteRestQueryService remoteRestQueryService;
+
     private final List<RemoteFileEvent> events = new ArrayList<>();
 
+    private boolean initDone = false;
+
     private Session session;
+
+    public boolean isInitDone() {
+        return initDone;
+    }
 
     @OnOpen
     public void open(Session session) {
@@ -38,7 +50,24 @@ public class SyncWebSocketClient {
     @OnMessage
     public void onMessage(String message) {
         LOG.info("Received msg: " + message);
+        if (Objects.equals("init-done", message)) {
+            LOG.info("Init done");
+            initDone = true;
+            return;
+        }
         RemoteFileEvent remoteFileEvent = new Gson().fromJson(message, RemoteFileEvent.class);
+        addNewEvent(remoteFileEvent);
+    }
+
+    private synchronized void addNewEvent(RemoteFileEvent remoteFileEvent) {
+        events.add(remoteFileEvent);
+    }
+
+    public synchronized Optional<RemoteFileEvent> getNext() {
+        if (events.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(events.remove(0));
     }
 
     public void sendMessage(String message) {
@@ -56,5 +85,9 @@ public class SyncWebSocketClient {
     public void error(Session session, Throwable t) {
         LOG.info("Error on session. SessionId: " + session.getId(), t);
         syncWebSocketKeepAliveService.reconnect();
+    }
+
+    public byte[] getFile(FileMetaInfo fileMetaInfo) {
+        return remoteRestQueryService.getFile(fileMetaInfo);
     }
 }
