@@ -2,9 +2,13 @@ package com.github.tornaia.sync.server.websocket;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.tornaia.sync.server.service.FileQueryService;
+import com.github.tornaia.sync.shared.api.FileMetaInfo;
+import com.github.tornaia.sync.shared.api.RemoteEventType;
 import com.github.tornaia.sync.shared.api.RemoteFileEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
@@ -20,6 +24,9 @@ public class SyncWebSocketHandler extends TextWebSocketHandler {
     private static final Logger LOG = LoggerFactory.getLogger(SyncWebSocketHandler.class);
 
     private final Map<String, List<WebSocketSession>> usersAndSessions = new HashMap<>();
+
+    @Autowired
+    private FileQueryService fileQueryService;
 
     @Override
     public synchronized void afterConnectionEstablished(WebSocketSession session) throws Exception {
@@ -37,9 +44,20 @@ public class SyncWebSocketHandler extends TextWebSocketHandler {
             }
             usersAndSessions.get(userid).add(session);
             LOG.info("Session " + session.getId() + " subscribed for all events of user " + userid);
+            sendCompleteStatus(session, userid);
         } else {
             LOG.warn("Unknown message: " + messageStr);
         }
+    }
+
+    private void sendCompleteStatus(WebSocketSession session, String userid) throws IOException {
+        List<FileMetaInfo> modifiedFiles = fileQueryService.getModifiedFiles(userid, Long.MIN_VALUE);
+
+        modifiedFiles.stream()
+                .map(mf -> new RemoteFileEvent(RemoteEventType.CREATED, new FileMetaInfo(mf.id, mf.userid, mf.relativePath, mf.length, mf.creationDateTime, mf.modificationDateTime)))
+                .forEach(this::notifyClients);
+
+        session.sendMessage(new TextMessage("init-done"));
     }
 
     @Override

@@ -45,7 +45,7 @@ public class FileController {
     }
 
     @RequestMapping(method = POST)
-    public void postFile(@RequestBody CreateFileRequest request, @RequestPart("file") MultipartFile multipartFile) throws IOException {
+    public void postFile(@RequestPart("fileAttributes") CreateFileRequest request, @RequestPart("file") MultipartFile multipartFile) throws IOException {
         fileCommandService.createFile(request.getUserId(), request.getCreationDateTime(), request.getModificationDateTime(), multipartFile.getOriginalFilename(), multipartFile.getBytes());
     }
 

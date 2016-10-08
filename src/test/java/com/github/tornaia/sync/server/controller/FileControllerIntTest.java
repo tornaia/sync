@@ -4,9 +4,7 @@ import com.github.tornaia.sync.server.data.document.File;
 import com.github.tornaia.sync.shared.api.*;
 import com.github.tornaia.sync.shared.api.matchers.FileMetaInfoMatcher;
 import org.hamcrest.Matchers;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mock.web.MockMultipartFile;
@@ -17,7 +15,6 @@ import java.util.List;
 
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
-import static org.junit.rules.ExpectedException.none;
 
 @RunWith(SpringRunner.class)
 public class FileControllerIntTest extends AbstractSyncServerIntTest {
@@ -53,7 +50,7 @@ public class FileControllerIntTest extends AbstractSyncServerIntTest {
 
         MockMultipartFile updatedFile = new MockMultipartFile("test", "test.png", "image/png", "TEST2".getBytes());
 
-        FileMetaInfo result = fileController.putFile(fileMetaInfo.id, new UpdateFileRequest( "userid", 3L, 4L), updatedFile);
+        FileMetaInfo result = fileController.putFile(fileMetaInfo.id, new UpdateFileRequest("userid", 3L, 4L), updatedFile);
 
         FileMetaInfoMatcher expected = new FileMetaInfoMatcher()
                 .relativePath("test.png")
