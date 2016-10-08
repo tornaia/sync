@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.builder.SpringApplicationBuilder;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.File;
@@ -24,14 +25,19 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.FileTime;
+import java.util.UUID;
 
+import static java.nio.file.Files.createTempFile;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(SpringRunner.class)
-public class WinClientAndServerIntTests {
+public class WinClientAndServerIntTest {
 
-    private static final Logger LOG = LoggerFactory.getLogger(WinClientAndServerIntTests.class);
+    private static final Logger LOG = LoggerFactory.getLogger(WinClientAndServerIntTest.class);
 
     // TODO these properties are ugly.. go with a property file or whatever
     // later this tests should run on jenkins, other op systems or
@@ -55,6 +61,10 @@ public class WinClientAndServerIntTests {
     @Value("#{systemProperties['server.port'] ?: '8080'}")
     private int serverPort;
 
+    private ConfigurableApplicationContext server;
+    private ConfigurableApplicationContext winClient1;
+    private ConfigurableApplicationContext winClient2;
+
     @Before
     public void initServerWith2Clients() throws Exception {
         Files.delete(new File(client1SyncDirectoryPath));
@@ -62,25 +72,23 @@ public class WinClientAndServerIntTests {
         Files.delete(new File(client1StateFilePath));
         Files.delete(new File(client2StateFilePath));
 
-        new SpringApplicationBuilder(ServerApp.class).headless(false).run();
+        server = new SpringApplicationBuilder(ServerApp.class).headless(false).run();
 
         resetDB();
 
-        new SpringApplicationBuilder(WinClientApp.class)
+        winClient1 = new SpringApplicationBuilder(WinClientApp.class)
                 .web(false)
                 .headless(false)
                 .run("--client.sync.directory.path=" + client1SyncDirectoryPath,
                         "--client.state.file.path=" + client1StateFilePath,
                         "--frosch-sync.userid=" + userid);
 
-        new SpringApplicationBuilder(WinClientApp.class)
+        winClient2 = new SpringApplicationBuilder(WinClientApp.class)
                 .web(false)
                 .headless(false)
                 .run("--client.sync.directory.path=" + client2SyncDirectoryPath,
                         "--client.state.file.path=" + client2StateFilePath,
                         "--frosch-sync.userid=" + userid);
-
-
     }
 
     private void resetDB() throws Exception {
@@ -119,10 +127,22 @@ public class WinClientAndServerIntTests {
 
         assertTrue(new File(client1SyncDirectoryPath).list().length == 0);
 
-        IOUtils.write("dummy content", new FileOutputStream(client1SyncDirectoryPath + "/dummy.txt"));
+        Path tempFile = createTempFile(UUID.randomUUID().toString(), "suffix");
+        try (FileOutputStream fos = new FileOutputStream(tempFile.toFile())) {
+            IOUtils.write("dummy content", fos);
+        }
+
+        java.nio.file.Files.setAttribute(tempFile, "basic:lastModifiedTime", FileTime.fromMillis(600L));
+        java.nio.file.Files.setAttribute(tempFile, "basic:creationTime", FileTime.fromMillis(500L));
+        Path targetFile = new File(client1SyncDirectoryPath).toPath().resolve("dummy.txt");
+        java.nio.file.Files.move(tempFile, targetFile, StandardCopyOption.ATOMIC_MOVE);
+
 
         // wait for sync
         Thread.sleep(5000L);
+        server.close();
+        winClient1.close();
+        winClient2.close();
 
         assertTrue(new File(client1SyncDirectoryPath).list().length == 1);
         assertTrue(new File(client2SyncDirectoryPath).list().length == 1);
