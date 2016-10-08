@@ -20,6 +20,7 @@ public final class RestApiExceptionHandler {
     @ExceptionHandler(value = Throwable.class)
     public static ModelAndView handle(HttpServletResponse response, Exception e) throws Exception {
         Throwable rootCause = ExceptionUtils.getRootCause(e);
+        rootCause = rootCause != null ? rootCause : e;
         String message = rootCause.getMessage();
 
         if (rootCause instanceof EOFException) {
