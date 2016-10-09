@@ -24,7 +24,7 @@ public class SpringMongoConfig extends AbstractMongoConfiguration {
         return DATABASE_NAME;
     }
 
-    private boolean resetDbOnStart = true;
+    private boolean resetDbOnStart = false;
 
     @Bean
     @Override
