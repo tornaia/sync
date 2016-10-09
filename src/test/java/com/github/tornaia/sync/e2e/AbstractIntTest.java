@@ -158,7 +158,7 @@ public abstract class AbstractIntTest {
 
         setCreationTime(tempFile, creationTime);
         setLastModifiedTime(tempFile, lastModifiedTime);
-        Files.move(tempFile, path, StandardCopyOption.ATOMIC_MOVE);
+        Files.move(tempFile, path, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
     }
 
     protected void waitForSyncDone() {
