@@ -4,7 +4,6 @@ import org.apache.commons.io.IOUtils;
 import org.junit.Test;
 
 import java.io.FileInputStream;
-import java.nio.file.attribute.FileTime;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -15,16 +14,16 @@ public class OneClientIntTest extends AbstractIntTest {
 
     @Test
     public void startOneClientThenCreateAFileThenStopAndThenStart() throws Exception {
-        AbstractIntTest.Client client1 = initClient(userid).start();
-        createFile(client1.syncDirectory.resolve("dummy2.txt"), "dummy2 content", 500L, 600L);
+        AbstractIntTest.Client client = initClient(userid).start();
+        createFile(client.syncDirectory.resolve("dummy.txt"), "dummy content", 500L, 600L);
         waitForSyncDone();
-        client1.stop();
+        client.stop();
 
-        client1.start();
+        client.start();
         waitForSyncDone();
         stopClients();
 
-        assertTrue(client1.syncDirectory.toFile().list().length == 1);
-        assertEquals("dummy2 content", IOUtils.toString(new FileInputStream(client1.syncDirectory.resolve("dummy2.txt").toFile())));
+        assertTrue(client.syncDirectory.toFile().list().length == 1);
+        assertEquals("dummy content", IOUtils.toString(new FileInputStream(client.syncDirectory.resolve("dummy.txt").toFile())));
     }
 }
