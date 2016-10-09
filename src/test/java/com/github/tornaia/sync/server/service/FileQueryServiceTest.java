@@ -38,18 +38,18 @@ public class FileQueryServiceTest {
     @Before
     public void setUp() {
         List<File> storedFiles = Arrays.asList(new File("userid", "path", "data".getBytes(), 3L, 3L));
-        when(fileRepository.findByUserIdAndLastModifiedDateAfter("userid", 2L)).thenReturn(storedFiles);
+        when(fileRepository.findByUseridAndLastModifiedDateAfter("userid", 2L)).thenReturn(storedFiles);
     }
 
     @Test
     public void getModifiedFilesIfNoCollectionInDB() {
-        when(fileRepository.findByUserIdAndLastModifiedDateAfter("userid", 1L)).thenReturn(null);
+        when(fileRepository.findByUseridAndLastModifiedDateAfter("userid", 1L)).thenReturn(null);
 
         List<FileMetaInfo> result = fileQueryService.getModifiedFiles("userid", 1L);
 
         assertThat(result.isEmpty(), is(true));
 
-        verify(fileRepository).findByUserIdAndLastModifiedDateAfter("userid", 1L);
+        verify(fileRepository).findByUseridAndLastModifiedDateAfter("userid", 1L);
         verifyNoMoreInteractions(fileRepository);
     }
 
@@ -65,7 +65,7 @@ public class FileQueryServiceTest {
 
         assertThat(result, contains(expected));
 
-        verify(fileRepository).findByUserIdAndLastModifiedDateAfter("userid", 2L);
+        verify(fileRepository).findByUseridAndLastModifiedDateAfter("userid", 2L);
         verifyNoMoreInteractions(fileRepository);
     }
 

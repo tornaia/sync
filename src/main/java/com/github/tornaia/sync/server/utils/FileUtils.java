@@ -1,12 +1,12 @@
 package com.github.tornaia.sync.server.utils;
 
-
 import com.github.tornaia.sync.server.data.document.File;
 import com.github.tornaia.sync.shared.api.FileMetaInfo;
 
-public final class FileUtil {
+// TODO I just simply do not like this class.. Maybe the name maybe Im just have a different taste
+public final class FileUtils {
 
-    private FileUtil() {
+    private FileUtils() {
     }
 
     public static FileMetaInfo getFileMetaInfo(File file) {

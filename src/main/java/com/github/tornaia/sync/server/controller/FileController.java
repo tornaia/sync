@@ -5,7 +5,10 @@ import com.github.tornaia.sync.server.service.FileCommandService;
 import com.github.tornaia.sync.server.service.FileQueryService;
 import com.github.tornaia.sync.server.service.exception.FileAlreadyExistsException;
 import com.github.tornaia.sync.server.service.exception.FileNotFoundException;
-import com.github.tornaia.sync.shared.api.*;
+import com.github.tornaia.sync.shared.api.CreateFileRequest;
+import com.github.tornaia.sync.shared.api.FileMetaInfo;
+import com.github.tornaia.sync.shared.api.GetModifiedFilesRequest;
+import com.github.tornaia.sync.shared.api.UpdateFileRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,12 +44,12 @@ public class FileController {
 
     @RequestMapping(method = GET)
     public List<FileMetaInfo> getModifiedFiles(@RequestBody GetModifiedFilesRequest request) {
-        return fileQueryService.getModifiedFiles(request.getUserId(), request.getModTs());
+        return fileQueryService.getModifiedFiles(request.getUserid(), request.getModTs());
     }
 
     @RequestMapping(method = POST)
     public void postFile(@RequestPart("fileAttributes") CreateFileRequest request, @RequestPart("file") MultipartFile multipartFile) throws IOException {
-        fileCommandService.createFile(request.getUserId(), request.getCreationDateTime(), request.getModificationDateTime(), multipartFile.getOriginalFilename(), multipartFile.getBytes());
+        fileCommandService.createFile(request.getUserid(), request.getCreationDateTime(), request.getModificationDateTime(), multipartFile.getOriginalFilename(), multipartFile.getBytes());
     }
 
     @RequestMapping(value = "/{id}", method = PUT)
@@ -61,7 +64,7 @@ public class FileController {
     }
 
     @RequestMapping(value = "/{id}", method = GET, produces = APPLICATION_OCTET_STREAM)
-    public ResponseEntity getFile(@PathVariable String id, @RequestBody GetFileRequest request) throws IOException {
+    public ResponseEntity getFile(@PathVariable String id) throws IOException {
         File file = fileQueryService.getFileById(id);
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.add(CONTENT_DISPOSITION, "attachment; filename=" + file.getName());
@@ -70,17 +73,17 @@ public class FileController {
     }
 
     @RequestMapping(value = "/{id}/metaInfo", method = GET)
-    public FileMetaInfo getMetaInfo(@PathVariable String id, @RequestBody GetFileMetaInfoRequest request) throws IOException {
+    public FileMetaInfo getMetaInfo(@PathVariable String id) throws IOException {
         return fileQueryService.getFileMetaInfoById(id);
     }
 
     @ResponseStatus(value = NOT_FOUND, reason = "File was not found")
     @ExceptionHandler({FileNotFoundException.class})
-    private void fileNotFoundExceptionHandler(FileNotFoundException e) {
+    private void convertFileNotFoundExceptionTo404(FileNotFoundException e) {
     }
 
     @ResponseStatus(value = CONFLICT, reason = "File already exists")
     @ExceptionHandler({FileAlreadyExistsException.class})
-    private void fileAlreadyExistsExceptionHandler(FileAlreadyExistsException e) {
+    private void convertFileAlreadyExistsExceptionTo409(FileAlreadyExistsException e) {
     }
 }

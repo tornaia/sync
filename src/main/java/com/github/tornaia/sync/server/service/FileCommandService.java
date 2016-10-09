@@ -4,6 +4,7 @@ import com.github.tornaia.sync.server.data.document.File;
 import com.github.tornaia.sync.server.data.repository.FileRepository;
 import com.github.tornaia.sync.server.service.exception.FileAlreadyExistsException;
 import com.github.tornaia.sync.server.service.exception.FileNotFoundException;
+import com.github.tornaia.sync.server.utils.FileUtils;
 import com.github.tornaia.sync.server.websocket.SyncWebSocketHandler;
 import com.github.tornaia.sync.shared.api.FileMetaInfo;
 import com.github.tornaia.sync.shared.api.RemoteFileEvent;
@@ -16,7 +17,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
 
-import static com.github.tornaia.sync.server.utils.FileUtil.getFileMetaInfo;
 import static com.github.tornaia.sync.shared.api.RemoteEventType.*;
 
 @Service
@@ -30,16 +30,16 @@ public class FileCommandService {
     @Autowired
     private SyncWebSocketHandler syncWebSocketHandler;
 
-    public void createFile(String userId, long creationDateTime, long modificationDateTime, String path, byte[] content) throws IOException {
-        File file = fileRepository.findByPath(path);
+    public void createFile(String userid, long creationDateTime, long modificationDateTime, String path, byte[] content) throws IOException {
+        File file = fileRepository.findByUseridAndPath(userid, path);
         if (!Objects.isNull(file)) {
             throw new FileAlreadyExistsException(path);
         }
 
-        file = fileRepository.insert(new File(userId, path, content, creationDateTime, modificationDateTime));
-        FileMetaInfo fileMetaInfo = getFileMetaInfo(file);
+        file = fileRepository.insert(new File(userid, path, content, creationDateTime, modificationDateTime));
+        FileMetaInfo fileMetaInfo = FileUtils.getFileMetaInfo(file);
         syncWebSocketHandler.notifyClients(new RemoteFileEvent(CREATED, fileMetaInfo));
-        LOG.info("POST file: " + fileMetaInfo);
+        LOG.info("CREATE file: " + fileMetaInfo);
     }
 
     public void updateFile(String id, long creationDateTime, long modificationDateTime, byte[] content) throws IOException {
@@ -51,7 +51,7 @@ public class FileCommandService {
             file.setLastModifiedDate(modificationDateTime);
             file.setData(content);
             fileRepository.save(file);
-            syncWebSocketHandler.notifyClients(new RemoteFileEvent(MODIFIED, getFileMetaInfo(file)));
+            syncWebSocketHandler.notifyClients(new RemoteFileEvent(MODIFIED, FileUtils.getFileMetaInfo(file)));
         }
     }
 
@@ -62,7 +62,7 @@ public class FileCommandService {
         }
         String path = file.getPath();
         fileRepository.delete(file);
-        syncWebSocketHandler.notifyClients(new RemoteFileEvent(DELETED, getFileMetaInfo(file)));
+        syncWebSocketHandler.notifyClients(new RemoteFileEvent(DELETED, FileUtils.getFileMetaInfo(file)));
         LOG.info("DELETE file: " + path);
     }
 

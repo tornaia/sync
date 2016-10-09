@@ -25,10 +25,15 @@ public class FileControllerIntTest extends AbstractSyncServerIntTest {
     @Test
     public void getMetaInfo() throws Exception {
         MockMultipartFile file = new MockMultipartFile("test", "test.png", "image/png", "TEST".getBytes());
-        fileController.postFile(new CreateFileRequest("userid", 1L, 2L), file);
+        CreateFileRequest createFileRequest = new CreateFileRequestBuilder()
+                .userid("userid")
+                .creationDateTime(1L)
+                .modificationDateTime(2L)
+                .create();
+        fileController.postFile(createFileRequest, file);
 
-        List<FileMetaInfo> modifiedFiles = fileController.getModifiedFiles(new GetModifiedFilesRequest("userid", -1L));
-        FileMetaInfo result = fileController.getMetaInfo(modifiedFiles.get(0).id, new GetFileMetaInfoRequest("userid"));
+        List<FileMetaInfo> modifiedFiles = fileController.getModifiedFiles(new GetModifiedFilesRequestBuilder().userid("userid").modTS(-1L).create());
+        FileMetaInfo result = fileController.getMetaInfo(modifiedFiles.get(0).id);
 
         FileMetaInfoMatcher expected = new FileMetaInfoMatcher()
                 .relativePath("test.png")
@@ -43,14 +48,25 @@ public class FileControllerIntTest extends AbstractSyncServerIntTest {
     @Test
     public void putFile() throws Exception {
         MockMultipartFile file = new MockMultipartFile("test", "test.png", "image/png", "TEST".getBytes());
-        fileController.postFile(new CreateFileRequest("userid", 2L, 3L), file);
+        CreateFileRequest createFileRequest = new CreateFileRequestBuilder()
+                .userid("userid")
+                .creationDateTime(2L)
+                .modificationDateTime(3L)
+                .create();
+        fileController.postFile(createFileRequest, file);
 
-        List<FileMetaInfo> modifiedFiles = fileController.getModifiedFiles(new GetModifiedFilesRequest("userid", -1L));
-        FileMetaInfo fileMetaInfo = fileController.getMetaInfo(modifiedFiles.get(0).id, new GetFileMetaInfoRequest("userid"));
+        List<FileMetaInfo> modifiedFiles = fileController.getModifiedFiles(new GetModifiedFilesRequestBuilder().userid("userid").modTS(-1L).create());
+        FileMetaInfo fileMetaInfo = fileController.getMetaInfo(modifiedFiles.get(0).id);
 
         MockMultipartFile updatedFile = new MockMultipartFile("test", "test.png", "image/png", "TEST2".getBytes());
 
-        FileMetaInfo result = fileController.putFile(fileMetaInfo.id, new UpdateFileRequest("userid", 3L, 4L), updatedFile);
+        UpdateFileRequest updateFileRequest = new UpdateFileRequestBuilder()
+                .userid("userid")
+                .creationDateTime(3L)
+                .modificationDateTime(4L)
+                .create();
+
+        FileMetaInfo result = fileController.putFile(fileMetaInfo.id, updateFileRequest, updatedFile);
 
         FileMetaInfoMatcher expected = new FileMetaInfoMatcher()
                 .relativePath("test.png")
@@ -64,10 +80,16 @@ public class FileControllerIntTest extends AbstractSyncServerIntTest {
     @Test
     public void deleteFile() throws Exception {
         MockMultipartFile file = new MockMultipartFile("test", "test.png", "image/png", "TEST".getBytes());
-        fileController.postFile(new CreateFileRequest("userid", 1L, 2L), file);
 
-        List<FileMetaInfo> modifiedFiles = fileController.getModifiedFiles(new GetModifiedFilesRequest("userid", -1L));
-        FileMetaInfo createdFile = fileController.getMetaInfo(modifiedFiles.get(0).id, new GetFileMetaInfoRequest("userid"));
+        CreateFileRequest createFileRequest = new CreateFileRequestBuilder()
+                .userid("userid")
+                .creationDateTime(1L)
+                .modificationDateTime(2L)
+                .create();
+        fileController.postFile(createFileRequest, file);
+
+        List<FileMetaInfo> modifiedFiles = fileController.getModifiedFiles(new GetModifiedFilesRequestBuilder().userid("userid").modTS(-1L).create());
+        FileMetaInfo createdFile = fileController.getMetaInfo(modifiedFiles.get(0).id);
 
         fileController.deleteFile(createdFile.id);
 
@@ -79,12 +101,22 @@ public class FileControllerIntTest extends AbstractSyncServerIntTest {
     @Test
     public void getModifiedFiles() throws Exception {
         MockMultipartFile file = new MockMultipartFile("test", "test.png", "image/png", "TEST".getBytes());
-        fileController.postFile(new CreateFileRequest("userid", 1L, 1L), file);
+        CreateFileRequest createFileRequest = new CreateFileRequestBuilder()
+                .userid("userid")
+                .creationDateTime(1L)
+                .modificationDateTime(1L)
+                .create();
+        fileController.postFile(createFileRequest, file);
 
         MockMultipartFile file2 = new MockMultipartFile("test2", "test2.png", "image/png", "TEST2".getBytes());
-        fileController.postFile(new CreateFileRequest("userid", 3L, 3L), file2);
+        CreateFileRequest createFileRequest2 = new CreateFileRequestBuilder()
+                .userid("userid")
+                .creationDateTime(3L)
+                .modificationDateTime(3L)
+                .create();
+        fileController.postFile(createFileRequest2, file2);
 
-        List<FileMetaInfo> result = fileController.getModifiedFiles(new GetModifiedFilesRequest("userid", 2L));
+        List<FileMetaInfo> result = fileController.getModifiedFiles(new GetModifiedFilesRequestBuilder().userid("userid").modTS(2L).create());
 
         FileMetaInfoMatcher expected = new FileMetaInfoMatcher()
                 .relativePath("test2.png")
@@ -94,5 +126,4 @@ public class FileControllerIntTest extends AbstractSyncServerIntTest {
 
         assertThat(result, Matchers.contains(expected));
     }
-
 }
