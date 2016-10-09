@@ -69,6 +69,6 @@ public class FileCommandService {
     public void deleteAll() {
         List<File> files = fileRepository.findAll();
         files.forEach(fileRepository::delete);
-        LOG.info("Just all files from DB: " + files.size());
+        LOG.info("All files deleted from DB: " + files.size());
     }
 }
