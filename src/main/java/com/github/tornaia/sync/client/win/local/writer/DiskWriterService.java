@@ -60,8 +60,11 @@ public class DiskWriterService {
         }
 
         if (!absolutePath.toFile().getParentFile().mkdirs()) {
-            LOG.error("Cannot create directories to target");
-            return false;
+            if (!absolutePath.toFile().getParentFile().isDirectory()) {
+                LOG.error("Cannot create directories to target");
+                return false;
+            }
+            LOG.trace("Directory to target already exist");
         }
 
         try {
