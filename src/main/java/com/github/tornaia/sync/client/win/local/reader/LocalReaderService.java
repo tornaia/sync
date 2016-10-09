@@ -61,7 +61,7 @@ public class LocalReaderService {
             Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
                 @Override
                 public FileVisitResult postVisitDirectory(Path dir, IOException e) throws IOException {
-                    LOG.warn("Cannot visit directory", e);
+                    LOG.warn("Cannot visit directory: " + dir, e);
                     return FileVisitResult.CONTINUE;
                 }
 
