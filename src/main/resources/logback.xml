@@ -4,5 +4,5 @@
     <root level="INFO">
         <appender-ref ref="CONSOLE" />
     </root>
-    <logger name="com.github.tornaia" level="TRACE"/>
+    <logger name="com.github.tornaia" level="DEBUG"/>
 </configuration>
