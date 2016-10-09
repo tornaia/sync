@@ -25,7 +25,7 @@ public class LocalReaderService {
 
     private static final Logger LOG = LoggerFactory.getLogger(LocalReaderService.class);
 
-    @Value("${client.sync.directory.path:C:\\temp\\client\\}")
+    @Value("${client.sync.directory.path:C:\\temp\\client}")
     private String syncDirectoryPath;
 
     @Value("${frosch-sync.userid:7247234}")

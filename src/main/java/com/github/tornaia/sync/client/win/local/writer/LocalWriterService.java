@@ -13,7 +13,7 @@ import java.util.Optional;
 @Component
 public class LocalWriterService {
 
-    @Value("${client.sync.directory.path:C:\\temp\\client\\}")
+    @Value("${client.sync.directory.path:C:\\temp\\client}")
     private String syncDirectoryPath;
 
     @Autowired

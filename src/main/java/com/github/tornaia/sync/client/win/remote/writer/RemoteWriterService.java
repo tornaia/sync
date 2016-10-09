@@ -23,7 +23,7 @@ public class RemoteWriterService {
     @Value("${frosch-sync.userid:7247234}")
     private String userid;
 
-    @Value("${client.sync.directory.path:C:\\temp\\client\\}")
+    @Value("${client.sync.directory.path:C:\\temp\\client}")
     private String syncDirectoryPath;
 
     @Autowired
