@@ -81,6 +81,20 @@ public class TwoClientsIntTest extends AbstractIntTest {
     }
 
     @Test
+    public void createThenModifyFilesContentTest() throws Exception {
+        Client client1 = initClient(userid).start();
+        Client client2 = initClient(userid).start();
+        createFile(client1.syncDirectory.resolve("dummy.txt"), "dummy content", 500L, 600L);
+        createFile(client1.syncDirectory.resolve("dummy.txt"), "dummy content2", 700L, 800L);
+        waitForSyncDone();
+
+        assertTrue(client1.syncDirectory.toFile().list().length == 1);
+        assertTrue(client2.syncDirectory.toFile().list().length == 1);
+        assertEquals("dummy content2", IOUtils.toString(new FileInputStream(client1.syncDirectory.resolve("dummy.txt").toFile())));
+        assertEquals("dummy content2", IOUtils.toString(new FileInputStream(client2.syncDirectory.resolve("dummy.txt").toFile())));
+    }
+
+    @Test
     public void bothClientsCreatesSameFileWithDifferentContentWhileTheyAreOffline() throws Exception {
         Client client1 = initClient(userid);
         Client client2 = initClient(userid);
