@@ -6,7 +6,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.FileInputStream;
-import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
 
 import static org.junit.Assert.assertEquals;
@@ -15,8 +14,6 @@ import static org.junit.Assert.assertTrue;
 public class TwoClientsIntTest extends AbstractIntTest {
 
     private String userid = "100000";
-    private Path client1Directory;
-    private Path client2Directory;
 
     @Before
     public void initServerWith2Clients() throws Exception {
@@ -24,37 +21,32 @@ public class TwoClientsIntTest extends AbstractIntTest {
         resetDB();
     }
 
-    @After
-    public void shutDownServer() {
-        server.close();
-    }
-
     @Test
     public void startTwoClientsAndThenCreateOneFile() throws Exception {
-        client1Directory = startNewClient(userid);
-        client2Directory = startNewClient(userid);
+        Client client1 = initClient(userid).start();
+        Client client2 = initClient(userid).start();
 
-        createFile(client1Directory.resolve("dummy.txt"), "dummy content", FileTime.fromMillis(500L), FileTime.fromMillis(600L));
+        createFile(client1.syncDirectory.resolve("dummy.txt"), "dummy content", FileTime.fromMillis(500L), FileTime.fromMillis(600L));
 
         waitForSyncDone();
 
-        assertTrue(client1Directory.toFile().list().length == 1);
-        assertTrue(client2Directory.toFile().list().length == 1);
-        assertEquals("dummy content", IOUtils.toString(new FileInputStream(client2Directory.resolve("dummy.txt").toFile())));
+        assertTrue(client1.syncDirectory.toFile().list().length == 1);
+        assertTrue(client2.syncDirectory.toFile().list().length == 1);
+        assertEquals("dummy content", IOUtils.toString(new FileInputStream(client2.syncDirectory.resolve("dummy.txt").toFile())));
     }
 
     @Test
     public void startOneClientThenCreateOneFileAndStartSecondClient() throws Exception {
-        client1Directory = startNewClient(userid);
+        Client client1 = initClient(userid).start();
 
-        createFile(client1Directory.resolve("dummy.txt"), "dummy content", FileTime.fromMillis(500L), FileTime.fromMillis(600L));
+        createFile(client1.syncDirectory.resolve("dummy2.txt"), "dummy2 content", FileTime.fromMillis(500L), FileTime.fromMillis(600L));
 
-        client2Directory = startNewClient(userid);
+        Client client2 = initClient(userid).start();
 
         waitForSyncDone();
 
-        assertTrue(client1Directory.toFile().list().length == 1);
-        assertTrue(client2Directory.toFile().list().length == 1);
-        assertEquals("dummy content", IOUtils.toString(new FileInputStream(client2Directory.resolve("dummy.txt").toFile())));
+        assertTrue(client1.syncDirectory.toFile().list().length == 1);
+        assertTrue(client2.syncDirectory.toFile().list().length == 1);
+        assertEquals("dummy2 content", IOUtils.toString(new FileInputStream(client2.syncDirectory.resolve("dummy2.txt").toFile())));
     }
 }

@@ -3,12 +3,14 @@ package com.github.tornaia.sync.e2e;
 import com.github.tornaia.sync.client.win.WinClientApp;
 import com.github.tornaia.sync.client.win.httpclient.FailOnErrorResponseInterceptor;
 import com.github.tornaia.sync.server.ServerApp;
+import jersey.repackaged.com.google.common.collect.Lists;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.junit.After;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +28,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.FileTime;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -49,6 +52,26 @@ public abstract class AbstractIntTest {
     protected final String clientsRootDirectoryPath = "C:\\temp\\e2etests\\";
 
     protected ConfigurableApplicationContext server;
+
+    protected List<Client> clients = Lists.newArrayList();
+
+    @After
+    public void stopServer() {
+        if (!Objects.isNull(server)) {
+            LOG.info("Shutdown server");
+            server.close();
+            server.stop();
+            server = null;
+        } else {
+            LOG.info("No server instance, nothing to shutdown");
+        }
+    }
+
+    @After
+    public void stopClients() {
+        LOG.info("Shutdown all clients");
+        clients.stream().forEach(client -> client.stop());
+    }
 
     protected void startServer() {
         if (!Objects.isNull(server)) {
@@ -90,17 +113,41 @@ public abstract class AbstractIntTest {
         thread.join();
     }
 
-    protected Path startNewClient(String userid) {
-        int id = clientIdGenerator.incrementAndGet();
-        Path clientSyncDirectory = new File(clientsRootDirectoryPath).toPath().resolve("client" + id);
-        createEmptyDirectory(clientSyncDirectory);
-        new SpringApplicationBuilder(WinClientApp.class)
-                .web(false)
-                .headless(false)
-                .run("--client.sync.directory.path=" + clientSyncDirectory.toFile().getAbsolutePath(),
-                        "--frosch-sync.userid=" + userid);
+    public class Client {
 
-        return clientSyncDirectory;
+        public String userid;
+        public Path syncDirectory;
+        private ConfigurableApplicationContext appContext;
+
+        public Client(String userid, Path syncDirectory) {
+            this.userid = userid;
+            this.syncDirectory = syncDirectory;
+        }
+
+        public Client start() {
+            appContext = new SpringApplicationBuilder(WinClientApp.class)
+                    .web(false)
+                    .headless(false)
+                    .run("--client.sync.directory.path=" + syncDirectory.toFile().getAbsolutePath(),
+                            "--frosch-sync.userid=" + userid);
+
+            clients.add(this);
+            LOG.info("Start client for userid: " + userid + ", syncDirectory: " + syncDirectory.toFile().getAbsolutePath());
+            return this;
+        }
+
+        public Client stop() {
+            LOG.info("Stop client for userid: " + userid + ", syncDirectory: " + syncDirectory.toFile().getAbsolutePath());
+            appContext.stop();
+            return this;
+        }
+    }
+
+    protected Client initClient(String userid) {
+        int id = clientIdGenerator.incrementAndGet();
+        Path syncDirectory = new File(clientsRootDirectoryPath).toPath().resolve("client" + id);
+        createEmptyDirectory(syncDirectory);
+        return new Client(userid, syncDirectory);
     }
 
     protected void createFile(Path path, String content, FileTime creationTime, FileTime lastModifiedTime) throws IOException {
