@@ -1,18 +1,34 @@
 package com.github.tornaia.sync.shared.api;
 
-public class UpdateFileRequest extends FileModificationRequest {
+public class UpdateFileRequest extends AbstractRequest {
 
-    // TODO if its used by only tests then create a builder in the test folder and do not add production code only used by tests
-    // and if so then the default constructor is not needed any more to be declared explicitly
-    public UpdateFileRequest() {
+    private String userid;
+
+    private long creationDateTime;
+
+    private long modificationDateTime;
+
+    public String getUserid() {
+        return userid;
     }
 
-    // TODO if its used by only tests then create a builder in the test folder and do not add production code only used by tests
-    // and if so then the default constructor is not needed any more to be declared explicitly
-    public UpdateFileRequest(String userId, long creationDateTime, long modificationDateTime) {
-        this.userId = userId;
+    public void setUserid(String userid) {
+        this.userid = userid;
+    }
+
+    public long getCreationDateTime() {
+        return creationDateTime;
+    }
+
+    public void setCreationDateTime(Long creationDateTime) {
         this.creationDateTime = creationDateTime;
+    }
+
+    public long getModificationDateTime() {
+        return modificationDateTime;
+    }
+
+    public void setModificationDateTime(Long modificationDateTime) {
         this.modificationDateTime = modificationDateTime;
     }
-
 }

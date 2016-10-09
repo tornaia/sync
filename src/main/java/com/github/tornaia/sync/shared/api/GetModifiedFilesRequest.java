@@ -1,28 +1,23 @@
 package com.github.tornaia.sync.shared.api;
 
-import javax.validation.constraints.NotNull;
-
-/**
- * Created by Bence on 07-Oct-16.
- */
 public class GetModifiedFilesRequest extends AbstractRequest {
 
-    @NotNull
-    private Long modTs;
+    private String userid;
+    private long modTs;
 
-    public GetModifiedFilesRequest() {
+    public String getUserid() {
+        return userid;
     }
 
-    public GetModifiedFilesRequest(String userId, Long modTs) {
-        this.userId = userId;
-        this.modTs = modTs;
+    public void setUserid(String userid) {
+        this.userid = userid;
     }
 
     public long getModTs() {
         return modTs;
     }
 
-    public void setModTs(Long modTs) {
+    public void setModTs(long modTs) {
         this.modTs = modTs;
     }
 }

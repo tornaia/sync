@@ -1,17 +1,34 @@
 package com.github.tornaia.sync.shared.api;
 
-// TODO Create should not inherint from modification. do not use inheritance
-public class CreateFileRequest extends FileModificationRequest {
+public class CreateFileRequest extends AbstractRequest {
 
-    // TODO if its used by only tests then create a builder in the test folder and do not add production code only used by tests
-    // and if so then the default constructor is not needed any more to be declared explicitly
-    public CreateFileRequest() {
+    private String userid;
+
+    private long creationDateTime;
+
+    private long modificationDateTime;
+
+    public String getUserid() {
+        return userid;
     }
 
-    // TODO if its used by only tests then create a builder in the test folder and do not add production code only used by tests
-    public CreateFileRequest(String userId, long creationDateTime, long modificationDateTime) {
-        this.userId = userId;
+    public void setUserid(String userid) {
+        this.userid = userid;
+    }
+
+    public long getCreationDateTime() {
+        return creationDateTime;
+    }
+
+    public void setCreationDateTime(Long creationDateTime) {
         this.creationDateTime = creationDateTime;
+    }
+
+    public long getModificationDateTime() {
+        return modificationDateTime;
+    }
+
+    public void setModificationDateTime(Long modificationDateTime) {
         this.modificationDateTime = modificationDateTime;
     }
 }
