@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.context.event.ContextStoppedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
@@ -35,23 +36,32 @@ public class SyncWebSocketKeepAliveService {
     @Autowired
     private RemoteReaderService remoteReaderService;
 
+    private volatile boolean contextIsRunning;
+
     @EventListener({ContextRefreshedEvent.class})
-    public void contextRefreshedEvent() {
+    public void onContextStartedEvent() {
         LOG.info("Context refreshed event happened");
+        contextIsRunning = true;
         reconnect();
+    }
+
+    @EventListener({ContextStoppedEvent.class})
+    public void onContextStoppedEvent() {
+        LOG.info("Context closed event happened");
+        contextIsRunning = false;
     }
 
     public void reconnect() {
         WebSocketContainer container = ContainerProvider.getWebSocketContainer();
         Thread thread = new Thread(() -> {
-            while (true) {
+            while (contextIsRunning) {
                 try {
-                    LOG.info("Reconnecting webSocket...");
+                    LOG.debug("WebSocket connection retry...");
                     container.connectToServer(remoteReaderService, URI.create(getWebSocketUri()));
-                    LOG.info("Successfully connected to webSocket!");
+                    LOG.info("WebSocket successfully connected");
                     break;
                 } catch (Exception e) {
-                    LOG.warn("Failed to connect to webSocket!");
+                    LOG.warn("WebSocket connection problem: ", e.getMessage());
                     try {
                         Thread.sleep(2000L);
                     } catch (InterruptedException ie) {
@@ -59,6 +69,7 @@ public class SyncWebSocketKeepAliveService {
                     }
                 }
             }
+            LOG.info("WebSocket keep-alive service fades out since the context is not running");
         });
         thread.setDaemon(true);
         thread.start();
