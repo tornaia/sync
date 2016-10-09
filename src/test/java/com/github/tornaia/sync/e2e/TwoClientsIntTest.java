@@ -1,6 +1,7 @@
 package com.github.tornaia.sync.e2e;
 
 import org.apache.commons.io.IOUtils;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -26,7 +27,12 @@ public class TwoClientsIntTest extends AbstractIntTest {
         client1Directory = startNewClient(userid);
         client2Directory = startNewClient(userid);
     }
-    
+
+    @After
+    public void shutDownServer() {
+        server.close();
+    }
+
     @Test
     public void bothCanStart() throws Exception {
         createFile(client1Directory.resolve("dummy.txt"), "dummy content", FileTime.fromMillis(500L), FileTime.fromMillis(600L));
