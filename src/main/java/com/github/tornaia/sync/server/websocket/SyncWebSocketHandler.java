@@ -90,7 +90,7 @@ public class SyncWebSocketHandler extends TextWebSocketHandler {
                         LOG.info("Notifying session " + session.getId() + " about a new event: " + remoteFileEvent);
                         ObjectMapper mapper = new ObjectMapper();
                         // TODO move object mapper to a common place and write a test String, int -> "xx", 34 but should be "xx", "34" otherwise client will not able to parse it
-                        // or maybe works, I dont know at the moment
+                        // or maybe works, I don't know at the moment
                         mapper.configure(JsonGenerator.Feature.WRITE_NUMBERS_AS_STRINGS, true);
                         String remoteFileEventAsJson = mapper.writeValueAsString(remoteFileEvent);
                         // TODO  here we send messages in synchronous way I guess... thats baaad.
