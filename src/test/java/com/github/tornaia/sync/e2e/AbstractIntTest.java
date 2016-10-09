@@ -150,14 +150,14 @@ public abstract class AbstractIntTest {
         return new Client(userid, syncDirectory);
     }
 
-    protected void createFile(Path path, String content, FileTime creationTime, FileTime lastModifiedTime) throws IOException {
+    protected void createFile(Path path, String content, long creationTime, long lastModifiedTime) throws IOException {
         Path tempFile = Files.createTempFile(UUID.randomUUID().toString(), "suffix");
         try (FileOutputStream fos = new FileOutputStream(tempFile.toFile())) {
             IOUtils.write(content, fos);
         }
 
-        Files.setAttribute(tempFile, "basic:creationTime", creationTime);
-        Files.setAttribute(tempFile, "basic:lastModifiedTime", lastModifiedTime);
+        setCreationTime(tempFile, creationTime);
+        setLastModifiedTime(tempFile, lastModifiedTime);
         Files.move(tempFile, path, StandardCopyOption.ATOMIC_MOVE);
     }
 
@@ -177,5 +177,13 @@ public abstract class AbstractIntTest {
             throw new IllegalStateException("Cannot create an empty for client", e);
         }
         clientsRootDirectory.mkdirs();
+    }
+
+    private static void setCreationTime(Path path, long creationDateTime) throws IOException {
+        Files.setAttribute(path, "basic:creationTime", FileTime.fromMillis(creationDateTime));
+    }
+
+    private static void setLastModifiedTime(Path path, long modificationDateTime) throws IOException {
+        Files.setAttribute(path, "basic:lastModifiedTime", FileTime.fromMillis(modificationDateTime));
     }
 }
