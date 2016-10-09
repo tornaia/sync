@@ -22,9 +22,6 @@ public class TwoClientsIntTest extends AbstractIntTest {
     public void initServerWith2Clients() throws Exception {
         startServer();
         resetDB();
-
-        client1Directory = startNewClient(userid);
-        client2Directory = startNewClient(userid);
     }
 
     @After
@@ -33,8 +30,26 @@ public class TwoClientsIntTest extends AbstractIntTest {
     }
 
     @Test
-    public void bothCanStart() throws Exception {
+    public void startTwoClientsAndThenCreateOneFile() throws Exception {
+        client1Directory = startNewClient(userid);
+        client2Directory = startNewClient(userid);
+
         createFile(client1Directory.resolve("dummy.txt"), "dummy content", FileTime.fromMillis(500L), FileTime.fromMillis(600L));
+
+        waitForSyncDone();
+
+        assertTrue(client1Directory.toFile().list().length == 1);
+        assertTrue(client2Directory.toFile().list().length == 1);
+        assertEquals("dummy content", IOUtils.toString(new FileInputStream(client2Directory.resolve("dummy.txt").toFile())));
+    }
+
+    @Test
+    public void startOneClientThenCreateOneFileAndStartSecondClient() throws Exception {
+        client1Directory = startNewClient(userid);
+
+        createFile(client1Directory.resolve("dummy.txt"), "dummy content", FileTime.fromMillis(500L), FileTime.fromMillis(600L));
+
+        client2Directory = startNewClient(userid);
 
         waitForSyncDone();
 
