@@ -20,6 +20,20 @@ public class TwoClientsIntTest extends AbstractIntTest {
     }
 
     @Test
+    public void uglyFilenameWithUglyContentTest() throws Exception {
+        Client client1 = initClient(userid).start();
+        Client client2 = initClient(userid).start();
+        String uglyFilename = ""+(char)10000;
+        createFile(client1.syncDirectory.resolve(uglyFilename), "\r", 500L, 600L);
+        waitForSyncDone();
+        stopClients();
+
+        assertTrue(client1.syncDirectory.toFile().list().length == 1);
+        assertTrue(client2.syncDirectory.toFile().list().length == 1);
+        assertEquals("\r", IOUtils.toString(new FileInputStream(client2.syncDirectory.resolve(uglyFilename).toFile())));
+    }
+
+    @Test
     public void startTwoClientsAndThenCreateOneFile() throws Exception {
         Client client1 = initClient(userid).start();
         Client client2 = initClient(userid).start();
