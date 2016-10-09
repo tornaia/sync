@@ -33,6 +33,9 @@ public class SyncWebSocketKeepAliveService {
     @Value("${frosch-sync.userid:7247234}")
     private String userid;
 
+    @Value("${client.sync.directory.path:C:\\temp\\client\\}")
+    private String syncDirectoryPath;
+
     @Autowired
     private RemoteReaderService remoteReaderService;
 
@@ -56,14 +59,14 @@ public class SyncWebSocketKeepAliveService {
         Thread thread = new Thread(() -> {
             while (contextIsRunning) {
                 try {
-                    LOG.debug("WebSocket connection retry...");
+                    LOG.trace("WebSocket connection retry...");
                     container.connectToServer(remoteReaderService, URI.create(getWebSocketUri()));
                     LOG.info("WebSocket successfully connected");
                     break;
                 } catch (Exception e) {
                     LOG.warn("WebSocket connection problem: ", e.getMessage());
                     try {
-                        Thread.sleep(2000L);
+                        Thread.sleep(1000L);
                     } catch (InterruptedException ie) {
                         LOG.warn("Sleep interrupted", ie);
                     }
@@ -72,6 +75,7 @@ public class SyncWebSocketKeepAliveService {
             LOG.info("WebSocket keep-alive service fades out since the context is not running");
         });
         thread.setDaemon(true);
+        thread.setName(userid + "-" + syncDirectoryPath.substring(syncDirectoryPath.length() - 1) + "-WSKpAl");
         thread.start();
     }
 

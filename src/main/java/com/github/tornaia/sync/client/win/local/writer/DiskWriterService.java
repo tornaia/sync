@@ -1,5 +1,6 @@
 package com.github.tornaia.sync.client.win.local.writer;
 
+import com.github.tornaia.sync.client.win.util.FileUtils;
 import com.github.tornaia.sync.client.win.util.RandomUtils;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -7,13 +8,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.nio.file.attribute.FileTime;
 import java.util.Optional;
 
 @Component
@@ -23,6 +22,9 @@ public class DiskWriterService {
 
     @Autowired
     private RandomUtils randomUtils;
+
+    @Autowired
+    private FileUtils fileUtils;
 
     public Optional<Path> createTempFile(byte[] fileContent, long creationDateTime, long modificationDateTime) {
         Path tempFile;
@@ -41,8 +43,8 @@ public class DiskWriterService {
         }
 
         try {
-            java.nio.file.Files.setAttribute(tempFile, "basic:creationTime", FileTime.fromMillis(creationDateTime));
-            java.nio.file.Files.setAttribute(tempFile, "basic:lastModifiedTime", FileTime.fromMillis(modificationDateTime));
+            fileUtils.setCreationTime(tempFile, creationDateTime);
+            fileUtils.setLastModifiedTime(tempFile, modificationDateTime);
         } catch (IOException e) {
             LOG.error("Cannot set temporary file's attributes", e);
             return Optional.empty();
@@ -74,20 +76,22 @@ public class DiskWriterService {
             return false;
         }
 
+        try {
+            fileUtils.setCreationTime(absolutePath, creationDateTime);
+            fileUtils.setLastModifiedTime(absolutePath, modificationDateTime);
+        } catch (IOException e) {
+            LOG.error("Cannot set file's attributes", e);
+            return false;
+        }
+
+        LOG.trace("File was written to disk: " + absolutePath.toFile().getAbsolutePath() + ", creationDateTime: " + creationDateTime + ", modificationDateTime: " + modificationDateTime + ", bytes: " + fileContent.length);
         return true;
     }
 
     public boolean replaceFile(Path what, Path with) {
-        Path oldContentNewFilePath = new File(what.toFile().getAbsolutePath() + "_conflict_" + System.currentTimeMillis()).toPath();
+        LOG.trace("Replace " + what.toFile().getAbsolutePath() + " with " + with.toFile().getAbsolutePath());
         try {
-            Files.move(what, oldContentNewFilePath, StandardCopyOption.ATOMIC_MOVE);
-        } catch (IOException e) {
-            LOG.error("Cannot create backup", e);
-            return false;
-        }
-
-        try {
-            Files.move(with, what, StandardCopyOption.ATOMIC_MOVE);
+            Files.move(what, with, StandardCopyOption.ATOMIC_MOVE);
         } catch (IOException e) {
             LOG.error("Cannot write new file", e);
             return false;

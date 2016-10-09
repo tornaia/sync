@@ -1,8 +1,10 @@
 package com.github.tornaia.sync.client.win.local.reader;
 
+import com.github.tornaia.sync.client.win.util.FileUtils;
 import com.github.tornaia.sync.shared.api.FileMetaInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -29,6 +31,9 @@ public class LocalReaderService {
     @Value("${frosch-sync.userid:7247234}")
     private String userid;
 
+    @Autowired
+    private FileUtils fileUtils;
+
     private final List<LocalFileEvent> events = new ArrayList<>();
 
     private WatchService watchService;
@@ -41,17 +46,50 @@ public class LocalReaderService {
         this.syncDirectory = FileSystems.getDefault().getPath(syncDirectoryPath);
         Files.createDirectories(syncDirectory);
         register(syncDirectory);
-        registerChildrenRecursively(syncDirectory);
+        registerChildrenDirectoriesRecursively(syncDirectory);
 
         Thread thread = new Thread(() -> runInBackground());
         thread.setDaemon(true);
+        thread.setName(userid + "-" + syncDirectoryPath.substring(syncDirectoryPath.length() - 1) + "-LocalR");
         thread.start();
+
+        addAllLocalFilesToChangeList(syncDirectory);
+    }
+
+    private void addAllLocalFilesToChangeList(Path root) {
+        try {
+            Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
+                @Override
+                public FileVisitResult postVisitDirectory(Path dir, IOException e) throws IOException {
+                    LOG.warn("Cannot visit directory", e);
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult visitFileFailed(Path file, IOException e) throws IOException {
+                    LOG.warn("Cannot visit file", e);
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                    String relativePath = getRelativePath(file.toFile());
+                    LOG.trace("Visit file: " + relativePath);
+                    // TODO it is not a FileCreatedEvent but more a FileAddedEvent
+                    addNewEvent(new FileCreatedEvent(relativePath));
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public synchronized Optional<LocalFileEvent> getNext() {
         if (events.isEmpty()) {
             return Optional.empty();
         }
+
         return Optional.of(events.remove(0));
     }
 
@@ -107,11 +145,11 @@ public class LocalReaderService {
                 Path ownerPath = (Path) key.watchable();
                 Path filePath = ownerPath.resolve(filename);
                 if (kind == ENTRY_CREATE) {
-                    onFileCreate(filePath);
+                    onFileCreated(filePath);
                 } else if (kind == ENTRY_MODIFY) {
-                    onFileModify(filePath);
+                    onFileModified(filePath);
                 } else if (kind == ENTRY_DELETE) {
-                    onFileDelete(filePath);
+                    onFileDeleted(filePath);
                 }
 
                 boolean valid = key.reset();
@@ -124,39 +162,42 @@ public class LocalReaderService {
         }
     }
 
-    private void onFileCreate(Path filePath) {
+    private void onFileCreated(Path filePath) {
         File file = filePath.toFile();
         String relativePath = getRelativePath(file);
 
         if (file.isFile()) {
+            LOG.info("File created event: " + fileUtils.getDescriptionForFile(file));
             addNewEvent(new FileCreatedEvent(relativePath));
         } else if (file.isDirectory()) {
-            registerChildrenRecursively(filePath.toAbsolutePath());
+            registerChildrenDirectoriesRecursively(filePath.toAbsolutePath());
         } else {
-            LOG.info("Creation event of an unknown file type. File/directory does not exist? " + file);
+            LOG.info("Created event of an unknown file type. File/directory does not exist? " + file);
         }
     }
 
-    private void onFileModify(Path filePath) {
+    private void onFileModified(Path filePath) {
         File file = filePath.toFile();
         if (file.isDirectory()) {
             return;
         } else if (file.isFile()) {
             String relativePath = getRelativePath(file);
+            LOG.info("File modified event: " + fileUtils.getDescriptionForFile(file));
             addNewEvent(new FileModifiedEvent(relativePath));
         } else {
-            LOG.info("Modification event of an unknown file type. File/directory does not exist? " + file);
+            LOG.info("Modified event of an unknown file type. File/directory does not exist? " + file);
         }
     }
 
-    private void onFileDelete(Path filePath) {
+    private void onFileDeleted(Path filePath) {
         File file = filePath.toFile();
         if (file.exists()) {
-            LOG.info("Delete event of a non-existing file: " + file);
+            LOG.info("Deleted event of a non-existing file: " + file);
             return;
         }
 
         String relativePath = getRelativePath(file);
+        LOG.info("File deleted event: " + relativePath);
         addNewEvent(new FileDeleteEvent(relativePath));
     }
 
@@ -168,7 +209,7 @@ public class LocalReaderService {
         }
     }
 
-    private void registerChildrenRecursively(Path root) {
+    private void registerChildrenDirectoriesRecursively(Path root) {
         try {
             Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
                 @Override
@@ -189,9 +230,8 @@ public class LocalReaderService {
         }
     }
 
-    // always without leading slash
-    private String getRelativePath(File directory) {
-        return directory.getAbsolutePath().substring(new File(syncDirectoryPath).getAbsolutePath().length() + 1);
+    private String getRelativePath(File file) {
+        return syncDirectory.relativize(file.toPath()).toString();
     }
 
     private Path getAbsolutePath(String relativePath) {

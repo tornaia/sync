@@ -1,5 +1,7 @@
 package com.github.tornaia.sync.client.win.remote.writer;
 
+import com.github.tornaia.sync.client.win.local.writer.DiskWriterService;
+import com.github.tornaia.sync.client.win.remote.RemoteKnownState;
 import com.github.tornaia.sync.shared.api.FileMetaInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,6 +29,12 @@ public class RemoteWriterService {
     @Autowired
     private RemoteRestCommandService remoteRestCommandService;
 
+    @Autowired
+    private DiskWriterService diskWriterService;
+
+    @Autowired
+    private RemoteKnownState remoteKnownState;
+
     private Path syncDirectory;
 
     @PostConstruct
@@ -46,8 +54,33 @@ public class RemoteWriterService {
             return false;
         }
 
+        if (remoteKnownState.isKnown(fileMetaInfo)) {
+            LOG.info("File is already known by server: " + fileMetaInfo);
+            return true;
+        }
+
         FileCreateResponse fileCreateResponse = remoteRestCommandService.onFileCreate(fileMetaInfo, file);
-        return Objects.equals(FileCreateResponse.Status.OK, fileCreateResponse.status);
+        boolean ok = Objects.equals(FileCreateResponse.Status.OK, fileCreateResponse.status);
+        if (ok) {
+            LOG.info("File uploaded to server: " + fileCreateResponse.fileMetaInfo);
+            return true;
+        }
+
+        boolean conflict = Objects.equals(FileCreateResponse.Status.CONFLICT, fileCreateResponse.status);
+        if (conflict) {
+            // TODO move this conflict file name creation to a separate object
+            String originalFileName = absolutePath.toFile().getAbsolutePath();
+            boolean hasExtension = originalFileName.indexOf('.') != -1;
+            String postFix = "_conflict_" + fileMetaInfo.length + "_" + fileMetaInfo.creationDateTime + "_" + fileMetaInfo.modificationDateTime;
+            String conflictFileName = hasExtension ? originalFileName.split("\\.", 2)[0] + postFix + "." + originalFileName.split("\\.", 2)[1] : originalFileName + postFix;
+            // TODO what should happen when this renamed/conflictFileName file exists?
+            Path renamed = new File(absolutePath.toFile().getParentFile().getAbsolutePath()).toPath().resolve(conflictFileName);
+            LOG.warn("File already exists on server. Renaming " + absolutePath + " -> " + renamed);
+            diskWriterService.replaceFile(absolutePath, renamed);
+            return false;
+        }
+
+        return false;
     }
 
     private Path getAbsolutePath(String relativePath) {
