@@ -3,6 +3,7 @@ package com.github.tornaia.sync.client.win.remote.writer;
 import com.github.tornaia.sync.client.win.httpclient.HttpClientProvider;
 import com.github.tornaia.sync.client.win.util.SerializerUtils;
 import com.github.tornaia.sync.shared.api.CreateFileRequest;
+import com.github.tornaia.sync.shared.api.CreateFileRequestBuilder;
 import com.github.tornaia.sync.shared.api.FileMetaInfo;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHeaders;
@@ -45,13 +46,19 @@ public class RemoteRestCommandService {
     private SerializerUtils serializerUtils;
 
     public FileCreateResponse onFileCreate(FileMetaInfo fileMetaInfo, File file) {
+        CreateFileRequest createFileRequest = new CreateFileRequestBuilder()
+                .userid(userid)
+                .creationDateTime(fileMetaInfo.creationDateTime)
+                .modificationDateTime(fileMetaInfo.modificationDateTime)
+                .create();
+
         HttpEntity multipart = MultipartEntityBuilder
                 .create()
                 .setCharset(StandardCharsets.UTF_8)
                 .setMode(HttpMultipartMode.BROWSER_COMPATIBLE)
                 .setContentType(ContentType.MULTIPART_FORM_DATA)
                 .addPart(generateJsonFormBodyPart("fileAttributes",
-                        serializerUtils.toJSON(new CreateFileRequest(userid, fileMetaInfo.creationDateTime, fileMetaInfo.modificationDateTime))))
+                        serializerUtils.toJSON(createFileRequest)))
                 .addPart(FormBodyPartBuilder.create()
                         .setName("file")
                         .setBody(new FileBody(file, ContentType.APPLICATION_OCTET_STREAM, fileMetaInfo.relativePath))
