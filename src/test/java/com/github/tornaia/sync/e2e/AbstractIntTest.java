@@ -35,6 +35,8 @@ public abstract class AbstractIntTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(AbstractIntTest.class);
 
+    private static final AtomicInteger clientIdGenerator = new AtomicInteger();
+
     @Value("#{systemProperties['server.scheme.http'] ?: 'http'}")
     private String serverSchemeHttp;
 
@@ -43,10 +45,6 @@ public abstract class AbstractIntTest {
 
     @Value("#{systemProperties['server.port'] ?: '8080'}")
     private int serverPort;
-
-    private final AtomicInteger clientIdGenerator = new AtomicInteger();
-
-    protected final long userid = System.currentTimeMillis();
 
     protected final String clientsRootDirectoryPath = "C:\\temp\\e2etests\\";
 
@@ -92,19 +90,10 @@ public abstract class AbstractIntTest {
         thread.join();
     }
 
-    protected void resetClientsFolder() {
-        File clientsRootDirectory = new File(clientsRootDirectoryPath);
-        try {
-            FileUtils.deleteDirectory(clientsRootDirectory);
-        } catch (IOException e) {
-            throw new IllegalStateException("Cannot reset clients' folder", e);
-        }
-        clientsRootDirectory.mkdirs();
-    }
-
     protected Path startNewClient(String userid) {
         int id = clientIdGenerator.incrementAndGet();
         Path clientSyncDirectory = new File(clientsRootDirectoryPath).toPath().resolve("client" + id);
+        createEmptyDirectory(clientSyncDirectory);
         new SpringApplicationBuilder(WinClientApp.class)
                 .web(false)
                 .headless(false)
@@ -131,5 +120,15 @@ public abstract class AbstractIntTest {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private static void createEmptyDirectory(Path path) {
+        File clientsRootDirectory = path.toFile();
+        try {
+            FileUtils.deleteDirectory(clientsRootDirectory);
+        } catch (IOException e) {
+            throw new IllegalStateException("Cannot create an empty for client", e);
+        }
+        clientsRootDirectory.mkdirs();
     }
 }

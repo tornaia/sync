@@ -22,7 +22,6 @@ public class TwoClientsIntTest extends AbstractIntTest {
     public void initServerWith2Clients() throws Exception {
         startServer();
         resetDB();
-        resetClientsFolder();
 
         client1Directory = startNewClient(userid);
         client2Directory = startNewClient(userid);
