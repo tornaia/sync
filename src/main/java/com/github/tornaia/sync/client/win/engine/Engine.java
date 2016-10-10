@@ -142,7 +142,7 @@ public class Engine {
                     LOG.info("File is in sync with server: " + relativePath);
                 } else {
                     LOG.warn("File cannot synced with server: " + relativePath);
-                    // TODO hint localReaderService to re-scan concrete directory
+                    localReaderService.addEvent(localEvent);
                 }
                 break;
             default:

@@ -56,35 +56,6 @@ public class LocalReaderService {
         addAllLocalFilesToChangeList(syncDirectory);
     }
 
-    private void addAllLocalFilesToChangeList(Path root) {
-        try {
-            Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
-                @Override
-                public FileVisitResult postVisitDirectory(Path dir, IOException e) throws IOException {
-                    LOG.warn("Cannot visit directory: " + dir, e);
-                    return FileVisitResult.CONTINUE;
-                }
-
-                @Override
-                public FileVisitResult visitFileFailed(Path file, IOException e) throws IOException {
-                    LOG.warn("Cannot visit file", e);
-                    return FileVisitResult.CONTINUE;
-                }
-
-                @Override
-                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                    String relativePath = getRelativePath(file.toFile());
-                    LOG.trace("Visit file: " + relativePath);
-                    // TODO it is not a FileCreatedEvent but more a FileAddedEvent
-                    addNewEvent(new FileCreatedEvent(relativePath));
-                    return FileVisitResult.CONTINUE;
-                }
-            });
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     public synchronized Optional<LocalFileEvent> getNext() {
         if (events.isEmpty()) {
             return Optional.empty();
@@ -113,11 +84,45 @@ public class LocalReaderService {
         return absolutePath.toFile().exists();
     }
 
+    public void addEvent(LocalFileEvent localFileEvent) {
+        LOG.info("External hint to do some action: " + localFileEvent);
+        addNewEvent(localFileEvent);
+    }
+
     private synchronized void addNewEvent(LocalFileEvent localFileEvent) {
         // TODO later here we can combine events to optimize things like:
         // create-delete (same path) -> nothing
         // create-delete-create (same path) -> last create only
         events.add(localFileEvent);
+    }
+
+    private void addAllLocalFilesToChangeList(Path root) {
+        try {
+            Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
+                @Override
+                public FileVisitResult postVisitDirectory(Path dir, IOException e) throws IOException {
+                    LOG.warn("Cannot visit directory: " + dir, e);
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult visitFileFailed(Path file, IOException e) throws IOException {
+                    LOG.warn("Cannot visit file", e);
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                    String relativePath = getRelativePath(file.toFile());
+                    LOG.trace("Visit file: " + relativePath);
+                    // TODO it is not a FileCreatedEvent but more a FileAddedEvent
+                    addNewEvent(new FileCreatedEvent(relativePath));
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private void runInBackground() {
