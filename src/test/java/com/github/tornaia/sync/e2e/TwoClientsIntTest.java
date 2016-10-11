@@ -3,13 +3,23 @@ package com.github.tornaia.sync.e2e;
 import org.apache.commons.io.IOUtils;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import java.io.FileInputStream;
+import java.util.Arrays;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+@RunWith(Parameterized.class)
 public class TwoClientsIntTest extends AbstractIntTest {
+
+    @Parameterized.Parameters
+    public static List<Object[]> data() {
+        return Arrays.asList(new Object[1][0]);
+    }
 
     private String userid = "100002";
 
@@ -94,6 +104,22 @@ public class TwoClientsIntTest extends AbstractIntTest {
         assertEquals("dummy content2", IOUtils.toString(new FileInputStream(client2.syncDirectory.resolve("dummy.txt").toFile())));
     }
 
+    @Test
+    public void createThenModifyFilesContentInAnotherClientTest() throws Exception {
+        Client client1 = initClient(userid).start();
+        Client client2 = initClient(userid).start();
+        createFile(client1.syncDirectory.resolve("dummy.txt"), "dummy content", 500L, 600L);
+        waitForSyncDone();
+        createFile(client2.syncDirectory.resolve("dummy.txt"), "dummy content2", 700L, 800L);
+        waitForSyncDone();
+
+        assertTrue(client1.syncDirectory.toFile().list().length == 1);
+        assertTrue(client2.syncDirectory.toFile().list().length == 1);
+        assertEquals("dummy content2", IOUtils.toString(new FileInputStream(client1.syncDirectory.resolve("dummy.txt").toFile())));
+        assertEquals("dummy content2", IOUtils.toString(new FileInputStream(client2.syncDirectory.resolve("dummy.txt").toFile())));
+    }
+
+    // @Repeat(1000)
     @Test
     public void bothClientsCreatesSameFileWithDifferentContentWhileTheyAreOffline() throws Exception {
         Client client1 = initClient(userid);

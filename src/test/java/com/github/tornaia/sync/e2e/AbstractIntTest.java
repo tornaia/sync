@@ -151,7 +151,8 @@ public abstract class AbstractIntTest {
     }
 
     protected void createFile(Path path, String content, long creationTime, long lastModifiedTime) throws IOException {
-        Path tempFile = Files.createTempFile(UUID.randomUUID().toString(), "suffix");
+        String tmpDir = System.getProperty("java.io.tmpdir");
+        Path tempFile = Files.createFile(new File(tmpDir).toPath().resolve(UUID.randomUUID().toString()));
         try (FileOutputStream fos = new FileOutputStream(tempFile.toFile())) {
             IOUtils.write(content, fos);
         }
