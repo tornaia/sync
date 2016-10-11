@@ -64,7 +64,7 @@ public class SyncWebSocketKeepAliveService {
                     LOG.info("WebSocket successfully connected");
                     break;
                 } catch (Exception e) {
-                    LOG.warn("WebSocket connection problem: ", e.getMessage());
+                    LOG.warn("WebSocket connection problem: " + e.getMessage());
                     try {
                         Thread.sleep(1000L);
                     } catch (InterruptedException ie) {

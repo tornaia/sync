@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -29,7 +30,7 @@ public class DiskWriterService {
     public Optional<Path> createTempFile(byte[] fileContent, long creationDateTime, long modificationDateTime) {
         Path tempFile;
         try {
-            tempFile = Files.createTempFile(randomUtils.getRandomString(), "suffix");
+            tempFile = fileUtils.createWorkFile();
         } catch (IOException e) {
             LOG.error("Cannot create temporary file", e);
             return Optional.empty();
@@ -88,12 +89,12 @@ public class DiskWriterService {
         return true;
     }
 
-    public boolean replaceFile(Path what, Path with) {
-        LOG.trace("Replace " + what.toFile().getAbsolutePath() + " with " + with.toFile().getAbsolutePath());
+    public boolean replaceFileAtomically(Path source, Path target) {
+        LOG.trace("Replace " + target.toFile().getAbsolutePath() + " with " + source.toFile().getAbsolutePath());
         try {
-            Files.move(what, with, StandardCopyOption.ATOMIC_MOVE);
+            Files.move(source, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
-            LOG.error("Cannot write new file", e);
+            LOG.error("Cannot write target file", e);
             return false;
         }
         return true;

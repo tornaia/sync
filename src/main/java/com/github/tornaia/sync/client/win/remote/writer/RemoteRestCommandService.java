@@ -1,10 +1,10 @@
 package com.github.tornaia.sync.client.win.remote.writer;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.tornaia.sync.client.win.ClientidService;
 import com.github.tornaia.sync.client.win.httpclient.HttpClientProvider;
 import com.github.tornaia.sync.client.win.util.SerializerUtils;
-import com.github.tornaia.sync.shared.api.CreateFileRequest;
-import com.github.tornaia.sync.shared.api.CreateFileRequestBuilder;
-import com.github.tornaia.sync.shared.api.FileMetaInfo;
+import com.github.tornaia.sync.shared.api.*;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
@@ -43,6 +43,9 @@ public class RemoteRestCommandService {
     private HttpClientProvider httpClientProvider;
 
     @Autowired
+    private ClientidService clientidService;
+
+    @Autowired
     private SerializerUtils serializerUtils;
 
     public FileCreateResponse onFileCreate(FileMetaInfo fileMetaInfo, File file) {
@@ -65,7 +68,8 @@ public class RemoteRestCommandService {
                         .build())
                 .build();
 
-        HttpPost httpPost = new HttpPost(httpClientProvider.getServerUrl() + FILE_PATH + "?userid=" + userid + "&creationDateTime=" + fileMetaInfo.creationDateTime + "&modificationDateTime=" + fileMetaInfo.modificationDateTime);
+        // TODO query params are not needed anymore
+        HttpPost httpPost = new HttpPost(httpClientProvider.getServerUrl() + FILE_PATH + "?userid=" + userid + "&creationDateTime=" + fileMetaInfo.creationDateTime + "&modificationDateTime=" + fileMetaInfo.modificationDateTime + "&clientid=" + clientidService.clientid);
         httpPost.setEntity(multipart);
 
         HttpResponse response;
@@ -82,35 +86,69 @@ public class RemoteRestCommandService {
             return FileCreateResponse.conflict(fileMetaInfo);
         }
 
-        return FileCreateResponse.ok(fileMetaInfo);
+        FileMetaInfo remoteFileMetaInfo;
+        try {
+            remoteFileMetaInfo = new ObjectMapper().readValue(response.getEntity().getContent(), FileMetaInfo.class);
+        } catch (IOException e) {
+            throw new RuntimeException("Unexpected response", e);
+        }
+
+        return FileCreateResponse.ok(remoteFileMetaInfo);
     }
 
-    public FileCreateResponse onFileModify(FileMetaInfo fileMetaInfo, File file) {
+    public FileModifyResponse onFileModify(FileMetaInfo fileMetaInfo, File file) {
+        UpdateFileRequest updateFileRequest = new UpdateFileRequestBuilder()
+                .userid(userid)
+                .creationDateTime(fileMetaInfo.creationDateTime)
+                .modificationDateTime(fileMetaInfo.modificationDateTime)
+                .create();
+
         HttpEntity multipart = MultipartEntityBuilder
                 .create()
-                .addBinaryBody("file", file, ContentType.APPLICATION_OCTET_STREAM, fileMetaInfo.relativePath)
+                .setCharset(StandardCharsets.UTF_8)
+                .setMode(HttpMultipartMode.BROWSER_COMPATIBLE)
+                .setContentType(ContentType.MULTIPART_FORM_DATA)
+                .addPart(generateJsonFormBodyPart("fileAttributes",
+                        serializerUtils.toJSON(updateFileRequest)))
+                .addPart(FormBodyPartBuilder.create()
+                        .setName("file")
+                        .setBody(new FileBody(file, ContentType.APPLICATION_OCTET_STREAM, fileMetaInfo.relativePath))
+                        .build())
                 .build();
 
-        HttpPut httpPut = new HttpPut(httpClientProvider.getServerUrl() + FILE_PATH + "/" + fileMetaInfo.id + "?userid=" + userid + "&creationDateTime=" + fileMetaInfo.creationDateTime + "&modificationDateTime=" + fileMetaInfo.modificationDateTime);
+        HttpPut httpPut = new HttpPut(httpClientProvider.getServerUrl() + FILE_PATH + "/" + fileMetaInfo.id + "?clientid=" + clientidService.clientid);
         httpPut.setEntity(multipart);
 
         HttpResponse response;
         try {
             response = httpClientProvider.get().execute(httpPut);
         } catch (FileNotFoundException e) {
-            LOG.info("File disappeared meanwhile it was under upload(put)? " + e.getMessage());
-            return FileCreateResponse.transferFailed(fileMetaInfo, e.getMessage());
+            LOG.info("File disappeared meanwhile it was under upload(post)? " + e.getMessage());
+            return FileModifyResponse.transferFailed(fileMetaInfo, e.getMessage());
         } catch (IOException e) {
-            return FileCreateResponse.transferFailed(fileMetaInfo, e.getMessage());
+            return FileModifyResponse.transferFailed(fileMetaInfo, e.getMessage());
         }
 
-        FileMetaInfo syncedFileMetaInfo = serializerUtils.toObject(response.getEntity(), FileMetaInfo.class);
-        LOG.info("PUT file: " + syncedFileMetaInfo);
-        return FileCreateResponse.ok(syncedFileMetaInfo);
+        if (Objects.equals(response.getStatusLine().getStatusCode(), HttpStatus.SC_CONFLICT)) {
+            return FileModifyResponse.conflict(fileMetaInfo);
+        }
+
+        if (Objects.equals(response.getStatusLine().getStatusCode(), HttpStatus.SC_NOT_FOUND)) {
+            return FileModifyResponse.notFound(fileMetaInfo);
+        }
+
+        FileMetaInfo remoteFileMetaInfo;
+        try {
+            remoteFileMetaInfo = new ObjectMapper().readValue(response.getEntity().getContent(), FileMetaInfo.class);
+        } catch (IOException e) {
+            throw new RuntimeException("Unexpected response", e);
+        }
+
+        return FileModifyResponse.ok(remoteFileMetaInfo);
     }
 
     public void onFileDelete(FileMetaInfo fileMetaInfo) {
-        HttpDelete httpDelete = new HttpDelete(httpClientProvider.getServerUrl() + FILE_PATH + "/" + fileMetaInfo.id + "?userid=" + userid);
+        HttpDelete httpDelete = new HttpDelete(httpClientProvider.getServerUrl() + FILE_PATH + "/" + fileMetaInfo.id + "?userid=" + userid + "&clientid=" + clientidService.clientid);
         httpDelete.setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
 
         try {

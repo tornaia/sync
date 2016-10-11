@@ -15,6 +15,7 @@ import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
@@ -34,7 +35,7 @@ public class LocalReaderService {
     @Autowired
     private FileUtils fileUtils;
 
-    private final List<LocalFileEvent> events = new ArrayList<>();
+    private List<LocalFileEvent> events = new ArrayList<>();
 
     private WatchService watchService;
 
@@ -84,9 +85,26 @@ public class LocalReaderService {
         return absolutePath.toFile().exists();
     }
 
-    public void addEvent(LocalFileEvent localFileEvent) {
-        LOG.info("External hint to do some action: " + localFileEvent);
-        addNewEvent(localFileEvent);
+    public void readdEvent(LocalFileEvent localFileEvent) {
+        if (Objects.equals(localFileEvent.eventType, LocalEventType.DELETED)) {
+            LOG.warn("Does not make sense to re-add DELETED local event to LocalReaderService");
+            return;
+        }
+        if (syncDirectory.resolve(localFileEvent.relativePath).toFile().exists()) {
+            LOG.debug("External hint to re-add event: " + localFileEvent);
+            addNewEvent(localFileEvent);
+        } else {
+            LOG.warn("Cannot re-add event since file does not exist: " + localFileEvent);
+        }
+    }
+
+    public void readdEvent(FileModifiedEvent fileModifiedEvent) {
+        if (syncDirectory.resolve(fileModifiedEvent.relativePath).toFile().exists()) {
+            LOG.debug("External hint to re-add event: " + fileModifiedEvent);
+            addNewEvent(fileModifiedEvent);
+        } else {
+            LOG.warn("Cannot re-add event since file does not exist: " + fileModifiedEvent);
+        }
     }
 
     private synchronized void addNewEvent(LocalFileEvent localFileEvent) {

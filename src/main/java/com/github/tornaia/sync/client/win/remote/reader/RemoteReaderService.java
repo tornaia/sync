@@ -1,6 +1,6 @@
 package com.github.tornaia.sync.client.win.remote.reader;
 
-import com.github.tornaia.sync.client.win.remote.RemoteKnownState;
+import com.github.tornaia.sync.client.win.ClientidService;
 import com.github.tornaia.sync.shared.api.FileMetaInfo;
 import com.github.tornaia.sync.shared.api.RemoteFileEvent;
 import com.google.gson.Gson;
@@ -32,7 +32,7 @@ public class RemoteReaderService {
     private RemoteRestQueryService remoteRestQueryService;
 
     @Autowired
-    private RemoteKnownState remoteKnownState;
+    private ClientidService clientidService;
 
     private final List<RemoteFileEvent> events = new ArrayList<>();
 
@@ -49,6 +49,7 @@ public class RemoteReaderService {
         this.session = session;
         LOG.info("Session opened. SessionId: " + session.getId());
         sendMessage("hello-please-send-me-updates-of-" + userid);
+        sendMessage("hello-i-am-" + clientidService.clientid);
     }
 
     @OnMessage

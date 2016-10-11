@@ -7,6 +7,7 @@ import com.github.tornaia.sync.client.win.remote.RemoteKnownState;
 import com.github.tornaia.sync.client.win.remote.reader.RemoteReaderService;
 import com.github.tornaia.sync.client.win.remote.writer.RemoteWriterService;
 import com.github.tornaia.sync.shared.api.FileMetaInfo;
+import com.github.tornaia.sync.shared.api.RemoteEventType;
 import com.github.tornaia.sync.shared.api.RemoteFileEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -91,13 +92,14 @@ public class Engine {
 
     private void handle(RemoteFileEvent remoteEvent) {
         LOG.info("Starting to process remote event: " + remoteEvent);
+        FileMetaInfo remoteFileMetaInfo = remoteEvent.fileMetaInfo;
+        String relativePath = remoteFileMetaInfo.relativePath;
+        boolean localFileExists = localReaderService.exists(relativePath);
+
         switch (remoteEvent.eventType) {
             case CREATED:
-                FileMetaInfo remoteFileMetaInfo = remoteEvent.fileMetaInfo;
+            case MODIFIED:
                 remoteKnownState.add(remoteFileMetaInfo);
-                String relativePath = remoteFileMetaInfo.relativePath;
-
-                boolean localFileExists = localReaderService.exists(relativePath);
 
                 if (localFileExists) {
                     Optional<FileMetaInfo> optionalLocalFileMetaInfo = localReaderService.getFileMetaInfo(relativePath);
@@ -111,11 +113,16 @@ public class Engine {
                     }
 
                     byte[] remoteFileContent = remoteReaderService.getFile(remoteFileMetaInfo);
-                    boolean succeed = localWriterService.replace(relativePath, remoteFileMetaInfo, remoteFileContent);
+                    boolean succeed = false;
+                    if (remoteEvent.eventType == RemoteEventType.CREATED) {
+                        succeed = localWriterService.write(remoteFileMetaInfo, remoteFileContent);
+                    } else if (remoteEvent.eventType == RemoteEventType.MODIFIED) {
+                        succeed = localWriterService.replace(relativePath, remoteFileMetaInfo, remoteFileContent);
+                    }
                     if (succeed) {
-                        LOG.info("File was replaced on disk: " + remoteFileMetaInfo);
+                        LOG.info("File was written to disk: " + remoteFileMetaInfo);
                     } else {
-                        LOG.warn("Failed to replace file on disk: " + remoteFileMetaInfo);
+                        LOG.warn("Failed to write file to disk: " + remoteFileMetaInfo);
                     }
                 } else {
                     byte[] remoteFileContent = remoteReaderService.getFile(remoteFileMetaInfo);
@@ -134,15 +141,24 @@ public class Engine {
 
     private void handle(LocalFileEvent localEvent) {
         LOG.info("Starting to process local event: " + localEvent);
+        String relativePath = localEvent.relativePath;
         switch (localEvent.eventType) {
             case CREATED:
-                String relativePath = localEvent.relativePath;
-                boolean succeed = remoteWriterService.createFile(relativePath);
-                if (succeed) {
-                    LOG.info("File is in sync with server: " + relativePath);
+                boolean createSucceed = remoteWriterService.createFile(relativePath);
+                if (createSucceed) {
+                    LOG.info("File is in sync with server after create: " + relativePath);
                 } else {
-                    LOG.warn("File cannot synced with server: " + relativePath);
-                    localReaderService.addEvent(localEvent);
+                    LOG.warn("File creation cannot synced with server: " + relativePath);
+                    localReaderService.readdEvent(localEvent);
+                }
+                break;
+            case MODIFIED:
+                boolean modifySucceed = remoteWriterService.modifyFile(relativePath);
+                if (modifySucceed) {
+                    LOG.info("File is in sync with server after modify: " + relativePath);
+                } else {
+                    LOG.warn("File modification cannot synced with server: " + relativePath);
+                    localReaderService.readdEvent(localEvent);
                 }
                 break;
             default:

@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 @Component
@@ -17,18 +18,17 @@ public class RemoteKnownState {
     private Set<FileMetaInfo> fileMetaInfos = new HashSet<>();
 
     public synchronized boolean add(FileMetaInfo fileMetaInfo) {
+        Optional<FileMetaInfo> optionalKnownFileMetaInfo = get(fileMetaInfo.relativePath);
+        if (optionalKnownFileMetaInfo.isPresent()) {
+            FileMetaInfo knownFileMetaInfo = optionalKnownFileMetaInfo.get();
+            fileMetaInfos.remove(knownFileMetaInfo);
+            LOG.info("Updating fileMetaInfo of relativePath: " + fileMetaInfo.relativePath + ", fileMetaInfo: " + fileMetaInfo);
+        }
+
         return fileMetaInfos.add(fileMetaInfo);
     }
 
-    public synchronized boolean remove(FileMetaInfo fileMetaInfo) {
-        boolean removed = fileMetaInfos.remove(fileMetaInfo);
-        if (!removed) {
-            LOG.warn("Removing a non existing fileMetaInfo: " + fileMetaInfo);
-        }
-        return removed;
-    }
-
-    public synchronized boolean isKnown(FileMetaInfo what) {
-        return fileMetaInfos.stream().filter(fmi -> Objects.equals(fmi, what)).findFirst().isPresent();
+    public synchronized Optional<FileMetaInfo> get(String relativePath) {
+        return fileMetaInfos.stream().filter(fmi -> Objects.equals(fmi.relativePath, relativePath)).findFirst();
     }
 }
