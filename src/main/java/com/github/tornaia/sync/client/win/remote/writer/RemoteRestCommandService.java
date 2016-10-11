@@ -6,7 +6,6 @@ import com.github.tornaia.sync.client.win.httpclient.HttpClientProvider;
 import com.github.tornaia.sync.client.win.util.SerializerUtils;
 import com.github.tornaia.sync.shared.api.*;
 import org.apache.http.HttpEntity;
-import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.HttpDelete;
@@ -22,7 +21,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import javax.ws.rs.core.MediaType;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -147,16 +145,17 @@ public class RemoteRestCommandService {
         return FileModifyResponse.ok(remoteFileMetaInfo);
     }
 
-    public void onFileDelete(FileMetaInfo fileMetaInfo) {
-        HttpDelete httpDelete = new HttpDelete(httpClientProvider.getServerUrl() + FILE_PATH + "/" + fileMetaInfo.id + "?userid=" + userid + "&clientid=" + clientidService.clientid);
-        httpDelete.setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
+    public FileDeleteResponse onFileDelete(FileMetaInfo fileMetaInfo) {
+        HttpDelete httpDelete = new HttpDelete(httpClientProvider.getServerUrl() + FILE_PATH + "/" + fileMetaInfo.id + "?clientid=" + clientidService.clientid);
 
         try {
             httpClientProvider.get().execute(httpDelete);
         } catch (IOException e) {
-            throw new RuntimeException("Delete from server failed", e);
+            return FileDeleteResponse.transferFailed(fileMetaInfo, e.getMessage());
         }
+
         LOG.info("DELETE file: " + fileMetaInfo);
+        return FileDeleteResponse.ok(fileMetaInfo);
     }
 
     // http://stackoverflow.com/questions/35675679/apache-http-4-5-stringbody-constructor-not-exporting-content-type-in-request

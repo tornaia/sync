@@ -101,7 +101,6 @@ public class Engine {
             case CREATED:
             case MODIFIED:
                 remoteKnownState.add(remoteFileMetaInfo);
-
                 if (localFileExists) {
                     Optional<FileMetaInfo> optionalLocalFileMetaInfo = localReaderService.getFileMetaInfo(relativePath);
                     if (!optionalLocalFileMetaInfo.isPresent()) {
@@ -135,6 +134,32 @@ public class Engine {
                     }
                 }
                 break;
+            case DELETED:
+                remoteKnownState.add(remoteFileMetaInfo);
+                if (!localFileExists) {
+                    LOG.info("Local file does not exist, nothing to delete: " + relativePath);
+                    return;
+                }
+
+                Optional<FileMetaInfo> optionalLocalFileMetaInfo = localReaderService.getFileMetaInfo(relativePath);
+                if (!optionalLocalFileMetaInfo.isPresent()) {
+                    LOG.warn("Cannot compare remote file with local file: " + relativePath);
+                    return;
+                }
+
+                FileMetaInfo localFileMetaInfo = optionalLocalFileMetaInfo.get();
+                if (Objects.equals(remoteFileMetaInfo, localFileMetaInfo)) {
+                    LOG.info("Remote and local fileMetaInfo equals: " + remoteFileMetaInfo.relativePath);
+                    boolean succeed = localWriterService.delete(relativePath);
+                    if (succeed) {
+                        LOG.info("File was created on disk: " + remoteFileMetaInfo);
+                    } else {
+                        LOG.warn("Failed to create file to disk: " + remoteFileMetaInfo);
+                    }
+                } else {
+                    LOG.warn("Remote and local fileMetaInfo differs, wont delete! Remote: " + remoteFileMetaInfo + ", localFileInfo: " + localFileMetaInfo);
+                }
+                break;
             default:
                 LOG.warn("Unhandled message: " + remoteEvent);
         }
@@ -150,7 +175,7 @@ public class Engine {
                     LOG.info("File is in sync with server after create: " + relativePath);
                 } else {
                     LOG.warn("File creation cannot synced with server: " + relativePath);
-                    localReaderService.readdEvent(localEvent);
+                    localReaderService.reAddEvent(localEvent);
                 }
                 break;
             case MODIFIED:
@@ -159,9 +184,17 @@ public class Engine {
                     LOG.info("File is in sync with server after modify: " + relativePath);
                 } else {
                     LOG.warn("File modification cannot synced with server: " + relativePath);
-                    localReaderService.readdEvent(localEvent);
+                    localReaderService.reAddEvent(localEvent);
                 }
                 break;
+            case DELETED:
+                boolean deleteSucceed = remoteWriterService.deleteFile(relativePath);
+                if (deleteSucceed) {
+                    LOG.info("File is in sync with server after delete: " + relativePath);
+                } else {
+                    LOG.warn("File deletion cannot synced with server: " + relativePath);
+                    localReaderService.reAddEvent(localEvent);
+                }
             default:
                 LOG.warn("Unhandled message: " + localEvent);
         }

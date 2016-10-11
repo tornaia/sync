@@ -8,7 +8,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -93,6 +92,17 @@ public class DiskWriterService {
         LOG.trace("Replace " + target.toFile().getAbsolutePath() + " with " + source.toFile().getAbsolutePath());
         try {
             Files.move(source, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            LOG.error("Cannot write target file", e);
+            return false;
+        }
+        return true;
+    }
+
+    public boolean delete(Path fileAbsolutePath) {
+        LOG.trace("Delete " + fileAbsolutePath.toFile().getAbsolutePath());
+        try {
+            Files.delete(fileAbsolutePath);
         } catch (IOException e) {
             LOG.error("Cannot write target file", e);
             return false;

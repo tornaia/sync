@@ -41,6 +41,11 @@ public class LocalWriterService {
         return diskWriterService.replaceFileAtomically(tempFileWithRemoteContent.get(), localFileAbsolutePath);
     }
 
+    public boolean delete(String relativePath) {
+        Path localFileAbsolutePath = getAbsolutePath(relativePath);
+        return diskWriterService.delete(localFileAbsolutePath);
+    }
+
     private Path getAbsolutePath(String relativePath) {
         return syncDirectory.resolve(relativePath);
     }

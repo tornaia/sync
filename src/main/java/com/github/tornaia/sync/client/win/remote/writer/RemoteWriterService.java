@@ -132,6 +132,26 @@ public class RemoteWriterService {
         return false;
     }
 
+    public boolean deleteFile(String relativePath) {
+        Optional<FileMetaInfo> optionalRemoteFileMetaInfo = remoteKnownState.get(relativePath);
+        if (!optionalRemoteFileMetaInfo.isPresent()) {
+            LOG.info("File is already deleted from server: " + relativePath);
+            return true;
+        }
+
+        FileMetaInfo fileMetaInfo = optionalRemoteFileMetaInfo.get();
+        FileDeleteResponse fileDeleteResponse = remoteRestCommandService.onFileDelete(fileMetaInfo);
+
+        boolean ok = Objects.equals(FileCreateResponse.Status.OK, fileDeleteResponse.status);
+        if (ok) {
+            LOG.info("File deleted from server: " + fileMetaInfo);
+            remoteKnownState.remove(fileMetaInfo);
+            return true;
+        }
+
+        return false;
+    }
+
     private void handleConflict(Path absolutePath, FileMetaInfo localFileMetaInfo) {
         // TODO move this conflict file name creation to a separate object
         String originalFileName = absolutePath.toFile().getAbsolutePath();

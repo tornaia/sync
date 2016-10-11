@@ -17,6 +17,10 @@ public class RemoteKnownState {
 
     private Set<FileMetaInfo> fileMetaInfos = new HashSet<>();
 
+    public synchronized Optional<FileMetaInfo> get(String relativePath) {
+        return fileMetaInfos.stream().filter(fmi -> Objects.equals(fmi.relativePath, relativePath)).findFirst();
+    }
+
     public synchronized boolean add(FileMetaInfo fileMetaInfo) {
         Optional<FileMetaInfo> optionalKnownFileMetaInfo = get(fileMetaInfo.relativePath);
         if (optionalKnownFileMetaInfo.isPresent()) {
@@ -28,7 +32,8 @@ public class RemoteKnownState {
         return fileMetaInfos.add(fileMetaInfo);
     }
 
-    public synchronized Optional<FileMetaInfo> get(String relativePath) {
-        return fileMetaInfos.stream().filter(fmi -> Objects.equals(fmi.relativePath, relativePath)).findFirst();
+    public synchronized void remove(FileMetaInfo fileMetaInfo) {
+        boolean succeed = fileMetaInfos.remove(fileMetaInfo);
+        LOG.info("Removing: " + fileMetaInfo.relativePath + ", fileMetaInfo: " + fileMetaInfo + ", succeedł: " + succeed);
     }
 }

@@ -85,12 +85,15 @@ public class LocalReaderService {
         return absolutePath.toFile().exists();
     }
 
-    public void readdEvent(LocalFileEvent localFileEvent) {
-        if (Objects.equals(localFileEvent.eventType, LocalEventType.DELETED)) {
-            LOG.warn("Does not make sense to re-add DELETED local event to LocalReaderService");
+    public void reAddEvent(LocalFileEvent localFileEvent) {
+        boolean isFileExist = syncDirectory.resolve(localFileEvent.relativePath).toFile().exists();
+        boolean isDelete = Objects.equals(localFileEvent.eventType, LocalEventType.DELETED);
+        if (isDelete && isFileExist) {
+            LOG.warn("Does not make sense to re-add DELETED local event to LocalReaderService when the file is on the disk: " + localFileEvent.relativePath);
             return;
         }
-        if (syncDirectory.resolve(localFileEvent.relativePath).toFile().exists()) {
+
+        if (isFileExist) {
             LOG.debug("External hint to re-add event: " + localFileEvent);
             addNewEvent(localFileEvent);
         } else {
