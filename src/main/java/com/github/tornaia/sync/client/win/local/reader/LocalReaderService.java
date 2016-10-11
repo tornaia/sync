@@ -98,15 +98,6 @@ public class LocalReaderService {
         }
     }
 
-    public void readdEvent(FileModifiedEvent fileModifiedEvent) {
-        if (syncDirectory.resolve(fileModifiedEvent.relativePath).toFile().exists()) {
-            LOG.debug("External hint to re-add event: " + fileModifiedEvent);
-            addNewEvent(fileModifiedEvent);
-        } else {
-            LOG.warn("Cannot re-add event since file does not exist: " + fileModifiedEvent);
-        }
-    }
-
     private synchronized void addNewEvent(LocalFileEvent localFileEvent) {
         // TODO later here we can combine events to optimize things like:
         // create-delete (same path) -> nothing
