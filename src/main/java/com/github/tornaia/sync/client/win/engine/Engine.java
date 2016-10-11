@@ -79,6 +79,7 @@ public class Engine {
                 }
 
                 try {
+                    // TODO use some kind of blocking queue instead of this ugly sleep
                     Thread.sleep(10L);
                 } catch (InterruptedException e) {
                     LOG.warn("Sleep interrupted", e);
