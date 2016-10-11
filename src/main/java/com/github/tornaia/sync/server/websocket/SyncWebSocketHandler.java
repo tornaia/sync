@@ -17,13 +17,16 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Component
 public class SyncWebSocketHandler extends TextWebSocketHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(SyncWebSocketHandler.class);
 
-    private final Map<String, List<WebSocketSession>> usersAndSessions = new HashMap<>();
+    private final Map<String, List<WebSocketSession>> useridAndSessions = new HashMap<>();
+
+    private final Map<String, WebSocketSession> clientidAndSession = new HashMap<>();
 
     @Autowired
     private FileQueryService fileQueryService;
@@ -37,12 +40,15 @@ public class SyncWebSocketHandler extends TextWebSocketHandler {
     public synchronized void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
         String messageStr = message.getPayload();
         LOG.info("Message received: " + messageStr);
-        if (messageStr.startsWith("hello-please-send-me-updates-of-")) {
+        if (messageStr.startsWith("hello-i-am-")) {
+            String clientid = messageStr.substring("hello-i-am-".length());
+            clientidAndSession.put(clientid, session);
+        } else if (messageStr.startsWith("hello-please-send-me-updates-of-")) {
             String userid = messageStr.substring("hello-please-send-me-updates-of-".length());
-            if (!usersAndSessions.containsKey(userid)) {
-                usersAndSessions.put(userid, new ArrayList<>());
+            if (!useridAndSessions.containsKey(userid)) {
+                useridAndSessions.put(userid, new ArrayList<>());
             }
-            usersAndSessions.get(userid).add(session);
+            useridAndSessions.get(userid).add(session);
             LOG.info("Session " + session.getId() + " subscribed for all events of user " + userid);
             sendCompleteStatus(session, userid);
         } else {
@@ -53,9 +59,11 @@ public class SyncWebSocketHandler extends TextWebSocketHandler {
     private void sendCompleteStatus(WebSocketSession session, String userid) throws IOException {
         List<FileMetaInfo> modifiedFiles = fileQueryService.getModifiedFiles(userid, Long.MIN_VALUE);
 
-        modifiedFiles.stream()
+        List<RemoteFileEvent> initMessages = modifiedFiles.stream()
                 .map(mf -> new RemoteFileEvent(RemoteEventType.CREATED, new FileMetaInfo(mf.id, mf.userid, mf.relativePath, mf.length, mf.creationDateTime, mf.modificationDateTime)))
-                .forEach(this::notifyClients);
+                .collect(Collectors.toList());
+
+        initMessages.forEach(rfe -> sendMsg(session, rfe));
 
         session.sendMessage(new TextMessage("init-done"));
     }
@@ -71,33 +79,50 @@ public class SyncWebSocketHandler extends TextWebSocketHandler {
         LOG.info("Connection closed. Reason: " + status.getReason() + ". SessionId: " + session.getId());
         super.afterConnectionClosed(session, status);
 
-        usersAndSessions.values()
+        useridAndSessions.values()
                 .stream()
                 .filter(list -> list.contains(session))
                 .findFirst()
                 .get()
                 .remove(session);
+
+        String clientid = clientidAndSession.entrySet()
+                .stream()
+                .filter(entry -> Objects.equals(entry.getValue(), session))
+                .findFirst()
+                .get()
+                .getKey();
+        clientidAndSession.remove(clientid);
     }
 
-    public void notifyClients(RemoteFileEvent remoteFileEvent) {
-        List<WebSocketSession> webSocketSessionsToNotify = usersAndSessions.get(remoteFileEvent.fileMetaInfo.userid);
+    public void notifyClientsExceptForSource(String sourceClientid, RemoteFileEvent remoteFileEvent) {
+        List<WebSocketSession> webSocketSessionsToNotify = useridAndSessions.get(remoteFileEvent.fileMetaInfo.userid);
         if (Objects.isNull(webSocketSessionsToNotify)) {
             return;
         }
+
+        WebSocketSession sourceSession = clientidAndSession.get(sourceClientid);
+        if (Objects.isNull(sourceSession)) {
+            LOG.warn("source normally should have a webSocket session too: " + sourceClientid);
+        }
+
         webSocketSessionsToNotify.stream()
-                .forEach(session -> {
-                    try {
-                        LOG.info("Notifying session " + session.getId() + " about a new event: " + remoteFileEvent);
-                        ObjectMapper mapper = new ObjectMapper();
-                        // TODO move object mapper to a common place and write a test String, int -> "xx", 34 but should be "xx", "34" otherwise client will not able to parse it
-                        // or maybe works, I don't know at the moment
-                        mapper.configure(JsonGenerator.Feature.WRITE_NUMBERS_AS_STRINGS, true);
-                        String remoteFileEventAsJson = mapper.writeValueAsString(remoteFileEvent);
-                        // TODO  here we send messages in synchronous way I guess... thats baaad.
-                        session.sendMessage(new TextMessage(remoteFileEventAsJson));
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                });
+                .filter(session -> !Objects.equals(session, sourceSession))
+                .forEach(session -> sendMsg(session, remoteFileEvent));
+    }
+
+    private void sendMsg(WebSocketSession session, RemoteFileEvent remoteFileEvent) {
+        try {
+            LOG.info("Notifying session " + session.getId() + " about a new event: " + remoteFileEvent);
+            ObjectMapper mapper = new ObjectMapper();
+            // TODO move object mapper to a common place and write a test String, int -> "xx", 34 but should be "xx", "34" otherwise client will not able to parse it
+            // or maybe works, I don't know at the moment
+            mapper.configure(JsonGenerator.Feature.WRITE_NUMBERS_AS_STRINGS, true);
+            String remoteFileEventAsJson = mapper.writeValueAsString(remoteFileEvent);
+            // TODO  here we send messages in synchronous way I guess... thats baaad.
+            session.sendMessage(new TextMessage(remoteFileEventAsJson));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

@@ -30,7 +30,7 @@ public class FileCommandService {
     @Autowired
     private SyncWebSocketHandler syncWebSocketHandler;
 
-    public void createFile(String userid, long creationDateTime, long modificationDateTime, String path, byte[] content) throws IOException {
+    public FileMetaInfo createFile(String clientid, String userid, long creationDateTime, long modificationDateTime, String path, byte[] content) throws IOException {
         File file = fileRepository.findByUseridAndPath(userid, path);
         if (!Objects.isNull(file)) {
             throw new FileAlreadyExistsException(path);
@@ -38,11 +38,12 @@ public class FileCommandService {
 
         file = fileRepository.insert(new File(userid, path, content, creationDateTime, modificationDateTime));
         FileMetaInfo fileMetaInfo = FileUtils.getFileMetaInfo(file);
-        syncWebSocketHandler.notifyClients(new RemoteFileEvent(CREATED, fileMetaInfo));
+        syncWebSocketHandler.notifyClientsExceptForSource(clientid, new RemoteFileEvent(CREATED, fileMetaInfo));
         LOG.info("CREATE file: " + fileMetaInfo);
+        return fileMetaInfo;
     }
 
-    public void updateFile(String id, long creationDateTime, long modificationDateTime, byte[] content) throws IOException {
+    public void updateFile(String clientid, String id, long creationDateTime, long modificationDateTime, byte[] content) throws IOException {
         File file = fileRepository.findOne(id);
         if (Objects.isNull(file)) {
             throw new FileNotFoundException(id);
@@ -51,18 +52,20 @@ public class FileCommandService {
             file.setLastModifiedDate(modificationDateTime);
             file.setData(content);
             fileRepository.save(file);
-            syncWebSocketHandler.notifyClients(new RemoteFileEvent(MODIFIED, FileUtils.getFileMetaInfo(file)));
+            FileMetaInfo fileMetaInfo = FileUtils.getFileMetaInfo(file);
+            syncWebSocketHandler.notifyClientsExceptForSource(clientid, new RemoteFileEvent(MODIFIED, fileMetaInfo));
+            LOG.info("MODIFY file: " + fileMetaInfo);
         }
     }
 
-    public void deleteFile(String id) {
+    public void deleteFile(String clientid, String id) {
         File file = fileRepository.findOne(id);
         if (Objects.isNull(file)) {
             throw new FileNotFoundException(id);
         }
         String path = file.getPath();
         fileRepository.delete(file);
-        syncWebSocketHandler.notifyClients(new RemoteFileEvent(DELETED, FileUtils.getFileMetaInfo(file)));
+        syncWebSocketHandler.notifyClientsExceptForSource(clientid, new RemoteFileEvent(DELETED, FileUtils.getFileMetaInfo(file)));
         LOG.info("DELETE file: " + path);
     }
 

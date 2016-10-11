@@ -48,19 +48,19 @@ public class FileController {
     }
 
     @RequestMapping(method = POST)
-    public void postFile(@RequestPart("fileAttributes") CreateFileRequest request, @RequestPart("file") MultipartFile multipartFile) throws IOException {
-        fileCommandService.createFile(request.getUserid(), request.getCreationDateTime(), request.getModificationDateTime(), multipartFile.getOriginalFilename(), multipartFile.getBytes());
+    public FileMetaInfo postFile(@RequestPart("fileAttributes") CreateFileRequest request, @RequestPart("file") MultipartFile multipartFile, @RequestParam("clientid") String clientid) throws IOException {
+        return fileCommandService.createFile(clientid, request.getUserid(), request.getCreationDateTime(), request.getModificationDateTime(), multipartFile.getOriginalFilename(), multipartFile.getBytes());
     }
 
     @RequestMapping(value = "/{id}", method = PUT)
-    public FileMetaInfo putFile(@PathVariable String id, @RequestBody UpdateFileRequest request, @RequestPart("file") MultipartFile multipartFile) throws IOException {
-        fileCommandService.updateFile(id, request.getCreationDateTime(), request.getModificationDateTime(), multipartFile.getBytes());
+    public FileMetaInfo putFile(@PathVariable String id, @RequestPart("fileAttributes") UpdateFileRequest request, @RequestPart("file") MultipartFile multipartFile, @RequestParam("clientid") String clientid) throws IOException {
+        fileCommandService.updateFile(clientid, id, request.getCreationDateTime(), request.getModificationDateTime(), multipartFile.getBytes());
         return fileQueryService.getFileMetaInfoById(id);
     }
 
     @RequestMapping(value = "/{id}", method = DELETE)
-    public void deleteFile(@PathVariable String id) throws IOException {
-        fileCommandService.deleteFile(id);
+    public void deleteFile(@PathVariable String id, @RequestParam("clientid") String clientid) throws IOException {
+        fileCommandService.deleteFile(clientid, id);
     }
 
     @RequestMapping(value = "/{id}", method = GET, produces = APPLICATION_OCTET_STREAM)

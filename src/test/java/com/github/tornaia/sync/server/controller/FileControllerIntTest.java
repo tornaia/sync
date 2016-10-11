@@ -3,7 +3,6 @@ package com.github.tornaia.sync.server.controller;
 import com.github.tornaia.sync.server.data.document.File;
 import com.github.tornaia.sync.shared.api.*;
 import com.github.tornaia.sync.shared.api.matchers.FileMetaInfoMatcher;
-import org.hamcrest.Matchers;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +12,7 @@ import utils.AbstractSyncServerIntTest;
 
 import java.util.List;
 
+import static org.hamcrest.Matchers.contains;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 
@@ -30,7 +30,7 @@ public class FileControllerIntTest extends AbstractSyncServerIntTest {
                 .creationDateTime(1L)
                 .modificationDateTime(2L)
                 .create();
-        fileController.postFile(createFileRequest, file);
+        fileController.postFile(createFileRequest, file, "clientid");
 
         List<FileMetaInfo> modifiedFiles = fileController.getModifiedFiles(new GetModifiedFilesRequestBuilder().userid("userid").modTS(-1L).create());
         FileMetaInfo result = fileController.getMetaInfo(modifiedFiles.get(0).id);
@@ -53,7 +53,7 @@ public class FileControllerIntTest extends AbstractSyncServerIntTest {
                 .creationDateTime(2L)
                 .modificationDateTime(3L)
                 .create();
-        fileController.postFile(createFileRequest, file);
+        fileController.postFile(createFileRequest, file, "clientid");
 
         List<FileMetaInfo> modifiedFiles = fileController.getModifiedFiles(new GetModifiedFilesRequestBuilder().userid("userid").modTS(-1L).create());
         FileMetaInfo fileMetaInfo = fileController.getMetaInfo(modifiedFiles.get(0).id);
@@ -66,7 +66,7 @@ public class FileControllerIntTest extends AbstractSyncServerIntTest {
                 .modificationDateTime(4L)
                 .create();
 
-        FileMetaInfo result = fileController.putFile(fileMetaInfo.id, updateFileRequest, updatedFile);
+        FileMetaInfo result = fileController.putFile(fileMetaInfo.id, updateFileRequest, updatedFile, "clientid");
 
         FileMetaInfoMatcher expected = new FileMetaInfoMatcher()
                 .relativePath("test.png")
@@ -86,12 +86,12 @@ public class FileControllerIntTest extends AbstractSyncServerIntTest {
                 .creationDateTime(1L)
                 .modificationDateTime(2L)
                 .create();
-        fileController.postFile(createFileRequest, file);
+        fileController.postFile(createFileRequest, file, "clientid");
 
         List<FileMetaInfo> modifiedFiles = fileController.getModifiedFiles(new GetModifiedFilesRequestBuilder().userid("userid").modTS(-1L).create());
         FileMetaInfo createdFile = fileController.getMetaInfo(modifiedFiles.get(0).id);
 
-        fileController.deleteFile(createdFile.id);
+        fileController.deleteFile(createdFile.id, "clientid");
 
         //TODO nxjohny: We can wrap it in the corresponding driver and hide mongotemplate op. The interface throws exception in case of null file, so i have to use the template to validate the delete whether was successful or not.
         File result = mongoTemplate.findById(createdFile.id, File.class);
@@ -106,7 +106,7 @@ public class FileControllerIntTest extends AbstractSyncServerIntTest {
                 .creationDateTime(1L)
                 .modificationDateTime(1L)
                 .create();
-        fileController.postFile(createFileRequest, file);
+        fileController.postFile(createFileRequest, file, "clientid");
 
         MockMultipartFile file2 = new MockMultipartFile("test2", "test2.png", "image/png", "TEST2".getBytes());
         CreateFileRequest createFileRequest2 = new CreateFileRequestBuilder()
@@ -114,7 +114,7 @@ public class FileControllerIntTest extends AbstractSyncServerIntTest {
                 .creationDateTime(3L)
                 .modificationDateTime(3L)
                 .create();
-        fileController.postFile(createFileRequest2, file2);
+        fileController.postFile(createFileRequest2, file2, "clientid");
 
         List<FileMetaInfo> result = fileController.getModifiedFiles(new GetModifiedFilesRequestBuilder().userid("userid").modTS(2L).create());
 
@@ -124,6 +124,6 @@ public class FileControllerIntTest extends AbstractSyncServerIntTest {
                 .modificationDateTime(3L)
                 .length(5L);
 
-        assertThat(result, Matchers.contains(expected));
+        assertThat(result, contains(expected));
     }
 }

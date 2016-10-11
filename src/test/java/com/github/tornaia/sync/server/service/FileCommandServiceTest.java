@@ -15,6 +15,7 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import static com.github.tornaia.sync.shared.api.RemoteEventType.CREATED;
+import static org.hamcrest.Matchers.is;
 import static org.junit.rules.ExpectedException.none;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.argThat;
@@ -40,16 +41,16 @@ public class FileCommandServiceTest {
         when(fileRepository.findByUseridAndPath("userid", "path")).thenReturn(new File());
 
         expectedException.expect(FileAlreadyExistsException.class);
-        commandService.createFile("userid", 1L, 2L, "path", "Test".getBytes());
+        commandService.createFile("clientid", "userid", 1L, 2L, "path", "Test".getBytes());
     }
 
     @Test
     public void createFile() throws Exception {
         when(fileRepository.insert(any(File.class))).thenReturn(new File("userid", "path", "test_content".getBytes(), 2L, 3L));
 
-        commandService.createFile("userid", 2L, 3L, "path", "test_content".getBytes());
+        commandService.createFile("clientid", "userid", 2L, 3L, "path", "test_content".getBytes());
 
-        verify(syncWebSocketHandler).notifyClients(argThat(new RemoteFileEventMatcher()
+        verify(syncWebSocketHandler).notifyClientsExceptForSource(argThat(is("clientid")), argThat(new RemoteFileEventMatcher()
                 .eventType(CREATED)
                 .fileMetaInfo(new FileMetaInfoMatcher()
                         .userid("userid")
