@@ -162,6 +162,10 @@ public abstract class AbstractIntTest {
         Files.move(tempFile, path, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
     }
 
+    protected void deleteFile(Path path) {
+        path.toFile().delete();
+    }
+
     protected void waitForSyncDone() {
         try {
             Thread.sleep(1000L);

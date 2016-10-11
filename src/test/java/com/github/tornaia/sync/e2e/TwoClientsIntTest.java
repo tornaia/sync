@@ -119,7 +119,6 @@ public class TwoClientsIntTest extends AbstractIntTest {
         assertEquals("dummy content2", IOUtils.toString(new FileInputStream(client2.syncDirectory.resolve("dummy.txt").toFile())));
     }
 
-    // @Repeat(1000)
     @Test
     public void bothClientsCreatesSameFileWithDifferentContentWhileTheyAreOffline() throws Exception {
         Client client1 = initClient(userid);
@@ -139,5 +138,18 @@ public class TwoClientsIntTest extends AbstractIntTest {
         assertEquals("dummy content1", IOUtils.toString(new FileInputStream(client2.syncDirectory.resolve("dummy.txt").toFile())));
         assertEquals("dummy content2", IOUtils.toString(new FileInputStream(client1.syncDirectory.resolve("dummy_conflict_14_1485000000000_1481400000000.txt").toFile())));
         assertEquals("dummy content2", IOUtils.toString(new FileInputStream(client2.syncDirectory.resolve("dummy_conflict_14_1485000000000_1481400000000.txt").toFile())));
+    }
+
+    @Test
+    public void createOneFileThenDeleteIt() throws Exception {
+        Client client1 = initClient(userid).start();
+        Client client2 = initClient(userid).start();
+        createFile(client1.syncDirectory.resolve("dummy.txt"), "dummy content", 500L, 600L);
+        waitForSyncDone();
+        deleteFile(client1.syncDirectory.resolve("dummy.txt"));
+        waitForSyncDone();
+
+        assertTrue(client1.syncDirectory.toFile().list().length == 0);
+        assertTrue(client2.syncDirectory.toFile().list().length == 0);
     }
 }
