@@ -43,7 +43,7 @@ public class FileCommandService {
         return fileMetaInfo;
     }
 
-    public void updateFile(String clientid, String id, long creationDateTime, long modificationDateTime, byte[] content) throws IOException {
+    public void modifyFile(String clientid, String id, long creationDateTime, long modificationDateTime, byte[] content) throws IOException {
         File file = fileRepository.findOne(id);
         if (Objects.isNull(file)) {
             throw new FileNotFoundException(id);

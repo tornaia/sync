@@ -54,7 +54,7 @@ public class FileController {
 
     @RequestMapping(value = "/{id}", method = PUT)
     public FileMetaInfo putFile(@PathVariable String id, @RequestPart("fileAttributes") UpdateFileRequest request, @RequestPart("file") MultipartFile multipartFile, @RequestParam("clientid") String clientid) throws IOException {
-        fileCommandService.updateFile(clientid, id, request.getCreationDateTime(), request.getModificationDateTime(), multipartFile.getBytes());
+        fileCommandService.modifyFile(clientid, id, request.getCreationDateTime(), request.getModificationDateTime(), multipartFile.getBytes());
         return fileQueryService.getFileMetaInfoById(id);
     }
 
