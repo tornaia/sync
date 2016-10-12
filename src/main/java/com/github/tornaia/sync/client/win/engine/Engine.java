@@ -240,6 +240,7 @@ public class Engine {
                     LOG.warn("File deletion cannot synced with server: " + relativePath);
                     localReaderService.reAddEvent(localEvent);
                 }
+                break;
             default:
                 LOG.warn("Unhandled message: " + localEvent);
         }
