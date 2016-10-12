@@ -4,8 +4,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.context.event.ContextRefreshedEvent;
-import org.springframework.context.event.ContextStoppedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
@@ -42,14 +42,14 @@ public class SyncWebSocketKeepAliveService {
     private volatile boolean contextIsRunning;
 
     @EventListener({ContextRefreshedEvent.class})
-    public void onContextStartedEvent() {
+    public void ContextRefreshedEvent() {
         LOG.info("Context refreshed event happened");
         contextIsRunning = true;
         reconnect();
     }
 
-    @EventListener({ContextStoppedEvent.class})
-    public void onContextStoppedEvent() {
+    @EventListener({ContextClosedEvent.class})
+    public void onContextClosedEvent() {
         LOG.info("Context closed event happened");
         contextIsRunning = false;
     }
@@ -68,7 +68,7 @@ public class SyncWebSocketKeepAliveService {
                     try {
                         Thread.sleep(1000L);
                     } catch (InterruptedException ie) {
-                        LOG.warn("Sleep interrupted", ie);
+                        LOG.warn("Run terminated: " + ie.getMessage());
                     }
                 }
             }

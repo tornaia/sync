@@ -13,9 +13,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.event.ContextClosedEvent;
+import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -45,7 +47,24 @@ public class Engine {
     @Autowired
     private RemoteKnownState remoteKnownState;
 
-    @PostConstruct
+    private Thread thread;
+
+    private volatile boolean contextIsRunning;
+
+    @EventListener({ContextRefreshedEvent.class})
+    public void ContextRefreshedEvent() {
+        LOG.info("Context refreshed event happened");
+        contextIsRunning = true;
+        init();
+    }
+
+    @EventListener({ContextClosedEvent.class})
+    public void onContextClosedEvent() {
+        LOG.info("Context closed event happened");
+        contextIsRunning = false;
+        thread.interrupt();
+    }
+
     public void init() {
         LOG.info("Engine init started");
 
@@ -54,7 +73,7 @@ public class Engine {
             try {
                 Thread.sleep(10L);
             } catch (InterruptedException e) {
-                LOG.warn("Sleep interrupted", e);
+                LOG.warn("Init terminated: " + e.getMessage());
             }
         }
 
@@ -64,8 +83,8 @@ public class Engine {
 
     private void runInBackground() {
         LOG.info("Starting engine...");
-        Thread thread = new Thread(() -> {
-            while (true) {
+        thread = new Thread(() -> {
+            while (contextIsRunning) {
                 Optional<RemoteFileEvent> remoteEvent = remoteReaderService.getNext();
                 if (remoteEvent.isPresent()) {
                     handle(remoteEvent.get());
@@ -82,7 +101,7 @@ public class Engine {
                     // TODO use some kind of blocking queue instead of this ugly sleep
                     Thread.sleep(10L);
                 } catch (InterruptedException e) {
-                    LOG.warn("Sleep interrupted", e);
+                    LOG.warn("Run terminated: " + e.getMessage());
                 }
             }
         });

@@ -6,9 +6,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.event.ContextClosedEvent;
+import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
@@ -41,7 +43,22 @@ public class LocalReaderService {
 
     private Path syncDirectory;
 
-    @PostConstruct
+    private volatile boolean contextIsRunning;
+
+    @EventListener({ContextRefreshedEvent.class})
+    public void ContextRefreshedEvent() throws IOException {
+        LOG.info("Context refreshed event happened");
+        contextIsRunning = true;
+        startDiskWatch();
+    }
+
+    @EventListener({ContextClosedEvent.class})
+    public void onContextClosedEvent() throws IOException {
+        LOG.info("Context closed event happened");
+        contextIsRunning = false;
+        watchService.close();
+    }
+
     public void startDiskWatch() throws IOException {
         this.watchService = FileSystems.getDefault().newWatchService();
         this.syncDirectory = FileSystems.getDefault().getPath(syncDirectoryPath);
@@ -138,11 +155,12 @@ public class LocalReaderService {
     }
 
     private void runInBackground() {
-        while (true) {
+        while (contextIsRunning) {
             WatchKey key;
             try {
                 key = watchService.poll(25, TimeUnit.MILLISECONDS);
-            } catch (InterruptedException e) {
+            } catch (InterruptedException | ClosedWatchServiceException e) {
+                LOG.warn("Run terminated: " + e.getMessage());
                 return;
             }
             if (key == null) {
