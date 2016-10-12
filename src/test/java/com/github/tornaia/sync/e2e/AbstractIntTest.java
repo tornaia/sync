@@ -11,6 +11,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,28 +56,25 @@ public abstract class AbstractIntTest {
 
     protected List<Client> clients = Lists.newArrayList();
 
-    @After
-    public void stopServer() {
-        if (!Objects.isNull(server)) {
-            LOG.info("Shutdown server");
-            server.close();
-            server.stop();
-            server = null;
-        } else {
-            LOG.info("No server instance, nothing to shutdown");
-        }
+    @Before
+    public void init() throws Exception {
+        startServer();
+        resetDB();
     }
 
     @After
-    public void stopClients() {
+    public void closeServer() {
+        LOG.info("Shutdown server");
+        server.close();
+    }
+
+    @After
+    public void closeClients() {
         LOG.info("Shutdown all clients");
-        clients.stream().forEach(client -> client.stop());
+        clients.stream().forEach(client -> client.close());
     }
 
     protected void startServer() {
-        if (!Objects.isNull(server)) {
-            throw new IllegalStateException("Server already started!");
-        }
         server = new SpringApplicationBuilder(ServerApp.class).headless(false).run();
     }
 
@@ -136,9 +134,9 @@ public abstract class AbstractIntTest {
             return this;
         }
 
-        public Client stop() {
-            LOG.info("Stop client for userid: " + userid + ", syncDirectory: " + syncDirectory.toFile().getAbsolutePath());
-            appContext.stop();
+        public Client close() {
+            LOG.info("Close client for userid: " + userid + ", syncDirectory: " + syncDirectory.toFile().getAbsolutePath());
+            appContext.close();
             return this;
         }
     }

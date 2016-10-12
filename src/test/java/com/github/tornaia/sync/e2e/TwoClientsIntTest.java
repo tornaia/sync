@@ -1,33 +1,16 @@
 package com.github.tornaia.sync.e2e;
 
 import org.apache.commons.io.IOUtils;
-import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 
 import java.io.FileInputStream;
-import java.util.Arrays;
-import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-@RunWith(Parameterized.class)
 public class TwoClientsIntTest extends AbstractIntTest {
 
-    @Parameterized.Parameters
-    public static List<Object[]> data() {
-        return Arrays.asList(new Object[1][0]);
-    }
-
     private String userid = "100002";
-
-    @Before
-    public void initServerWith2Clients() throws Exception {
-        startServer();
-        resetDB();
-    }
 
     @Test
     public void uglyFilenameWithUglyContentTest() throws Exception {
@@ -36,7 +19,6 @@ public class TwoClientsIntTest extends AbstractIntTest {
         String uglyFilename = "" + (char) 10000;
         createFile(client1.syncDirectory.resolve(uglyFilename), "\r", 500L, 600L);
         waitForSyncDone();
-        stopClients();
 
         assertTrue(client1.syncDirectory.toFile().list().length == 1);
         assertTrue(client2.syncDirectory.toFile().list().length == 1);
@@ -50,7 +32,6 @@ public class TwoClientsIntTest extends AbstractIntTest {
         Client client2 = initClient(userid).start();
         createFile(client1.syncDirectory.resolve("dummy.txt"), "dummy content", 500L, 600L);
         waitForSyncDone();
-        stopClients();
 
         assertTrue(client1.syncDirectory.toFile().list().length == 1);
         assertTrue(client2.syncDirectory.toFile().list().length == 1);
@@ -66,7 +47,6 @@ public class TwoClientsIntTest extends AbstractIntTest {
 
         Client client2 = initClient(userid).start();
         waitForSyncDone();
-        stopClients();
 
         assertTrue(client1.syncDirectory.toFile().list().length == 1);
         assertTrue(client2.syncDirectory.toFile().list().length == 1);
@@ -78,11 +58,10 @@ public class TwoClientsIntTest extends AbstractIntTest {
         Client client1 = initClient(userid).start();
         createFile(client1.syncDirectory.resolve("dummy2.txt"), "dummy2 content", 500L, 600L);
         waitForSyncDone();
-        client1.stop();
+        client1.close();
 
         Client client2 = initClient(userid).start();
         waitForSyncDone();
-        stopClients();
 
         assertTrue(client1.syncDirectory.toFile().list().length == 1);
         assertTrue(client2.syncDirectory.toFile().list().length == 1);
@@ -123,21 +102,20 @@ public class TwoClientsIntTest extends AbstractIntTest {
     public void bothClientsCreatesSameFileWithDifferentContentWhileTheyAreOffline() throws Exception {
         Client client1 = initClient(userid);
         Client client2 = initClient(userid);
-        createFile(client1.syncDirectory.resolve("dummy.txt"), "dummy content1", 1476000000000L, 1476900000000L);
-        createFile(client2.syncDirectory.resolve("dummy.txt"), "dummy content2", 1485000000000L, 1481400000000L);
+        createFile(client1.syncDirectory.resolve("dummy.txt"), "1", 1476000000000L, 1476900000000L);
+        createFile(client2.syncDirectory.resolve("dummy.txt"), "22", 1485000000000L, 1481400000000L);
 
         client1.start();
         waitForSyncDone();
         client2.start();
         waitForSyncDone();
-        stopClients();
 
         assertTrue(client1.syncDirectory.toFile().list().length == 2);
         assertTrue(client2.syncDirectory.toFile().list().length == 2);
-        assertEquals("dummy content1", IOUtils.toString(new FileInputStream(client1.syncDirectory.resolve("dummy.txt").toFile())));
-        assertEquals("dummy content1", IOUtils.toString(new FileInputStream(client2.syncDirectory.resolve("dummy.txt").toFile())));
-        assertEquals("dummy content2", IOUtils.toString(new FileInputStream(client1.syncDirectory.resolve("dummy_conflict_14_1485000000000_1481400000000.txt").toFile())));
-        assertEquals("dummy content2", IOUtils.toString(new FileInputStream(client2.syncDirectory.resolve("dummy_conflict_14_1485000000000_1481400000000.txt").toFile())));
+        assertEquals("1", IOUtils.toString(new FileInputStream(client1.syncDirectory.resolve("dummy.txt").toFile())));
+        assertEquals("1", IOUtils.toString(new FileInputStream(client2.syncDirectory.resolve("dummy.txt").toFile())));
+        assertEquals("22", IOUtils.toString(new FileInputStream(client1.syncDirectory.resolve("dummy_conflict_2_1485000000000_1481400000000.txt").toFile())));
+        assertEquals("22", IOUtils.toString(new FileInputStream(client2.syncDirectory.resolve("dummy_conflict_2_1485000000000_1481400000000.txt").toFile())));
     }
 
     @Test
@@ -151,5 +129,34 @@ public class TwoClientsIntTest extends AbstractIntTest {
 
         assertTrue(client1.syncDirectory.toFile().list().length == 0);
         assertTrue(client2.syncDirectory.toFile().list().length == 0);
+    }
+
+
+    @Test
+    public void modifyOfflineInBothClients() throws Exception {
+        Client client1 = initClient(userid);
+        Client client2 = initClient(userid);
+        createFile(client1.syncDirectory.resolve("dummy.txt"), "00", 1476000000000L, 1476900000000L);
+
+        client1.start();
+        client2.start();
+        waitForSyncDone();
+        client1.close();
+        client2.close();
+        createFile(client1.syncDirectory.resolve("dummy.txt"), "11", 10000L, 20000L);
+        createFile(client2.syncDirectory.resolve("dummy.txt"), "22", 30000L, 40000L);
+        client1.start();
+        waitForSyncDone();
+        client2.start();
+        waitForSyncDone();
+
+        assertTrue(client1.syncDirectory.toFile().list().length == 3);
+        assertTrue(client2.syncDirectory.toFile().list().length == 3);
+        assertEquals("00", IOUtils.toString(new FileInputStream(client1.syncDirectory.resolve("dummy.txt").toFile())));
+        assertEquals("00", IOUtils.toString(new FileInputStream(client2.syncDirectory.resolve("dummy.txt").toFile())));
+        assertEquals("11", IOUtils.toString(new FileInputStream(client1.syncDirectory.resolve("dummy_conflict_2_10000_20000.txt").toFile())));
+        assertEquals("11", IOUtils.toString(new FileInputStream(client2.syncDirectory.resolve("dummy_conflict_2_10000_20000.txt").toFile())));
+        assertEquals("22", IOUtils.toString(new FileInputStream(client1.syncDirectory.resolve("dummy_conflict_2_30000_40000.txt").toFile())));
+        assertEquals("22", IOUtils.toString(new FileInputStream(client2.syncDirectory.resolve("dummy_conflict_2_30000_40000.txt").toFile())));
     }
 }

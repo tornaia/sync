@@ -13,15 +13,14 @@ public class OneClientIntTest extends AbstractIntTest {
     private String userid = "100001";
 
     @Test
-    public void startOneClientThenCreateAFileThenStopAndThenStart() throws Exception {
+    public void startOneClientThenCreateAFileThenCloseAndThenStart() throws Exception {
         AbstractIntTest.Client client = initClient(userid).start();
         createFile(client.syncDirectory.resolve("dummy.txt"), "dummy content", 500L, 600L);
         waitForSyncDone();
-        client.stop();
+        client.close();
 
         client.start();
         waitForSyncDone();
-        stopClients();
 
         assertTrue(client.syncDirectory.toFile().list().length == 1);
         assertEquals("dummy content", IOUtils.toString(new FileInputStream(client.syncDirectory.resolve("dummy.txt").toFile())));
