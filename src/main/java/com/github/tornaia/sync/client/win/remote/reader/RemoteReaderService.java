@@ -26,7 +26,7 @@ public class RemoteReaderService {
     private String userid;
 
     @Autowired
-    private SyncWebSocketKeepAliveService syncWebSocketKeepAliveService;
+    private SyncWebSocketReConnectService syncWebSocketReConnectService;
 
     @Autowired
     private RemoteRestQueryService remoteRestQueryService;
@@ -83,13 +83,13 @@ public class RemoteReaderService {
     @OnClose
     public void closedConnection(Session session) {
         LOG.info("Session closed. SessionId: " + session.getId());
-        syncWebSocketKeepAliveService.reconnect();
+        syncWebSocketReConnectService.reconnect();
     }
 
     @OnError
     public void error(Session session, Throwable t) {
         LOG.info("Error on session. SessionId: " + session.getId(), t);
-        syncWebSocketKeepAliveService.reconnect();
+        syncWebSocketReConnectService.reconnect();
     }
 
     public byte[] getFile(FileMetaInfo fileMetaInfo) {

@@ -14,9 +14,9 @@ import javax.websocket.WebSocketContainer;
 import java.net.URI;
 
 @Component
-public class SyncWebSocketKeepAliveService {
+public class SyncWebSocketReConnectService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(SyncWebSocketKeepAliveService.class);
+    private static final Logger LOG = LoggerFactory.getLogger(SyncWebSocketReConnectService.class);
 
     @Value("${server.scheme.web.socket:ws}")
     private String serverSchemeWebSocket;
@@ -39,7 +39,7 @@ public class SyncWebSocketKeepAliveService {
     @Autowired
     private RemoteReaderService remoteReaderService;
 
-    private volatile boolean contextIsRunning;
+    private volatile boolean contextIsRunning = true    ;
 
     @EventListener({ContextRefreshedEvent.class})
     public void ContextRefreshedEvent() {
@@ -72,7 +72,7 @@ public class SyncWebSocketKeepAliveService {
                     }
                 }
             }
-            LOG.info("WebSocket keep-alive service fades out since the context is not running");
+            LOG.debug("WebSocket re-connect service fades out since the connection is up");
         });
         thread.setDaemon(true);
         thread.setName(userid + "-" + syncDirectoryPath.substring(syncDirectoryPath.length() - 1) + "-WSKpAl");
