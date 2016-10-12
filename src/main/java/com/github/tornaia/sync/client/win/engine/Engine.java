@@ -68,32 +68,58 @@ public class Engine {
     public void init() {
         LOG.info("Engine init started");
 
-        while (remoteReaderService.isInitDone()) {
-            LOG.trace("Engine init...");
-            try {
-                Thread.sleep(10L);
-            } catch (InterruptedException e) {
-                LOG.warn("Init terminated: " + e.getMessage());
+        new Thread(() -> {
+            while (!remoteReaderService.isInitDone()) {
+                LOG.trace("Engine init...");
+                try {
+                    Thread.sleep(10L);
+                } catch (InterruptedException e) {
+                    LOG.warn("Init terminated: " + e.getMessage());
+                }
             }
-        }
 
-        runInBackground();
-        LOG.info("Engine init finished");
+            runInBackground();
+            LOG.info("Engine init finished");
+        }).start();
     }
 
     private void runInBackground() {
         LOG.info("Starting engine...");
         thread = new Thread(() -> {
             while (contextIsRunning) {
-                Optional<RemoteFileEvent> remoteEvent = remoteReaderService.getNext();
-                if (remoteEvent.isPresent()) {
-                    handle(remoteEvent.get());
+                Optional<RemoteFileEvent> remoteDeletedEvent = remoteReaderService.getNextDeleted();
+                if (remoteDeletedEvent.isPresent()) {
+                    handle(remoteDeletedEvent.get());
                     continue;
                 }
 
-                Optional<LocalFileEvent> localEvent = localReaderService.getNext();
-                if (localEvent.isPresent()) {
-                    handle(localEvent.get());
+                Optional<RemoteFileEvent> remoteModifiedEvent = remoteReaderService.getNextModified();
+                if (remoteModifiedEvent.isPresent()) {
+                    handle(remoteModifiedEvent.get());
+                    continue;
+                }
+
+                Optional<RemoteFileEvent> remoteCreatedEvent = remoteReaderService.getNextCreated();
+                if (remoteCreatedEvent.isPresent()) {
+                    handle(remoteCreatedEvent.get());
+                    continue;
+                }
+
+                Optional<LocalFileEvent> localCreatedEvent = localReaderService.getNextCreated();
+                if (localCreatedEvent.isPresent()) {
+                    handle(localCreatedEvent.get());
+                    continue;
+                }
+
+                Optional<LocalFileEvent> localModifiedEvent = localReaderService.getNextModified();
+                if (localModifiedEvent.isPresent()) {
+                    handle(localModifiedEvent.get());
+                    continue;
+                }
+
+                Optional<LocalFileEvent> localDeletedEvent = localReaderService.getNextDeleted();
+                if (localDeletedEvent.isPresent()) {
+                    handle(localDeletedEvent.get());
                     continue;
                 }
 
@@ -191,7 +217,7 @@ public class Engine {
             case CREATED:
                 boolean createSucceed = remoteWriterService.createFile(relativePath);
                 if (createSucceed) {
-                    LOG.info("File is in sync with server after create: " + relativePath);
+                    LOG.info("File is in sync with server after created event: " + relativePath);
                 } else {
                     LOG.warn("File creation cannot synced with server: " + relativePath);
                     localReaderService.reAddEvent(localEvent);
@@ -200,7 +226,7 @@ public class Engine {
             case MODIFIED:
                 boolean modifySucceed = remoteWriterService.modifyFile(relativePath);
                 if (modifySucceed) {
-                    LOG.info("File is in sync with server after modify: " + relativePath);
+                    LOG.info("File is in sync with server after modified event: " + relativePath);
                 } else {
                     LOG.warn("File modification cannot synced with server: " + relativePath);
                     localReaderService.reAddEvent(localEvent);
@@ -209,7 +235,7 @@ public class Engine {
             case DELETED:
                 boolean deleteSucceed = remoteWriterService.deleteFile(relativePath);
                 if (deleteSucceed) {
-                    LOG.info("File is in sync with server after delete: " + relativePath);
+                    LOG.info("File is in sync with server after deleted event: " + relativePath);
                 } else {
                     LOG.warn("File deletion cannot synced with server: " + relativePath);
                     localReaderService.reAddEvent(localEvent);

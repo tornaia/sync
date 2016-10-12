@@ -2,6 +2,7 @@ package com.github.tornaia.sync.client.win.remote.reader;
 
 import com.github.tornaia.sync.client.win.ClientidService;
 import com.github.tornaia.sync.shared.api.FileMetaInfo;
+import com.github.tornaia.sync.shared.api.RemoteEventType;
 import com.github.tornaia.sync.shared.api.RemoteFileEvent;
 import com.google.gson.Gson;
 import org.slf4j.Logger;
@@ -36,7 +37,7 @@ public class RemoteReaderService {
 
     private final List<RemoteFileEvent> events = new ArrayList<>();
 
-    private boolean initDone = false;
+    private volatile boolean initDone = false;
 
     private Session session;
 
@@ -68,12 +69,42 @@ public class RemoteReaderService {
         events.add(remoteFileEvent);
     }
 
-    public synchronized Optional<RemoteFileEvent> getNext() {
+    public synchronized Optional<RemoteFileEvent> getNextCreated() {
+        Optional<RemoteFileEvent> first = events.stream()
+                .filter(e -> Objects.equals(RemoteEventType.CREATED, e.eventType))
+                .findFirst();
+        if (first.isPresent()) {
+            events.remove(first.get());
+        }
+        return first;
+    }
+
+    public synchronized Optional<RemoteFileEvent> getNextModified() {
+        Optional<RemoteFileEvent> first = events.stream()
+                .filter(e -> Objects.equals(RemoteEventType.MODIFIED, e.eventType))
+                .findFirst();
+        if (first.isPresent()) {
+            events.remove(first.get());
+        }
+        return first;
+    }
+
+    public synchronized Optional<RemoteFileEvent> getNextDeleted() {
+        Optional<RemoteFileEvent> first = events.stream()
+                .filter(e -> Objects.equals(RemoteEventType.DELETED, e.eventType))
+                .findFirst();
+        if (first.isPresent()) {
+            events.remove(first.get());
+        }
+        return first;
+    }
+
+    /*public synchronized Optional<RemoteFileEvent> getNext() {
         if (events.isEmpty()) {
             return Optional.empty();
         }
         return Optional.of(events.remove(0));
-    }
+    }*/
 
     public void sendMessage(String message) {
         session.getAsyncRemote().sendText(message);

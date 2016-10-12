@@ -140,6 +140,12 @@ public class RemoteWriterService {
         }
 
         FileMetaInfo fileMetaInfo = optionalRemoteFileMetaInfo.get();
+
+        boolean localFileExistWithThisRelativePath = getAbsolutePath(relativePath).toFile().exists();
+        if (localFileExistWithThisRelativePath) {
+            LOG.info("Do not delete a file on server that exists on disk: " + fileMetaInfo);
+            return true;
+        }
         FileDeleteResponse fileDeleteResponse = remoteRestCommandService.onFileDelete(fileMetaInfo);
 
         boolean ok = Objects.equals(FileCreateResponse.Status.OK, fileDeleteResponse.status);

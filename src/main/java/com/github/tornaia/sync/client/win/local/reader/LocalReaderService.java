@@ -74,12 +74,34 @@ public class LocalReaderService {
         addAllLocalFilesToChangeList(syncDirectory);
     }
 
-    public synchronized Optional<LocalFileEvent> getNext() {
-        if (events.isEmpty()) {
-            return Optional.empty();
+    public synchronized Optional<LocalFileEvent> getNextCreated() {
+        Optional<LocalFileEvent> first = events.stream()
+                .filter(e -> Objects.equals(LocalEventType.CREATED, e.eventType))
+                .findFirst();
+        if (first.isPresent()) {
+            events.remove(first.get());
         }
+        return first;
+    }
 
-        return Optional.of(events.remove(0));
+    public synchronized Optional<LocalFileEvent> getNextModified() {
+        Optional<LocalFileEvent> first = events.stream()
+                .filter(e -> Objects.equals(LocalEventType.MODIFIED, e.eventType))
+                .findFirst();
+        if (first.isPresent()) {
+            events.remove(first.get());
+        }
+        return first;
+    }
+
+    public synchronized Optional<LocalFileEvent> getNextDeleted() {
+        Optional<LocalFileEvent> first = events.stream()
+                .filter(e -> Objects.equals(LocalEventType.DELETED, e.eventType))
+                .findFirst();
+        if (first.isPresent()) {
+            events.remove(first.get());
+        }
+        return first;
     }
 
     public Optional<FileMetaInfo> getFileMetaInfo(String relativePath) {
