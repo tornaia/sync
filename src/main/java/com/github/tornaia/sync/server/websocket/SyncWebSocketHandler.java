@@ -115,7 +115,7 @@ public class SyncWebSocketHandler extends TextWebSocketHandler {
 
     private void sendMsg(WebSocketSession session, RemoteFileEvent remoteFileEvent) {
         try {
-            LOG.info("Notifying session " + session.getId() + " about a new event: " + remoteFileEvent);
+            LOG.debug("Notifying session " + session.getId() + " about a new event: " + remoteFileEvent);
             ObjectMapper mapper = new ObjectMapper();
             // TODO move object mapper to a common place and write a test String, int -> "xx", 34 but should be "xx", "34" otherwise client will not able to parse it
             // or maybe works, I don't know at the moment
