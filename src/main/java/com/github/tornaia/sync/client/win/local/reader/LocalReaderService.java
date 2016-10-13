@@ -159,18 +159,6 @@ public class LocalReaderService {
         try {
             Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
                 @Override
-                public FileVisitResult postVisitDirectory(Path dir, IOException e) throws IOException {
-                    LOG.warn("Cannot visit directory: " + dir, e);
-                    return FileVisitResult.CONTINUE;
-                }
-
-                @Override
-                public FileVisitResult visitFileFailed(Path file, IOException e) throws IOException {
-                    LOG.warn("Cannot visit file", e);
-                    return FileVisitResult.CONTINUE;
-                }
-
-                @Override
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                     String relativePath = getRelativePath(file.toFile());
                     LOG.trace("Visit file: " + relativePath);
