@@ -146,20 +146,15 @@ public class RemoteRestCommandService {
     }
 
     public FileDeleteResponse onFileDelete(FileMetaInfo fileMetaInfo) {
-        LOG.info("                  171");
         HttpDelete httpDelete = new HttpDelete(httpClientProvider.getServerUrl() + FILE_PATH + "/" + fileMetaInfo.id + "?clientid=" + clientidService.clientid);
-        LOG.info("                  172");
         try {
             HttpResponse response = httpClientProvider.get().execute(httpDelete);
             HttpEntity entity = response.getEntity();
             EntityUtils.consume(entity);
-            LOG.info("                  173");
         } catch (IOException e) {
-            LOG.info("                  174");
             return FileDeleteResponse.transferFailed(fileMetaInfo, e.getMessage());
         }
 
-        LOG.info("                  175");
         LOG.info("DELETE file: " + fileMetaInfo);
         return FileDeleteResponse.ok(fileMetaInfo);
     }
