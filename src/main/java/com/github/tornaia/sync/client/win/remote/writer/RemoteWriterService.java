@@ -148,7 +148,7 @@ public class RemoteWriterService {
         }
         FileDeleteResponse fileDeleteResponse = remoteRestCommandService.onFileDelete(fileMetaInfo);
 
-        boolean ok = Objects.equals(FileCreateResponse.Status.OK, fileDeleteResponse.status);
+        boolean ok = Objects.equals(FileDeleteResponse.Status.OK, fileDeleteResponse.status);
         if (ok) {
             LOG.info("File deleted from server: " + fileMetaInfo);
             remoteKnownState.remove(fileMetaInfo);
