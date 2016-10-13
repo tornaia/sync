@@ -51,6 +51,9 @@ public class RemoteWriterService {
         FileMetaInfo localFileMetaInfo;
         try {
             localFileMetaInfo = FileMetaInfo.createNonSyncedFileMetaInfo(userid, relativePath, file);
+        } catch (NoSuchFileException e) {
+            LOG.warn("Skipping created event of a non-existing file", e);
+            return true;
         } catch (IOException e) {
             LOG.error("Cannot read file", e);
             return false;
