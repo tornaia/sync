@@ -197,9 +197,9 @@ public class Engine {
                     LOG.info("Remote and local fileMetaInfo equals: " + remoteFileMetaInfo.relativePath);
                     boolean succeed = localWriterService.delete(relativePath);
                     if (succeed) {
-                        LOG.info("File was created on disk: " + remoteFileMetaInfo);
+                        LOG.info("File was deleted from disk: " + remoteFileMetaInfo);
                     } else {
-                        LOG.warn("Failed to create file to disk: " + remoteFileMetaInfo);
+                        LOG.warn("Failed to deleted file from disk: " + remoteFileMetaInfo);
                     }
                 } else {
                     LOG.warn("Remote and local fileMetaInfo differs, wont delete! Remote: " + remoteFileMetaInfo + ", localFileInfo: " + localFileMetaInfo);
