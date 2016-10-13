@@ -34,6 +34,6 @@ public class RemoteKnownState {
 
     public synchronized void remove(FileMetaInfo fileMetaInfo) {
         boolean succeed = fileMetaInfos.remove(fileMetaInfo);
-        LOG.info("Removing: " + fileMetaInfo.relativePath + ", fileMetaInfo: " + fileMetaInfo + ", succeedł: " + succeed);
+        LOG.info("Removing: " + fileMetaInfo.relativePath + ", fileMetaInfo: " + fileMetaInfo + ", succeed: " + succeed);
     }
 }
