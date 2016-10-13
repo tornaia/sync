@@ -46,6 +46,7 @@ public class FileCommandService {
     public void modifyFile(String clientid, String id, long creationDateTime, long modificationDateTime, byte[] content) throws IOException {
         File file = fileRepository.findOne(id);
         if (Objects.isNull(file)) {
+            LOG.info("MODIFY Not found file: " + id);
             throw new FileNotFoundException(id);
         } else {
             file.setCreationDate(creationDateTime);
@@ -61,6 +62,7 @@ public class FileCommandService {
     public void deleteFile(String clientid, String id) {
         File file = fileRepository.findOne(id);
         if (Objects.isNull(file)) {
+            LOG.info("DELETE not found file: " + id);
             throw new FileNotFoundException(id);
         }
         String path = file.getPath();
