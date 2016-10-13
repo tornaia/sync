@@ -55,7 +55,7 @@ public class RemoteReaderService {
 
     @OnMessage
     public void onMessage(String message) {
-        LOG.info("Received msg: " + message);
+        LOG.debug("Received msg: " + message);
         if (Objects.equals("init-done", message)) {
             LOG.info("Init done");
             initDone = true;
@@ -109,7 +109,7 @@ public class RemoteReaderService {
 
     public void sendMessage(String message) {
         session.getAsyncRemote().sendText(message);
-        LOG.info("Sent msg: " + message);
+        LOG.debug("Sent msg: " + message);
     }
 
     @OnClose
@@ -120,7 +120,7 @@ public class RemoteReaderService {
 
     @OnError
     public void error(Session session, Throwable t) {
-        LOG.info("Error on session. SessionId: " + session.getId(), t);
+        LOG.warn("Error on session. SessionId: " + session.getId(), t);
         syncWebSocketReConnectService.reconnect();
     }
 

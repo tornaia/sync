@@ -26,7 +26,7 @@ public class RemoteKnownState {
         if (optionalKnownFileMetaInfo.isPresent()) {
             FileMetaInfo knownFileMetaInfo = optionalKnownFileMetaInfo.get();
             fileMetaInfos.remove(knownFileMetaInfo);
-            LOG.info("Updating fileMetaInfo of relativePath: " + fileMetaInfo.relativePath + ", fileMetaInfo: " + fileMetaInfo);
+            LOG.debug("Updating fileMetaInfo of relativePath: " + fileMetaInfo.relativePath + ", fileMetaInfo: " + fileMetaInfo);
         }
 
         return fileMetaInfos.add(fileMetaInfo);
@@ -34,6 +34,6 @@ public class RemoteKnownState {
 
     public synchronized void remove(FileMetaInfo fileMetaInfo) {
         boolean succeed = fileMetaInfos.remove(fileMetaInfo);
-        LOG.info("Removing: " + fileMetaInfo.relativePath + ", fileMetaInfo: " + fileMetaInfo + ", succeed: " + succeed);
+        LOG.debug("Removing: " + fileMetaInfo.relativePath + ", fileMetaInfo: " + fileMetaInfo + ", succeed: " + succeed);
     }
 }

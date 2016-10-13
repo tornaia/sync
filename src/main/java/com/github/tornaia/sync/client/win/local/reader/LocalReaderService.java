@@ -235,12 +235,12 @@ public class LocalReaderService {
         String relativePath = getRelativePath(file);
 
         if (file.isFile()) {
-            LOG.info("File created event: " + fileUtils.getDescriptionForFile(file));
+            LOG.debug("File created event: " + fileUtils.getDescriptionForFile(file));
             addNewEvent(new FileCreatedEvent(relativePath));
         } else if (file.isDirectory()) {
             registerChildrenDirectoriesRecursively(filePath.toAbsolutePath());
         } else {
-            LOG.info("Created event of an unknown file type. File/directory does not exist? " + file);
+            LOG.debug("Created event of an unknown file type. File/directory does not exist? " + file);
         }
     }
 
@@ -250,22 +250,22 @@ public class LocalReaderService {
             return;
         } else if (file.isFile()) {
             String relativePath = getRelativePath(file);
-            LOG.info("File modified event: " + fileUtils.getDescriptionForFile(file));
+            LOG.debug("File modified event: " + fileUtils.getDescriptionForFile(file));
             addNewEvent(new FileModifiedEvent(relativePath));
         } else {
-            LOG.info("Modified event of an unknown file type. File/directory does not exist? " + file);
+            LOG.debug("Modified event of an unknown file type. File/directory does not exist? " + file);
         }
     }
 
     private void onFileDeleted(Path filePath) {
         File file = filePath.toFile();
         if (file.exists()) {
-            LOG.info("Deleted event of a non-existing file: " + file);
+            LOG.debug("Deleted event of a non-existing file: " + file);
             return;
         }
 
         String relativePath = getRelativePath(file);
-        LOG.info("File deleted event: " + relativePath);
+        LOG.debug("File deleted event: " + relativePath);
         addNewEvent(new FileDeleteEvent(relativePath));
     }
 
