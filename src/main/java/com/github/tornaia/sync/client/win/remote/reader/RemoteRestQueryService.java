@@ -3,7 +3,9 @@ package com.github.tornaia.sync.client.win.remote.reader;
 import com.github.tornaia.sync.client.win.httpclient.HttpClientProvider;
 import com.github.tornaia.sync.shared.api.FileMetaInfo;
 import org.apache.commons.io.IOUtils;
+import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +32,9 @@ public class RemoteRestQueryService {
 
         byte[] response;
         try {
-            response = IOUtils.toByteArray(httpClientProvider.get().execute(httpGet).getEntity().getContent());
+            HttpEntity entity = httpClientProvider.get().execute(httpGet).getEntity();
+            response = IOUtils.toByteArray(entity.getContent());
+            EntityUtils.consume(entity);
         } catch (IOException e) {
             throw new RuntimeException("Get from server failed", e);
         }

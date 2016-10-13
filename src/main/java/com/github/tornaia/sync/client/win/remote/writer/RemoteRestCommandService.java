@@ -15,6 +15,7 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.mime.*;
 import org.apache.http.entity.mime.content.FileBody;
 import org.apache.http.entity.mime.content.StringBody;
+import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -70,25 +71,21 @@ public class RemoteRestCommandService {
         HttpPost httpPost = new HttpPost(httpClientProvider.getServerUrl() + FILE_PATH + "?userid=" + userid + "&creationDateTime=" + fileMetaInfo.creationDateTime + "&modificationDateTime=" + fileMetaInfo.modificationDateTime + "&clientid=" + clientidService.clientid);
         httpPost.setEntity(multipart);
 
-        HttpResponse response;
+        FileMetaInfo remoteFileMetaInfo;
         try {
-            response = httpClientProvider.get().execute(httpPost);
+            HttpResponse response = httpClientProvider.get().execute(httpPost);
+            HttpEntity entity = response.getEntity();
+            if (Objects.equals(response.getStatusLine().getStatusCode(), HttpStatus.SC_CONFLICT)) {
+                EntityUtils.consume(entity);
+                return FileCreateResponse.conflict(fileMetaInfo);
+            }
+
+            remoteFileMetaInfo = new ObjectMapper().readValue(entity.getContent(), FileMetaInfo.class);
         } catch (FileNotFoundException e) {
             LOG.info("File disappeared meanwhile it was under upload(post)? " + e.getMessage());
             return FileCreateResponse.transferFailed(fileMetaInfo, e.getMessage());
         } catch (IOException e) {
             return FileCreateResponse.transferFailed(fileMetaInfo, e.getMessage());
-        }
-
-        if (Objects.equals(response.getStatusLine().getStatusCode(), HttpStatus.SC_CONFLICT)) {
-            return FileCreateResponse.conflict(fileMetaInfo);
-        }
-
-        FileMetaInfo remoteFileMetaInfo;
-        try {
-            remoteFileMetaInfo = new ObjectMapper().readValue(response.getEntity().getContent(), FileMetaInfo.class);
-        } catch (IOException e) {
-            throw new RuntimeException("Unexpected response", e);
         }
 
         return FileCreateResponse.ok(remoteFileMetaInfo);
@@ -117,9 +114,19 @@ public class RemoteRestCommandService {
         HttpPut httpPut = new HttpPut(httpClientProvider.getServerUrl() + FILE_PATH + "/" + fileMetaInfo.id + "?clientid=" + clientidService.clientid);
         httpPut.setEntity(multipart);
 
-        HttpResponse response;
+        HttpEntity entity;
         try {
-            response = httpClientProvider.get().execute(httpPut);
+            HttpResponse response = httpClientProvider.get().execute(httpPut);
+            entity = response.getEntity();
+            if (Objects.equals(response.getStatusLine().getStatusCode(), HttpStatus.SC_CONFLICT)) {
+                EntityUtils.consume(entity);
+                return FileModifyResponse.conflict(fileMetaInfo);
+            }
+
+            if (Objects.equals(response.getStatusLine().getStatusCode(), HttpStatus.SC_NOT_FOUND)) {
+                EntityUtils.consume(entity);
+                return FileModifyResponse.notFound(fileMetaInfo);
+            }
         } catch (FileNotFoundException e) {
             LOG.info("File disappeared meanwhile it was under upload(post)? " + e.getMessage());
             return FileModifyResponse.transferFailed(fileMetaInfo, e.getMessage());
@@ -127,33 +134,32 @@ public class RemoteRestCommandService {
             return FileModifyResponse.transferFailed(fileMetaInfo, e.getMessage());
         }
 
-        if (Objects.equals(response.getStatusLine().getStatusCode(), HttpStatus.SC_CONFLICT)) {
-            return FileModifyResponse.conflict(fileMetaInfo);
-        }
-
-        if (Objects.equals(response.getStatusLine().getStatusCode(), HttpStatus.SC_NOT_FOUND)) {
-            return FileModifyResponse.notFound(fileMetaInfo);
-        }
-
         FileMetaInfo remoteFileMetaInfo;
         try {
-            remoteFileMetaInfo = new ObjectMapper().readValue(response.getEntity().getContent(), FileMetaInfo.class);
+            remoteFileMetaInfo = new ObjectMapper().readValue(entity.getContent(), FileMetaInfo.class);
         } catch (IOException e) {
-            throw new RuntimeException("Unexpected response", e);
+            LOG.error("Ok response with a malformed response body?", e);
+            return FileModifyResponse.transferFailed(fileMetaInfo, e.getMessage());
         }
 
         return FileModifyResponse.ok(remoteFileMetaInfo);
     }
 
     public FileDeleteResponse onFileDelete(FileMetaInfo fileMetaInfo) {
+        LOG.info("                  171");
         HttpDelete httpDelete = new HttpDelete(httpClientProvider.getServerUrl() + FILE_PATH + "/" + fileMetaInfo.id + "?clientid=" + clientidService.clientid);
-
+        LOG.info("                  172");
         try {
-            httpClientProvider.get().execute(httpDelete);
+            HttpResponse response = httpClientProvider.get().execute(httpDelete);
+            HttpEntity entity = response.getEntity();
+            EntityUtils.consume(entity);
+            LOG.info("                  173");
         } catch (IOException e) {
+            LOG.info("                  174");
             return FileDeleteResponse.transferFailed(fileMetaInfo, e.getMessage());
         }
 
+        LOG.info("                  175");
         LOG.info("DELETE file: " + fileMetaInfo);
         return FileDeleteResponse.ok(fileMetaInfo);
     }
