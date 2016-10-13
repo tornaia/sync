@@ -65,7 +65,9 @@ public class SyncWebSocketHandler extends TextWebSocketHandler {
 
         initMessages.forEach(rfe -> sendMsg(session, rfe));
 
-        session.sendMessage(new TextMessage("init-done"));
+        synchronized (session) {
+            session.sendMessage(new TextMessage("init-done"));
+        }
     }
 
     @Override
@@ -120,7 +122,9 @@ public class SyncWebSocketHandler extends TextWebSocketHandler {
             mapper.configure(JsonGenerator.Feature.WRITE_NUMBERS_AS_STRINGS, true);
             String remoteFileEventAsJson = mapper.writeValueAsString(remoteFileEvent);
             // TODO  here we send messages in synchronous way I guess... thats baaad.
-            session.sendMessage(new TextMessage(remoteFileEventAsJson));
+            synchronized (session) {
+                session.sendMessage(new TextMessage(remoteFileEventAsJson));
+            }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
