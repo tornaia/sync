@@ -153,7 +153,7 @@ public class Engine {
                         return;
                     }
                     if (Objects.equals(remoteFileMetaInfo, optionalLocalFileMetaInfo.get())) {
-                        LOG.info("Remote and local fileMetaInfo equals: " + remoteFileMetaInfo.relativePath);
+                        LOG.debug("Remote and local fileMetaInfo equals: " + remoteFileMetaInfo.relativePath);
                         return;
                     }
 
@@ -194,7 +194,7 @@ public class Engine {
 
                 FileMetaInfo localFileMetaInfo = optionalLocalFileMetaInfo.get();
                 if (Objects.equals(remoteFileMetaInfo, localFileMetaInfo)) {
-                    LOG.info("Remote and local fileMetaInfo equals: " + remoteFileMetaInfo.relativePath);
+                    LOG.debug("Remote and local fileMetaInfo equals: " + remoteFileMetaInfo.relativePath);
                     boolean succeed = localWriterService.delete(relativePath);
                     if (succeed) {
                         LOG.info("File was deleted from disk: " + remoteFileMetaInfo);
