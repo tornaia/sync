@@ -74,34 +74,40 @@ public class LocalReaderService {
         addAllLocalFilesToChangeList(syncDirectory);
     }
 
-    public synchronized Optional<LocalFileEvent> getNextCreated() {
-        Optional<LocalFileEvent> first = events.stream()
-                .filter(e -> Objects.equals(LocalEventType.CREATED, e.eventType))
-                .findFirst();
-        if (first.isPresent()) {
-            events.remove(first.get());
+    public Optional<LocalFileEvent> getNextCreated() {
+        synchronized (this) {
+            Optional<LocalFileEvent> first = events.stream()
+                    .filter(e -> Objects.equals(LocalEventType.CREATED, e.eventType))
+                    .findFirst();
+            if (first.isPresent()) {
+                events.remove(first.get());
+            }
+            return first;
         }
-        return first;
     }
 
-    public synchronized Optional<LocalFileEvent> getNextModified() {
-        Optional<LocalFileEvent> first = events.stream()
-                .filter(e -> Objects.equals(LocalEventType.MODIFIED, e.eventType))
-                .findFirst();
-        if (first.isPresent()) {
-            events.remove(first.get());
+    public Optional<LocalFileEvent> getNextModified() {
+        synchronized (this) {
+            Optional<LocalFileEvent> first = events.stream()
+                    .filter(e -> Objects.equals(LocalEventType.MODIFIED, e.eventType))
+                    .findFirst();
+            if (first.isPresent()) {
+                events.remove(first.get());
+            }
+            return first;
         }
-        return first;
     }
 
-    public synchronized Optional<LocalFileEvent> getNextDeleted() {
-        Optional<LocalFileEvent> first = events.stream()
-                .filter(e -> Objects.equals(LocalEventType.DELETED, e.eventType))
-                .findFirst();
-        if (first.isPresent()) {
-            events.remove(first.get());
+    public Optional<LocalFileEvent> getNextDeleted() {
+        synchronized (this) {
+            Optional<LocalFileEvent> first = events.stream()
+                    .filter(e -> Objects.equals(LocalEventType.DELETED, e.eventType))
+                    .findFirst();
+            if (first.isPresent()) {
+                events.remove(first.get());
+            }
+            return first;
         }
-        return first;
     }
 
     public Optional<FileMetaInfo> getFileMetaInfo(String relativePath) {
@@ -140,11 +146,13 @@ public class LocalReaderService {
         }
     }
 
-    private synchronized void addNewEvent(LocalFileEvent localFileEvent) {
+    private void addNewEvent(LocalFileEvent localFileEvent) {
         // TODO later here we can combine events to optimize things like:
         // create-delete (same path) -> nothing
         // create-delete-create (same path) -> last create only
-        events.add(localFileEvent);
+        synchronized (this) {
+            events.add(localFileEvent);
+        }
     }
 
     private void addAllLocalFilesToChangeList(Path root) {

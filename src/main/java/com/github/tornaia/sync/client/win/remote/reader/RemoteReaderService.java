@@ -65,46 +65,47 @@ public class RemoteReaderService {
         addNewEvent(remoteFileEvent);
     }
 
-    private synchronized void addNewEvent(RemoteFileEvent remoteFileEvent) {
-        events.add(remoteFileEvent);
+    private void addNewEvent(RemoteFileEvent remoteFileEvent) {
+        synchronized (this) {
+            events.add(remoteFileEvent);
+        }
     }
 
-    public synchronized Optional<RemoteFileEvent> getNextCreated() {
-        Optional<RemoteFileEvent> first = events.stream()
-                .filter(e -> Objects.equals(RemoteEventType.CREATED, e.eventType))
-                .findFirst();
-        if (first.isPresent()) {
-            events.remove(first.get());
+    public Optional<RemoteFileEvent> getNextCreated() {
+        synchronized (this) {
+            Optional<RemoteFileEvent> first = events.stream()
+                    .filter(e -> Objects.equals(RemoteEventType.CREATED, e.eventType))
+                    .findFirst();
+            if (first.isPresent()) {
+                events.remove(first.get());
+            }
+            return first;
         }
-        return first;
     }
 
-    public synchronized Optional<RemoteFileEvent> getNextModified() {
-        Optional<RemoteFileEvent> first = events.stream()
-                .filter(e -> Objects.equals(RemoteEventType.MODIFIED, e.eventType))
-                .findFirst();
-        if (first.isPresent()) {
-            events.remove(first.get());
+    public Optional<RemoteFileEvent> getNextModified() {
+        synchronized (this) {
+            Optional<RemoteFileEvent> first = events.stream()
+                    .filter(e -> Objects.equals(RemoteEventType.MODIFIED, e.eventType))
+                    .findFirst();
+            if (first.isPresent()) {
+                events.remove(first.get());
+            }
+            return first;
         }
-        return first;
     }
 
-    public synchronized Optional<RemoteFileEvent> getNextDeleted() {
-        Optional<RemoteFileEvent> first = events.stream()
-                .filter(e -> Objects.equals(RemoteEventType.DELETED, e.eventType))
-                .findFirst();
-        if (first.isPresent()) {
-            events.remove(first.get());
+    public Optional<RemoteFileEvent> getNextDeleted() {
+        synchronized (this) {
+            Optional<RemoteFileEvent> first = events.stream()
+                    .filter(e -> Objects.equals(RemoteEventType.DELETED, e.eventType))
+                    .findFirst();
+            if (first.isPresent()) {
+                events.remove(first.get());
+            }
+            return first;
         }
-        return first;
     }
-
-    /*public synchronized Optional<RemoteFileEvent> getNext() {
-        if (events.isEmpty()) {
-            return Optional.empty();
-        }
-        return Optional.of(events.remove(0));
-    }*/
 
     public void sendMessage(String message) {
         session.getAsyncRemote().sendText(message);
