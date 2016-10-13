@@ -63,15 +63,30 @@ public class LocalReaderService {
         this.watchService = FileSystems.getDefault().newWatchService();
         this.syncDirectory = FileSystems.getDefault().getPath(syncDirectoryPath);
         Files.createDirectories(syncDirectory);
-        register(syncDirectory);
-        registerChildrenDirectoriesRecursively(syncDirectory);
 
-        Thread thread = new Thread(() -> runInBackground());
-        thread.setDaemon(true);
-        thread.setName(userid + "-" + syncDirectoryPath.substring(syncDirectoryPath.length() - 1) + "-LocalR");
-        thread.start();
+        Thread directoryEventsReaderThread = new Thread(() -> runInBackground());
+        directoryEventsReaderThread.setDaemon(true);
+        directoryEventsReaderThread.setName(userid + "-" + syncDirectoryPath.substring(syncDirectoryPath.length() - 1) + "-LocalR");
+        directoryEventsReaderThread.start();
 
-        addAllLocalFilesToChangeList(syncDirectory);
+        Thread directoryWatcherRegisterThread = new Thread(() -> runDirWatcherRegisterInBackground());
+        directoryWatcherRegisterThread.setDaemon(true);
+        directoryWatcherRegisterThread.setName(userid + "-" + syncDirectoryPath.substring(syncDirectoryPath.length() - 1) + "-DirWR");
+        directoryWatcherRegisterThread.start();
+    }
+
+    private void runDirWatcherRegisterInBackground() {
+        while (contextIsRunning) {
+            LOG.debug("Rescan directory tree");
+            register(syncDirectory);
+            registerChildrenDirectoriesRecursively(syncDirectory);
+            addAllLocalFilesToChangeList(syncDirectory);
+            try {
+                Thread.sleep(30000L);
+            } catch (InterruptedException ie) {
+                LOG.warn("Run terminated: " + ie.getMessage());
+            }
+        }
     }
 
     public Optional<LocalFileEvent> getNextCreated() {
