@@ -217,7 +217,7 @@ public class Engine {
             case CREATED:
                 boolean createSucceed = remoteWriterService.createFile(relativePath);
                 if (createSucceed) {
-                    LOG.info("File is in sync with server after created event: " + relativePath);
+                    LOG.debug("File is in sync with server after created event: " + relativePath);
                 } else {
                     LOG.warn("File creation cannot synced with server: " + relativePath);
                     localReaderService.reAddEvent(localEvent);
@@ -226,7 +226,7 @@ public class Engine {
             case MODIFIED:
                 boolean modifySucceed = remoteWriterService.modifyFile(relativePath);
                 if (modifySucceed) {
-                    LOG.info("File is in sync with server after modified event: " + relativePath);
+                    LOG.debug("File is in sync with server after modified event: " + relativePath);
                 } else {
                     LOG.warn("File modification cannot synced with server: " + relativePath);
                     localReaderService.reAddEvent(localEvent);
@@ -235,7 +235,7 @@ public class Engine {
             case DELETED:
                 boolean deleteSucceed = remoteWriterService.deleteFile(relativePath);
                 if (deleteSucceed) {
-                    LOG.info("File is in sync with server after deleted event: " + relativePath);
+                    LOG.debug("File is in sync with server after deleted event: " + relativePath);
                 } else {
                     LOG.warn("File deletion cannot synced with server: " + relativePath);
                     localReaderService.reAddEvent(localEvent);

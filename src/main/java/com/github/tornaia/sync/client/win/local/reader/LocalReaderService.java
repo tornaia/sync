@@ -282,7 +282,7 @@ public class LocalReaderService {
             Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
                 @Override
                 public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-                    LOG.info("WatchService registered for dir: " + dir.toFile().getAbsolutePath());
+                    LOG.debug("WatchService registered for dir: " + dir.toFile().getAbsolutePath());
                     register(dir);
                     return FileVisitResult.CONTINUE;
                 }

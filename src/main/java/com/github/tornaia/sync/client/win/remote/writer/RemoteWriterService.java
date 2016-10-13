@@ -61,7 +61,7 @@ public class RemoteWriterService {
 
         Optional<FileMetaInfo> optionalRemoteFileMetaInfo = remoteKnownState.get(relativePath);
         if (optionalRemoteFileMetaInfo.isPresent() && Objects.equals(optionalRemoteFileMetaInfo.get(), localFileMetaInfo)) {
-            LOG.info("File is already known by server: " + localFileMetaInfo);
+            LOG.debug("File is already known by server: " + localFileMetaInfo);
             return true;
         }
 
@@ -103,7 +103,7 @@ public class RemoteWriterService {
             return createFile(relativePath);
         }
         if (optionalRemoteFileMetaInfo.isPresent() && Objects.equals(optionalRemoteFileMetaInfo.get(), localFileMetaInfo)) {
-            LOG.info("File is already known by server: " + localFileMetaInfo);
+            LOG.debug("File is already known by server: " + localFileMetaInfo);
             return true;
         }
 
