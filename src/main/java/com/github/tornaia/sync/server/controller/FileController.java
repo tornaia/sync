@@ -42,6 +42,7 @@ public class FileController {
         fileCommandService.deleteAll();
     }
 
+    // FIXME GET and RequestBody?!
     @RequestMapping(method = GET)
     public List<FileMetaInfo> getModifiedFiles(@RequestBody GetModifiedFilesRequest request) {
         return fileQueryService.getModifiedFiles(request.getUserid(), request.getModTs());
