@@ -1,5 +1,6 @@
 package com.github.tornaia.sync.client.win.local.reader;
 
+import com.github.tornaia.sync.client.win.remote.RemoteKnownState;
 import com.github.tornaia.sync.client.win.util.FileUtils;
 import com.github.tornaia.sync.shared.api.FileMetaInfo;
 import org.slf4j.Logger;
@@ -33,6 +34,9 @@ public class LocalReaderService {
 
     @Value("${frosch-sync.userid:7247234}")
     private String userid;
+
+    @Autowired
+    private RemoteKnownState remoteKnownState;
 
     @Autowired
     private FileUtils fileUtils;
@@ -80,7 +84,7 @@ public class LocalReaderService {
             LOG.debug("Rescan directory tree");
             register(syncDirectory);
             registerChildrenDirectoriesRecursively(syncDirectory);
-            addAllLocalFilesToChangeList(syncDirectory);
+            addAllLocalNewFilesToChangeList(syncDirectory);
             try {
                 Thread.sleep(30000L);
             } catch (InterruptedException ie) {
@@ -170,21 +174,32 @@ public class LocalReaderService {
         }
     }
 
-    private void addAllLocalFilesToChangeList(Path root) {
-        try {
-            Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
-                @Override
-                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                    String relativePath = getRelativePath(file.toFile());
-                    LOG.trace("Visit file: " + relativePath);
-                    // TODO it is not a FileCreatedEvent but more a FileAddedEvent
-                    addNewEvent(new FileCreatedEvent(relativePath));
-                    return FileVisitResult.CONTINUE;
-                }
-            });
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+    private void addAllLocalNewFilesToChangeList(Path root) {
+//        try {
+//            Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
+//                @Override
+//                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+//                    String relativePath = getRelativePath(file.toFile());
+//                    LOG.trace("Visit file: " + relativePath);
+//                    Optional<FileMetaInfo> optionalKnownFileMetaInfo = remoteKnownState.get(getRelativePath(file.toFile()));
+//                    if (!optionalKnownFileMetaInfo.isPresent()) {
+//                        LOG.trace("New file found: " + relativePath);
+//                        addNewEvent(new FileCreatedEvent(relativePath));
+//                        return FileVisitResult.CONTINUE;
+//                    }
+//
+//                    FileMetaInfo knownFileMetaInfo = optionalKnownFileMetaInfo.get();
+//                    FileMetaInfo localFileMetaInfo = new FileMetaInfo(null, userid, relativePath, attrs.size(), attrs.creationTime().toMillis(), attrs.lastModifiedTime().toMillis());
+//                    if (!Objects.equals(knownFileMetaInfo, localFileMetaInfo)) {
+//                        LOG.trace("Modified file found: " + knownFileMetaInfo + " -> " + localFileMetaInfo);
+//                        addNewEvent(new FileModifiedEvent(relativePath));
+//                    }
+//                    return FileVisitResult.CONTINUE;
+//                }
+//            });
+//        } catch (IOException e) {
+//            throw new RuntimeException(e);
+//        }
     }
 
     private void runInBackground() {
