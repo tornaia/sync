@@ -72,7 +72,7 @@ public class Engine {
             while (!remoteReaderService.isInitDone()) {
                 LOG.trace("Engine init...");
                 try {
-                    Thread.sleep(10L);
+                    Thread.sleep(250L);
                 } catch (InterruptedException e) {
                     LOG.warn("Init terminated: " + e.getMessage());
                 }
@@ -92,34 +92,30 @@ public class Engine {
                     handle(remoteDeletedEvent.get());
                     continue;
                 }
-
                 Optional<RemoteFileEvent> remoteModifiedEvent = remoteReaderService.getNextModified();
                 if (remoteModifiedEvent.isPresent()) {
                     handle(remoteModifiedEvent.get());
                     continue;
                 }
-
                 Optional<RemoteFileEvent> remoteCreatedEvent = remoteReaderService.getNextCreated();
                 if (remoteCreatedEvent.isPresent()) {
                     handle(remoteCreatedEvent.get());
                     continue;
                 }
 
-                Optional<LocalFileEvent> localCreatedEvent = localReaderService.getNextCreated();
-                if (localCreatedEvent.isPresent()) {
-                    handle(localCreatedEvent.get());
+                Optional<LocalFileEvent> localDeletedEvent = localReaderService.getNextDeleted();
+                if (localDeletedEvent.isPresent()) {
+                    handle(localDeletedEvent.get());
                     continue;
                 }
-
                 Optional<LocalFileEvent> localModifiedEvent = localReaderService.getNextModified();
                 if (localModifiedEvent.isPresent()) {
                     handle(localModifiedEvent.get());
                     continue;
                 }
-
-                Optional<LocalFileEvent> localDeletedEvent = localReaderService.getNextDeleted();
-                if (localDeletedEvent.isPresent()) {
-                    handle(localDeletedEvent.get());
+                Optional<LocalFileEvent> localCreatedEvent = localReaderService.getNextCreated();
+                if (localCreatedEvent.isPresent()) {
+                    handle(localCreatedEvent.get());
                     continue;
                 }
 
