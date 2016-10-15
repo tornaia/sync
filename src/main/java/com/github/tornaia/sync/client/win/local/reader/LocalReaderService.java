@@ -68,18 +68,18 @@ public class LocalReaderService {
         this.syncDirectory = FileSystems.getDefault().getPath(syncDirectoryPath);
         Files.createDirectories(syncDirectory);
 
-        Thread directoryEventsReaderThread = new Thread(() -> runInBackground());
+        Thread directoryEventsReaderThread = new Thread(() -> consumeEventsFromWatchService());
         directoryEventsReaderThread.setDaemon(true);
         directoryEventsReaderThread.setName(userid + "-" + syncDirectoryPath.substring(syncDirectoryPath.length() - 1) + "-LocalR");
         directoryEventsReaderThread.start();
 
-        Thread directoryWatcherRegisterThread = new Thread(() -> runDirWatcherRegisterInBackground());
+        Thread directoryWatcherRegisterThread = new Thread(() -> registerWatchersAndAddAllFiles());
         directoryWatcherRegisterThread.setDaemon(true);
         directoryWatcherRegisterThread.setName(userid + "-" + syncDirectoryPath.substring(syncDirectoryPath.length() - 1) + "-DirWR");
         directoryWatcherRegisterThread.start();
     }
 
-    private void runDirWatcherRegisterInBackground() {
+    private void registerWatchersAndAddAllFiles() {
         while (contextIsRunning) {
             LOG.debug("Rescan directory tree");
             register(syncDirectory);
@@ -175,34 +175,34 @@ public class LocalReaderService {
     }
 
     private void addAllLocalNewFilesToChangeList(Path root) {
-//        try {
-//            Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
-//                @Override
-//                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-//                    String relativePath = getRelativePath(file.toFile());
-//                    LOG.trace("Visit file: " + relativePath);
-//                    Optional<FileMetaInfo> optionalKnownFileMetaInfo = remoteKnownState.get(getRelativePath(file.toFile()));
-//                    if (!optionalKnownFileMetaInfo.isPresent()) {
-//                        LOG.trace("New file found: " + relativePath);
-//                        addNewEvent(new FileCreatedEvent(relativePath));
-//                        return FileVisitResult.CONTINUE;
-//                    }
-//
-//                    FileMetaInfo knownFileMetaInfo = optionalKnownFileMetaInfo.get();
-//                    FileMetaInfo localFileMetaInfo = new FileMetaInfo(null, userid, relativePath, attrs.size(), attrs.creationTime().toMillis(), attrs.lastModifiedTime().toMillis());
-//                    if (!Objects.equals(knownFileMetaInfo, localFileMetaInfo)) {
-//                        LOG.trace("Modified file found: " + knownFileMetaInfo + " -> " + localFileMetaInfo);
-//                        addNewEvent(new FileModifiedEvent(relativePath));
-//                    }
-//                    return FileVisitResult.CONTINUE;
-//                }
-//            });
-//        } catch (IOException e) {
-//            throw new RuntimeException(e);
-//        }
+        try {
+            Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                    String relativePath = getRelativePath(file.toFile());
+                    LOG.trace("Visit file: " + relativePath);
+                    Optional<FileMetaInfo> optionalKnownFileMetaInfo = remoteKnownState.get(getRelativePath(file.toFile()));
+                    if (!optionalKnownFileMetaInfo.isPresent()) {
+                        LOG.trace("New file found: " + relativePath);
+                        addNewEvent(new FileCreatedEvent(relativePath));
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    FileMetaInfo knownFileMetaInfo = optionalKnownFileMetaInfo.get();
+                    FileMetaInfo localFileMetaInfo = new FileMetaInfo(null, userid, relativePath, attrs.size(), attrs.creationTime().toMillis(), attrs.lastModifiedTime().toMillis());
+                    if (!Objects.equals(knownFileMetaInfo, localFileMetaInfo)) {
+                        LOG.trace("Modified file found: " + knownFileMetaInfo + " -> " + localFileMetaInfo);
+                        addNewEvent(new FileModifiedEvent(relativePath));
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    private void runInBackground() {
+    private void consumeEventsFromWatchService() {
         while (contextIsRunning) {
             WatchKey key;
             try {
@@ -297,14 +297,14 @@ public class LocalReaderService {
             Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
                 @Override
                 public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-                    LOG.debug("WatchService registered for dir: " + dir.toFile().getAbsolutePath());
+                    LOG.debug("WatchService (re)registered for dir: " + dir.toFile().getAbsolutePath());
                     register(dir);
                     return FileVisitResult.CONTINUE;
                 }
 
                 @Override
                 public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
-                    LOG.warn("VISIT FAILED: " + file + ", exception: " + exc.getMessage());
+                    LOG.warn("Visit of file failed: " + file + ", exception: " + exc.getMessage());
                     return FileVisitResult.CONTINUE;
                 }
             });
