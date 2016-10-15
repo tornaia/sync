@@ -1,0 +1,1 @@
+cf push dev-sync-backend -p sync-server-1.0-SNAPSHOT.jar
