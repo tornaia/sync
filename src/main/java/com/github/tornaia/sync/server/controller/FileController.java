@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.List;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM;
@@ -43,9 +42,8 @@ public class FileController {
         fileCommandService.deleteAll();
     }
 
-    // FIXME GET and RequestBody?!
     @RequestMapping(method = GET)
-    public List<FileMetaInfo> getModifiedFiles(@RequestBody GetModifiedFilesRequest request) {
+    public List<FileMetaInfo> getModifiedFiles(GetModifiedFilesRequest request) {
         return fileQueryService.getModifiedFiles(request.getUserid(), request.getModTs());
     }
 
