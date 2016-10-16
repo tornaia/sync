@@ -99,7 +99,7 @@ public class RemoteWriterService {
 
         Optional<FileMetaInfo> optionalRemoteFileMetaInfo = remoteKnownState.get(relativePath);
         if (!optionalRemoteFileMetaInfo.isPresent()) {
-            LOG.info("Cannot modify a file that is unknown to server. So lets create instead of modification: " + localFileMetaInfo);
+            LOG.debug("Cannot modify a file that is unknown to server. So lets create instead of modification: " + localFileMetaInfo);
             return createFile(relativePath);
         }
         if (optionalRemoteFileMetaInfo.isPresent() && Objects.equals(optionalRemoteFileMetaInfo.get(), localFileMetaInfo)) {

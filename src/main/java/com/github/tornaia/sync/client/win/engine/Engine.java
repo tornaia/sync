@@ -133,7 +133,7 @@ public class Engine {
     }
 
     private void handle(RemoteFileEvent remoteEvent) {
-        LOG.info("Starting to process remote event: " + remoteEvent);
+        LOG.debug("Starting to process remote event: " + remoteEvent);
         FileMetaInfo remoteFileMetaInfo = remoteEvent.fileMetaInfo;
         String relativePath = remoteFileMetaInfo.relativePath;
         boolean localFileExists = localReaderService.exists(relativePath);
@@ -207,7 +207,7 @@ public class Engine {
     }
 
     private void handle(LocalFileEvent localEvent) {
-        LOG.info("Starting to process local event: " + localEvent);
+        LOG.debug("Starting to process local event: " + localEvent);
         String relativePath = localEvent.relativePath;
         switch (localEvent.eventType) {
             case CREATED:
