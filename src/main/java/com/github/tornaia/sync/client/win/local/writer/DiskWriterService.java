@@ -104,7 +104,6 @@ public class DiskWriterService {
         }
 
         try {
-            // TODO StandardCopyOption.COPY_ATTRIBUTES
             Files.move(tempFile.get(), absolutePath, StandardCopyOption.ATOMIC_MOVE);
         } catch (IOException e) {
             LOG.error("Cannot move temporary file to target", e);
