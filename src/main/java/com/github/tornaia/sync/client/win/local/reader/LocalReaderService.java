@@ -16,10 +16,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static java.nio.file.StandardWatchEventKinds.*;
@@ -41,7 +38,7 @@ public class LocalReaderService {
     @Autowired
     private FileUtils fileUtils;
 
-    private List<LocalFileEvent> events = new ArrayList<>();
+    private Set<LocalFileEvent> events = new LinkedHashSet<>();
 
     private WatchService watchService;
 
@@ -84,7 +81,8 @@ public class LocalReaderService {
             LOG.debug("Rescan directory tree");
             register(syncDirectory);
             registerChildrenDirectoriesRecursively(syncDirectory);
-            addAllLocalNewFilesToChangeList(syncDirectory);
+            Set<LocalFileEvent> newOrModifiedChangeList = getNewOrModifiedChangeList(syncDirectory);
+            addNewEvents(newOrModifiedChangeList);
             try {
                 Thread.sleep(30000L);
             } catch (InterruptedException ie) {
@@ -165,6 +163,15 @@ public class LocalReaderService {
         }
     }
 
+    private void addNewEvents(Set<LocalFileEvent> localFileEvents) {
+        LOG.info("Size of possibly new local events to process: " + localFileEvents.size());
+        synchronized (this) {
+            LOG.info("Size of pending events before adding possibly new local events to process: " + events.size());
+            events.addAll(localFileEvents);
+            LOG.info("Size of pending events after adding possibly new local events to process: " + events.size());
+        }
+    }
+
     private void addNewEvent(LocalFileEvent localFileEvent) {
         // TODO later here we can combine events to optimize things like:
         // create-delete (same path) -> nothing
@@ -174,7 +181,8 @@ public class LocalReaderService {
         }
     }
 
-    private void addAllLocalNewFilesToChangeList(Path root) {
+    private Set<LocalFileEvent> getNewOrModifiedChangeList(Path root) {
+        Set<LocalFileEvent> newFileEvents = new HashSet<>();
         try {
             Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
                 @Override
@@ -184,7 +192,7 @@ public class LocalReaderService {
                     Optional<FileMetaInfo> optionalKnownFileMetaInfo = remoteKnownState.get(getRelativePath(file.toFile()));
                     if (!optionalKnownFileMetaInfo.isPresent()) {
                         LOG.trace("New file found: " + relativePath);
-                        addNewEvent(new FileCreatedEvent(relativePath));
+                        newFileEvents.add(new FileCreatedEvent(relativePath));
                         return FileVisitResult.CONTINUE;
                     }
 
@@ -192,7 +200,7 @@ public class LocalReaderService {
                     FileMetaInfo localFileMetaInfo = new FileMetaInfo(null, userid, relativePath, attrs.size(), attrs.creationTime().toMillis(), attrs.lastModifiedTime().toMillis());
                     if (!Objects.equals(knownFileMetaInfo, localFileMetaInfo)) {
                         LOG.trace("Modified file found: " + knownFileMetaInfo + " -> " + localFileMetaInfo);
-                        addNewEvent(new FileModifiedEvent(relativePath));
+                        newFileEvents.add(new FileModifiedEvent(relativePath));
                     }
                     return FileVisitResult.CONTINUE;
                 }
@@ -200,6 +208,7 @@ public class LocalReaderService {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        return newFileEvents;
     }
 
     private void consumeEventsFromWatchService() {
