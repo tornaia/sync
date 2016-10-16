@@ -52,7 +52,7 @@ public class SpringMongoConfig extends AbstractMongoConfiguration {
     @Bean
     @Override
     public Mongo mongo() throws Exception {
-        LOG.info("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX vcapServices: " + vcapServices);
+        LOG.info("vcapServices: " + vcapServices);
         boolean isCloud = !Objects.isNull(vcapServices);
         if (isCloud) {
             return initCloud();
