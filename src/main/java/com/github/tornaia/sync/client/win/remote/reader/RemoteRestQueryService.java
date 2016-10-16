@@ -39,7 +39,7 @@ public class RemoteRestQueryService {
             throw new RuntimeException("Get from server failed", e);
         }
 
-        LOG.info("GET file: " + fileMetaInfo);
+        LOG.debug("GET file: " + fileMetaInfo);
         return response;
     }
 }

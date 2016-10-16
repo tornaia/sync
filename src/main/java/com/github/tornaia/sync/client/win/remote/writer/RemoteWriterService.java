@@ -68,7 +68,7 @@ public class RemoteWriterService {
         FileCreateResponse fileCreateResponse = remoteRestCommandService.onFileCreate(localFileMetaInfo, file);
         boolean ok = Objects.equals(FileCreateResponse.Status.OK, fileCreateResponse.status);
         if (ok) {
-            LOG.debug("File created on server: " + fileCreateResponse.fileMetaInfo);
+            LOG.info("File created on server: " + fileCreateResponse.fileMetaInfo);
             remoteKnownState.add(fileCreateResponse.fileMetaInfo);
             return true;
         }
@@ -118,7 +118,7 @@ public class RemoteWriterService {
         FileModifyResponse fileModifyResponse = remoteRestCommandService.onFileModify(requestFileMetaInfo, file);
         boolean ok = Objects.equals(FileModifyResponse.Status.OK, fileModifyResponse.status);
         if (ok) {
-            LOG.debug("File modified on server: " + fileModifyResponse.fileMetaInfo);
+            LOG.info("File modified on server: " + fileModifyResponse.fileMetaInfo);
             remoteKnownState.add(fileModifyResponse.fileMetaInfo);
             return true;
         }

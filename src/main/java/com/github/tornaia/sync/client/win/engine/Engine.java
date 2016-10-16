@@ -161,15 +161,15 @@ public class Engine {
                         succeed = localWriterService.replace(relativePath, remoteFileMetaInfo, remoteFileContent);
                     }
                     if (succeed) {
-                        LOG.info("File was written to disk: " + remoteFileMetaInfo);
+                        LOG.info("File was updated on disk: " + remoteFileMetaInfo);
                     } else {
-                        LOG.warn("Failed to write file to disk: " + remoteFileMetaInfo);
+                        LOG.warn("Failed to update file on disk: " + remoteFileMetaInfo);
                     }
                 } else {
                     byte[] remoteFileContent = remoteReaderService.getFile(remoteFileMetaInfo);
                     boolean succeed = localWriterService.write(remoteFileMetaInfo, remoteFileContent);
                     if (succeed) {
-                        LOG.info("File was created on disk: " + remoteFileMetaInfo);
+                        LOG.info("File created on disk: " + remoteFileMetaInfo);
                     } else {
                         LOG.warn("Failed to create file to disk: " + remoteFileMetaInfo);
                     }
@@ -178,7 +178,7 @@ public class Engine {
             case DELETED:
                 remoteKnownState.add(remoteFileMetaInfo);
                 if (!localFileExists) {
-                    LOG.info("Local file does not exist, nothing to delete: " + relativePath);
+                    LOG.debug("Local file does not exist, nothing to delete: " + relativePath);
                     return;
                 }
 
@@ -193,7 +193,7 @@ public class Engine {
                     LOG.debug("Remote and local fileMetaInfo equals: " + remoteFileMetaInfo.relativePath);
                     boolean succeed = localWriterService.delete(relativePath);
                     if (succeed) {
-                        LOG.info("File was deleted from disk: " + remoteFileMetaInfo);
+                        LOG.info("File deleted from disk: " + remoteFileMetaInfo);
                     } else {
                         LOG.warn("Failed to deleted file from disk: " + remoteFileMetaInfo);
                     }
@@ -213,7 +213,7 @@ public class Engine {
             case CREATED:
                 boolean createSucceed = remoteWriterService.createFile(relativePath);
                 if (createSucceed) {
-                    LOG.debug("File is in sync with server after created event: " + relativePath);
+                    LOG.debug("File is in sync with the server (created): " + relativePath);
                 } else {
                     LOG.warn("File creation cannot synced with server: " + relativePath);
                     localReaderService.reAddEvent(localEvent);
@@ -222,7 +222,7 @@ public class Engine {
             case MODIFIED:
                 boolean modifySucceed = remoteWriterService.modifyFile(relativePath);
                 if (modifySucceed) {
-                    LOG.debug("File is in sync with server after modified event: " + relativePath);
+                    LOG.debug("File is in sync with the server (modified): " + relativePath);
                 } else {
                     LOG.warn("File modification cannot synced with server: " + relativePath);
                     localReaderService.reAddEvent(localEvent);
@@ -231,7 +231,7 @@ public class Engine {
             case DELETED:
                 boolean deleteSucceed = remoteWriterService.deleteFile(relativePath);
                 if (deleteSucceed) {
-                    LOG.debug("File is in sync with server after deleted event: " + relativePath);
+                    LOG.info("File is in sync with the server (deleted): " + relativePath);
                 } else {
                     LOG.warn("File deletion cannot synced with server: " + relativePath);
                     localReaderService.reAddEvent(localEvent);
