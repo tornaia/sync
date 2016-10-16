@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.List;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM;
@@ -68,7 +69,8 @@ public class FileController {
     public ResponseEntity getFile(@PathVariable String id) throws IOException {
         File file = fileQueryService.getFileById(id);
         HttpHeaders responseHeaders = new HttpHeaders();
-        responseHeaders.add(CONTENT_DISPOSITION, "attachment; filename=" + file.getName());
+        String filename = file.getFilename();
+        responseHeaders.add(CONTENT_DISPOSITION, "attachment; filename=" + filename);
         LOG.info("GET file: " + file.getPath());
         return new ResponseEntity<>(file.getData(), responseHeaders, OK);
     }
