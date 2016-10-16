@@ -1,22 +1,18 @@
 package com.github.tornaia.sync.server.controller;
 
-import com.github.tornaia.sync.server.data.document.File;
+import com.github.tornaia.sync.server.service.exception.FileNotFoundException;
 import com.github.tornaia.sync.shared.api.*;
 import com.github.tornaia.sync.shared.api.matchers.FileMetaInfoMatcher;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.test.context.junit4.SpringRunner;
 import utils.AbstractSyncServerIntTest;
 
 import java.util.List;
 
 import static org.hamcrest.Matchers.contains;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 
-@RunWith(SpringRunner.class)
 public class FileControllerIntTest extends AbstractSyncServerIntTest {
 
     @Autowired
@@ -42,7 +38,6 @@ public class FileControllerIntTest extends AbstractSyncServerIntTest {
                 .length(4L);
 
         assertThat(result, expected);
-
     }
 
     @Test
@@ -93,9 +88,8 @@ public class FileControllerIntTest extends AbstractSyncServerIntTest {
 
         fileController.deleteFile(createdFile.id, "clientid");
 
-        //TODO nxjohny: We can wrap it in the corresponding driver and hide mongotemplate op. The interface throws exception in case of null file, so i have to use the template to validate the delete whether was successful or not.
-        File result = mongoTemplate.findById(createdFile.id, File.class);
-        assertNull(result);
+        expectedException.expect(FileNotFoundException.class);
+        fileController.getMetaInfo(createdFile.id);
     }
 
     @Test

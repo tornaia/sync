@@ -8,8 +8,8 @@ import org.springframework.context.annotation.Bean;
 @TestConfiguration
 public class IntTestMongoConfiguration {
 
-  @Bean
-  public Mongo mongo() throws Exception {
-    return new Fongo("sync-server-int-db").getMongo();
-  }
+    @Bean
+    public Mongo mongo() {
+        return new Fongo("sync-server-int-db").getMongo();
+    }
 }

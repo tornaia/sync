@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Objects;
 
 import static java.util.Collections.emptyList;
 import static java.util.Objects.isNull;
@@ -32,17 +33,17 @@ public class FileQueryService {
         return fileList.stream().map(fileToFileMetaInfoConverter::convert).collect(toList());
     }
 
+    public FileMetaInfo getFileMetaInfoById(String id) {
+        File file = getFileById(id);
+        return fileToFileMetaInfoConverter.convert(file);
+    }
+
     public File getFileById(String id) {
         File file = fileRepository.findOne(id);
-        if (file == null) {
+        if (Objects.isNull(file)) {
             throw new FileNotFoundException(id);
         }
 
         return file;
-    }
-
-    public FileMetaInfo getFileMetaInfoById(String id) {
-        File file = getFileById(id);
-        return fileToFileMetaInfoConverter.convert(file);
     }
 }
