@@ -67,8 +67,7 @@ public class RemoteRestCommandService {
                         .build())
                 .build();
 
-        // TODO query params are not needed anymore
-        HttpPost httpPost = new HttpPost(httpClientProvider.getServerUrl() + FILE_PATH + "?userid=" + userid + "&creationDateTime=" + fileMetaInfo.creationDateTime + "&modificationDateTime=" + fileMetaInfo.modificationDateTime + "&clientid=" + clientidService.clientid);
+        HttpPost httpPost = new HttpPost(httpClientProvider.getServerUrl() + FILE_PATH + "?clientid=" + clientidService.clientid);
         httpPost.setEntity(multipart);
 
         FileMetaInfo remoteFileMetaInfo;
