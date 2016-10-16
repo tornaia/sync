@@ -1,9 +1,11 @@
 package com.github.tornaia.sync.server.service;
 
+import com.github.tornaia.sync.server.data.converter.FileToFileMetaInfoConverter;
 import com.github.tornaia.sync.server.data.document.File;
 import com.github.tornaia.sync.server.data.repository.FileRepository;
 import com.github.tornaia.sync.server.service.exception.FileAlreadyExistsException;
 import com.github.tornaia.sync.server.websocket.SyncWebSocketHandler;
+import com.github.tornaia.sync.shared.api.FileMetaInfo;
 import com.github.tornaia.sync.shared.api.matchers.FileMetaInfoMatcher;
 import com.github.tornaia.sync.shared.api.matchers.RemoteFileEventMatcher;
 import org.junit.Rule;
@@ -33,6 +35,9 @@ public class FileCommandServiceTest {
     @Mock
     private SyncWebSocketHandler syncWebSocketHandler;
 
+    @Mock
+    private FileToFileMetaInfoConverter fileToFileMetaInfoConverter;
+
     @InjectMocks
     private FileCommandService commandService;
 
@@ -47,6 +52,7 @@ public class FileCommandServiceTest {
     @Test
     public void createFile() throws Exception {
         when(fileRepository.insert(any(File.class))).thenReturn(new File("userid", "path", "test_content".getBytes(), 2L, 3L));
+        when(fileToFileMetaInfoConverter.convert(any(File.class))).thenReturn(new FileMetaInfo(null, "userid", "path", 12, 2L, 3L));
 
         commandService.createFile("clientid", "userid", 2L, 3L, "path", "test_content".getBytes());
 

@@ -1,5 +1,6 @@
 package com.github.tornaia.sync.server.service;
 
+import com.github.tornaia.sync.server.data.converter.FileToFileMetaInfoConverter;
 import com.github.tornaia.sync.server.data.document.File;
 import com.github.tornaia.sync.server.data.repository.FileRepository;
 import com.github.tornaia.sync.server.service.exception.FileNotFoundException;
@@ -32,6 +33,9 @@ public class FileQueryServiceTest {
     @Mock
     private FileRepository fileRepository;
 
+    @Mock
+    private FileToFileMetaInfoConverter fileToFileMetaInfoConverter;
+
     @InjectMocks
     private FileQueryService fileQueryService;
 
@@ -55,6 +59,7 @@ public class FileQueryServiceTest {
 
     @Test
     public void getModifiedFiles() {
+        when(fileToFileMetaInfoConverter.convert(any(File.class))).thenReturn(new FileMetaInfo(null, "userid", "path", 0L, 3L, 3L));
         FileMetaInfoMatcher expected = new FileMetaInfoMatcher()
                 .userid("userid")
                 .relativePath("path")
