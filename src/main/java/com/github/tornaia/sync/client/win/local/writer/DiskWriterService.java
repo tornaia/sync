@@ -31,6 +31,9 @@ public class DiskWriterService {
     private String syncDirectoryPath;
 
     @Autowired
+    private ConflictFileNameGenerator conflictFileNameGenerator;
+
+    @Autowired
     private FileUtils fileUtils;
 
     private Path syncDirectory;
@@ -122,15 +125,8 @@ public class DiskWriterService {
         return true;
     }
 
-    private void handleConflict(Path absolutePath, FileMetaInfo localFileMetaInfo) {
-        // TODO move this conflict file name creation to a separate object
-        String originalFileName = absolutePath.toFile().getAbsolutePath();
-        boolean hasExtension = originalFileName.indexOf('.') != -1;
-        String postFix = "_conflict_" + localFileMetaInfo.length + "_" + localFileMetaInfo.creationDateTime + "_" + localFileMetaInfo.modificationDateTime;
-        String conflictFileName = hasExtension ? originalFileName.split("\\.", 2)[0] + postFix + "." + originalFileName.split("\\.", 2)[1] : originalFileName + postFix;
-        // TODO what should happen when this renamed/conflictFileName file exists?
-        Path renamed = new File(absolutePath.toFile().getParentFile().getAbsolutePath()).toPath().resolve(conflictFileName);
-        LOG.warn("File already exists on server. Renaming " + absolutePath + " -> " + renamed);
+    public void handleConflict(Path absolutePath, FileMetaInfo localFileMetaInfo) {
+        Path renamed = conflictFileNameGenerator.resolve(absolutePath, localFileMetaInfo);
         replaceFileAtomically(absolutePath, renamed);
     }
 
