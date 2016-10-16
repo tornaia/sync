@@ -83,20 +83,29 @@ public class SyncWebSocketHandler extends TextWebSocketHandler {
         LOG.info("Connection closed. Reason: " + status.getReason() + ". SessionId: " + session.getId());
         super.afterConnectionClosed(session, status);
 
-        useridAndSessions.values()
+        Optional<List<WebSocketSession>> webSessions = useridAndSessions.values()
                 .stream()
                 .filter(list -> list.contains(session))
-                .findFirst()
-                .get()
-                .remove(session);
+                .findFirst();
 
-        String clientid = clientidAndSession.entrySet()
+        if (webSessions.isPresent()) {
+            List<WebSocketSession> webSocketSessions = webSessions.get();
+            webSocketSessions.remove(session);
+        } else {
+            LOG.warn("WebSession was not found: " + session);
+        }
+
+        Optional<Map.Entry<String, WebSocketSession>> clientidAndWebSession = clientidAndSession.entrySet()
                 .stream()
                 .filter(entry -> Objects.equals(entry.getValue(), session))
-                .findFirst()
-                .get()
-                .getKey();
-        clientidAndSession.remove(clientid);
+                .findFirst();
+
+        if (clientidAndWebSession.isPresent()) {
+            String clientid = clientidAndWebSession.get().getKey();
+            clientidAndSession.remove(clientid);
+        } else {
+            LOG.warn("Clientid not found for session: " + session);
+        }
     }
 
     public void notifyClientsExceptForSource(String sourceClientid, RemoteFileEvent remoteFileEvent) {
