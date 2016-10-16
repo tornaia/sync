@@ -9,7 +9,7 @@ import org.springframework.context.annotation.ComponentScan;
 import java.lang.management.ManagementFactory;
 
 @SpringBootApplication
-@ComponentScan({"com.github.tornaia.sync.shared", "com.github.tornaia.sync.win"})
+@ComponentScan({"com.github.tornaia.sync.shared", "com.github.tornaia.sync.client.win"})
 public class WinClientApp {
 
     private static final Logger LOG = LoggerFactory.getLogger(WinClientApp.class);
