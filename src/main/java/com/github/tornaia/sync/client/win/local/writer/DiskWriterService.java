@@ -134,11 +134,9 @@ public class DiskWriterService {
         replaceFileAtomically(absolutePath, renamed);
     }
 
-    // TODO rename replace Without Delete
     public boolean replaceFileAtomically(Path source, Path target) {
         LOG.trace("Replace " + target.toFile().getAbsolutePath() + " with " + source.toFile().getAbsolutePath());
         try {
-            // TODO StandardCopyOption.COPY_ATTRIBUTES
             Files.move(source, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
             LOG.error("Cannot write target file", e);
