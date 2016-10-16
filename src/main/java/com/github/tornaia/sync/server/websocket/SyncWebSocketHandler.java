@@ -41,11 +41,14 @@ public class SyncWebSocketHandler extends TextWebSocketHandler {
     @Override
     public synchronized void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
         String messageStr = message.getPayload();
-        LOG.info("Message received: " + messageStr);
-        if (messageStr.startsWith("hello-i-am-")) {
+        if (Objects.equals("ping", messageStr)) {
+            LOG.debug("Message received: " + messageStr);
+        } else if (messageStr.startsWith("hello-i-am-")) {
+            LOG.info("Message received: " + messageStr);
             String clientid = messageStr.substring("hello-i-am-".length());
             clientidAndSession.put(clientid, session);
         } else if (messageStr.startsWith("hello-please-send-me-updates-of-")) {
+            LOG.info("Message received: " + messageStr);
             String userid = messageStr.substring("hello-please-send-me-updates-of-".length());
             if (!useridAndSessions.containsKey(userid)) {
                 useridAndSessions.put(userid, new ArrayList<>());
