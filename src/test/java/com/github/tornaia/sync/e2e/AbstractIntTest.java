@@ -148,6 +148,10 @@ public abstract class AbstractIntTest {
         return new Client(userid, syncDirectory);
     }
 
+    protected void createDirectory(Path path) throws IOException {
+        Files.createDirectory(path);
+    }
+
     protected void createFile(Path path, String content, long creationTime, long lastModifiedTime) throws IOException {
         String tmpDir = System.getProperty("java.io.tmpdir");
         Path tempFile = Files.createFile(new File(tmpDir).toPath().resolve(UUID.randomUUID().toString()));

@@ -1,12 +1,10 @@
 package com.github.tornaia.sync.e2e;
 
-import org.apache.commons.io.IOUtils;
 import org.junit.Test;
 
-import java.io.FileInputStream;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static java.util.Arrays.asList;
+import static org.hamcrest.Matchers.contains;
+import static org.junit.Assert.assertThat;
 
 public class OneClientIntTest extends AbstractIntTest {
 
@@ -22,7 +20,12 @@ public class OneClientIntTest extends AbstractIntTest {
         client.start();
         waitForSyncDone();
 
-        assertTrue(client.syncDirectory.toFile().list().length == 1);
-        assertEquals("dummy content", IOUtils.toString(new FileInputStream(client.syncDirectory.resolve("dummy.txt").toFile())));
+        assertThat(asList(client.syncDirectory.toFile().listFiles()),
+                contains(new FileMatcher(client.syncDirectory)
+                        .relativePath("dummy.txt")
+                        .creationTime(500L)
+                        .lastModifiedTime(600L)
+                        .length(13)
+                        .content("dummy content")));
     }
 }

@@ -91,6 +91,13 @@
 
             <dependency>
                 <groupId>com.github.tornaia</groupId>
+                <artifactId>sync-shared</artifactId>
+                <version>${project.version}</version>
+                <type>test-jar</type>
+            </dependency>
+
+            <dependency>
+                <groupId>com.github.tornaia</groupId>
                 <artifactId>sync-server</artifactId>
                 <version>${project.version}</version>
                 <type>test-jar</type>
@@ -133,6 +140,13 @@
         <dependency>
             <groupId>com.github.tornaia</groupId>
             <artifactId>sync-client-win</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.tornaia</groupId>
+            <artifactId>sync-shared</artifactId>
+            <type>test-jar</type>
             <scope>test</scope>
         </dependency>
 
