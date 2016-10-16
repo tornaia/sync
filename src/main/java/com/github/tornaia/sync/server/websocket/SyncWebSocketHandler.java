@@ -1,11 +1,10 @@
 package com.github.tornaia.sync.server.websocket;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tornaia.sync.server.service.FileQueryService;
 import com.github.tornaia.sync.shared.api.FileMetaInfo;
 import com.github.tornaia.sync.shared.api.RemoteEventType;
 import com.github.tornaia.sync.shared.api.RemoteFileEvent;
+import com.github.tornaia.sync.shared.util.SerializerUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +29,9 @@ public class SyncWebSocketHandler extends TextWebSocketHandler {
 
     @Autowired
     private FileQueryService fileQueryService;
+
+    @Autowired
+    private SerializerUtils serializerUtils;
 
     @Override
     public synchronized void afterConnectionEstablished(WebSocketSession session) throws Exception {
@@ -116,12 +118,7 @@ public class SyncWebSocketHandler extends TextWebSocketHandler {
     private void sendMsg(WebSocketSession session, RemoteFileEvent remoteFileEvent) {
         try {
             LOG.debug("Notifying session " + session.getId() + " about a new event: " + remoteFileEvent);
-            ObjectMapper mapper = new ObjectMapper();
-            // TODO move object mapper to a common place and write a test String, int -> "xx", 34 but should be "xx", "34" otherwise client will not able to parse it
-            // or maybe works, I don't know at the moment
-            mapper.configure(JsonGenerator.Feature.WRITE_NUMBERS_AS_STRINGS, true);
-            String remoteFileEventAsJson = mapper.writeValueAsString(remoteFileEvent);
-            // TODO  here we send messages in synchronous way I guess... thats baaad.
+            String remoteFileEventAsJson = serializerUtils.toJSON(remoteFileEvent);
             synchronized (session) {
                 session.sendMessage(new TextMessage(remoteFileEventAsJson));
             }

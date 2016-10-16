@@ -12,7 +12,7 @@ import static org.springframework.boot.SpringApplication.run;
 
 @EnableWebSocket
 @SpringBootApplication
-@ComponentScan("com.github.tornaia.sync")
+@ComponentScan({"com.github.tornaia.sync.shared", "com.github.tornaia.sync.server"})
 public class ServerApp {
 
     private static final Logger LOG = LoggerFactory.getLogger(ServerApp.class);
