@@ -79,6 +79,11 @@ public class RemoteRestCommandService {
                 return FileCreateResponse.conflict(fileMetaInfo);
             }
 
+            // FIXME this error might occur everywhere... refactor this and the writer class
+            if (Objects.equals(response.getStatusLine().getStatusCode(), HttpStatus.SC_BAD_GATEWAY)) {
+                return FileCreateResponse.transferFailed(fileMetaInfo, "Bad gateway");
+            }
+
             remoteFileMetaInfo = new ObjectMapper().readValue(entity.getContent(), FileMetaInfo.class);
         } catch (FileNotFoundException e) {
             LOG.info("File disappeared meanwhile it was under upload(post)? " + e.getMessage());
