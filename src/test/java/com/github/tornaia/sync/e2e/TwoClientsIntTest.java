@@ -119,33 +119,8 @@ public class TwoClientsIntTest extends AbstractIntTest {
         Client client1 = initClient(userid).start();
         Client client2 = initClient(userid).start();
         createFile(client1.syncDirectory.resolve("dummy.txt"), "dummy content", 500L, 600L);
+        waitForSyncDone();
         createFile(client1.syncDirectory.resolve("dummy.txt"), "dummy content2", 700L, 800L);
-        waitForSyncDone();
-
-        assertThat(asList(client1.syncDirectory.toFile().listFiles()),
-                contains(new FileMatcher(client1.syncDirectory)
-                        .relativePath("dummy.txt")
-                        .creationTime(700L)
-                        .lastModifiedTime(800L)
-                        .length(14)
-                        .content("dummy content2")));
-
-        assertThat(asList(client2.syncDirectory.toFile().listFiles()),
-                contains(new FileMatcher(client2.syncDirectory)
-                        .relativePath("dummy.txt")
-                        .creationTime(700L)
-                        .lastModifiedTime(800L)
-                        .length(14)
-                        .content("dummy content2")));
-    }
-
-    @Test
-    public void createThenModifyFilesContentInAnotherClientTest() throws Exception {
-        Client client1 = initClient(userid).start();
-        Client client2 = initClient(userid).start();
-        createFile(client1.syncDirectory.resolve("dummy.txt"), "dummy content", 500L, 600L);
-        waitForSyncDone();
-        createFile(client2.syncDirectory.resolve("dummy.txt"), "dummy content2", 700L, 800L);
         waitForSyncDone();
 
         assertThat(asList(client1.syncDirectory.toFile().listFiles()),
