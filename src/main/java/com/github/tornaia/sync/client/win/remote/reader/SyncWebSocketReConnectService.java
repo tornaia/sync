@@ -39,7 +39,7 @@ public class SyncWebSocketReConnectService {
     @Autowired
     private RemoteReaderService remoteReaderService;
 
-    private volatile boolean contextIsRunning = true    ;
+    private volatile boolean contextIsRunning;
 
     @EventListener({ContextRefreshedEvent.class})
     public void ContextRefreshedEvent() {

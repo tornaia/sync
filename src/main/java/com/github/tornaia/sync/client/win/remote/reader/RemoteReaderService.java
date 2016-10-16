@@ -37,7 +37,7 @@ public class RemoteReaderService {
 
     private final List<RemoteFileEvent> events = new ArrayList<>();
 
-    private volatile boolean initDone = false;
+    private volatile boolean initDone;
 
     private Session session;
 
@@ -108,8 +108,13 @@ public class RemoteReaderService {
     }
 
     public void sendMessage(String message) {
-        session.getAsyncRemote().sendText(message);
-        LOG.debug("Sent msg: " + message);
+        if (!session.isOpen()) {
+            LOG.warn("Message will not be sent because the WebSocket session has been closed: " + message);
+            return;
+        }
+        RemoteEndpoint.Async asyncRemote = session.getAsyncRemote();
+        asyncRemote.sendText(message);
+        LOG.debug("Message sent: " + message);
     }
 
     @OnClose
