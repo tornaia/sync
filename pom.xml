@@ -14,6 +14,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
         <java.version>1.8</java.version>
+        <org.apache.httpcomponents.version>4.5.2</org.apache.httpcomponents.version>
         <commons-lang3.version>3.4</commons-lang3.version>
         <junit.version>4.12</junit.version>
 
@@ -66,6 +67,11 @@
 
     <dependencies>
         <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
         </dependency>
@@ -84,6 +90,12 @@
 
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpclient</artifactId>
+                <version>${org.apache.httpcomponents.version}</version>
+            </dependency>
+
             <dependency>
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-lang3</artifactId>
@@ -109,7 +121,6 @@
                 <artifactId>spring-boot-starter-web</artifactId>
                 <version>${org.springframework.boot.version}</version>
             </dependency>
-
         </dependencies>
     </dependencyManagement>
 
