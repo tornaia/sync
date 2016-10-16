@@ -1,15 +1,13 @@
-package com.github.tornaia.sync.server.utils;
+package com.github.tornaia.sync.server.data.converter;
 
 import com.github.tornaia.sync.server.data.document.File;
 import com.github.tornaia.sync.shared.api.FileMetaInfo;
+import org.springframework.stereotype.Component;
 
-// TODO I just simply do not like this class.. Maybe the name maybe Im just have a different taste
-public final class FileUtils {
+@Component
+public class FileToFileMetaInfoConverter {
 
-    private FileUtils() {
-    }
-
-    public static FileMetaInfo getFileMetaInfo(File file) {
+    public FileMetaInfo convert(File file) {
         return new FileMetaInfo(file.getId(), file.getUserid(), file.getPath(), file.getData().length, file.getCreationDate(), file.getLastModifiedDate());
     }
 }

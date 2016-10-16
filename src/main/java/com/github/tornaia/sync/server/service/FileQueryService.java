@@ -1,9 +1,9 @@
 package com.github.tornaia.sync.server.service;
 
+import com.github.tornaia.sync.server.data.converter.FileToFileMetaInfoConverter;
 import com.github.tornaia.sync.server.data.document.File;
 import com.github.tornaia.sync.server.data.repository.FileRepository;
 import com.github.tornaia.sync.server.service.exception.FileNotFoundException;
-import com.github.tornaia.sync.server.utils.FileUtils;
 import com.github.tornaia.sync.shared.api.FileMetaInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -20,13 +20,16 @@ public class FileQueryService {
     @Autowired
     private FileRepository fileRepository;
 
+    @Autowired
+    private FileToFileMetaInfoConverter fileToFileMetaInfoConverter;
+
     public List<FileMetaInfo> getModifiedFiles(String userid, long modTs) {
         List<File> fileList = fileRepository.findByUseridAndLastModifiedDateAfter(userid, modTs);
         if (isNull(fileList)) {
             return emptyList();
         }
 
-        return fileList.stream().map(FileUtils::getFileMetaInfo).collect(toList());
+        return fileList.stream().map(fileToFileMetaInfoConverter::convert).collect(toList());
     }
 
     public File getFileById(String id) {
@@ -40,6 +43,6 @@ public class FileQueryService {
 
     public FileMetaInfo getFileMetaInfoById(String id) {
         File file = getFileById(id);
-        return FileUtils.getFileMetaInfo(file);
+        return fileToFileMetaInfoConverter.convert(file);
     }
 }

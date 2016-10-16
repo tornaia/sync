@@ -1,10 +1,10 @@
 package com.github.tornaia.sync.server.service;
 
+import com.github.tornaia.sync.server.data.converter.FileToFileMetaInfoConverter;
 import com.github.tornaia.sync.server.data.document.File;
 import com.github.tornaia.sync.server.data.repository.FileRepository;
 import com.github.tornaia.sync.server.service.exception.FileAlreadyExistsException;
 import com.github.tornaia.sync.server.service.exception.FileNotFoundException;
-import com.github.tornaia.sync.server.utils.FileUtils;
 import com.github.tornaia.sync.server.websocket.SyncWebSocketHandler;
 import com.github.tornaia.sync.shared.api.FileMetaInfo;
 import com.github.tornaia.sync.shared.api.RemoteFileEvent;
@@ -30,6 +30,9 @@ public class FileCommandService {
     @Autowired
     private SyncWebSocketHandler syncWebSocketHandler;
 
+    @Autowired
+    private FileToFileMetaInfoConverter fileToFileMetaInfoConverter;
+
     public FileMetaInfo createFile(String clientid, String userid, long creationDateTime, long modificationDateTime, String path, byte[] content) throws IOException {
         File file = fileRepository.findByUseridAndPath(userid, path);
         if (!Objects.isNull(file)) {
@@ -37,7 +40,7 @@ public class FileCommandService {
         }
 
         file = fileRepository.insert(new File(userid, path, content, creationDateTime, modificationDateTime));
-        FileMetaInfo fileMetaInfo = FileUtils.getFileMetaInfo(file);
+        FileMetaInfo fileMetaInfo = fileToFileMetaInfoConverter.convert(file);
         syncWebSocketHandler.notifyClientsExceptForSource(clientid, new RemoteFileEvent(CREATED, fileMetaInfo));
         LOG.info("CREATE file: " + fileMetaInfo);
         return fileMetaInfo;
@@ -53,7 +56,7 @@ public class FileCommandService {
             file.setLastModifiedDate(modificationDateTime);
             file.setData(content);
             fileRepository.save(file);
-            FileMetaInfo fileMetaInfo = FileUtils.getFileMetaInfo(file);
+            FileMetaInfo fileMetaInfo = fileToFileMetaInfoConverter.convert(file);
             syncWebSocketHandler.notifyClientsExceptForSource(clientid, new RemoteFileEvent(MODIFIED, fileMetaInfo));
             LOG.info("MODIFY file: " + fileMetaInfo);
         }
@@ -67,7 +70,8 @@ public class FileCommandService {
         }
         String path = file.getPath();
         fileRepository.delete(file);
-        syncWebSocketHandler.notifyClientsExceptForSource(clientid, new RemoteFileEvent(DELETED, FileUtils.getFileMetaInfo(file)));
+        FileMetaInfo deletedFileMetaInfo = fileToFileMetaInfoConverter.convert(file);
+        syncWebSocketHandler.notifyClientsExceptForSource(clientid, new RemoteFileEvent(DELETED, deletedFileMetaInfo));
         LOG.info("DELETE file: " + path);
     }
 
