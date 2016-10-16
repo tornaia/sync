@@ -1,6 +1,5 @@
 package com.github.tornaia.sync.server.data.document;
 
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -31,6 +30,10 @@ public class File {
         this.data = data;
         this.creationDate = creationDate;
         this.lastModifiedDate = lastModifiedDate;
+    }
+
+    public String getFilename() {
+        return Paths.get(path).getFileName().toString();
     }
 
     public String getId() {
@@ -80,12 +83,4 @@ public class File {
     public void setLastModifiedDate(long lastModifiedDate) {
         this.lastModifiedDate = lastModifiedDate;
     }
-
-    public String getName() {
-        if (path == null || Paths.get(getPath()).getFileName() == null) {
-            return StringUtils.EMPTY;
-        }
-        return Paths.get(getPath()).getFileName().toString();
-    }
-
 }
