@@ -13,10 +13,25 @@ public class SerializerUtils {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    public <T> T toObject(String json, Class<T> clazz) {
+        try {
+            return objectMapper.readValue(json, clazz);
+        } catch (IOException e) {
+            throw new RuntimeException("Cannot deserialize string content", e);
+        }
+    }
+
+    public <T> T toObject(InputStream inputStream, Class<T> clazz) {
+        try {
+            return objectMapper.readValue(inputStream, clazz);
+        } catch (IOException e) {
+            throw new RuntimeException("Cannot deserialize inputStream content", e);
+        }
+    }
+
     public <T> T toObject(HttpEntity httpEntity, Class<T> clazz) {
         try {
-            InputStream inputStream = httpEntity.getContent();
-            return objectMapper.readValue(inputStream, clazz);
+            return toObject(httpEntity.getContent(), clazz);
         } catch (IOException e) {
             throw new RuntimeException("Cannot deserialize httpEntity content", e);
         }
