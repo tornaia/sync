@@ -52,7 +52,7 @@ public class RemoteWriterService {
         try {
             localFileMetaInfo = FileMetaInfo.createNonSyncedFileMetaInfo(userid, relativePath, file);
         } catch (NoSuchFileException e) {
-            LOG.warn("Skipping created event of a non-existing file", e);
+            LOG.warn("Skipping created event of a non-existing file: " + relativePath);
             return true;
         } catch (IOException e) {
             LOG.error("Cannot read file", e);
@@ -90,7 +90,7 @@ public class RemoteWriterService {
         try {
             localFileMetaInfo = FileMetaInfo.createNonSyncedFileMetaInfo(userid, relativePath, file);
         } catch (NoSuchFileException e) {
-            LOG.warn("Skipping modified event of a non-existing file", e);
+            LOG.warn("Skipping modified event of a non-existing file: " + relativePath);
             return true;
         } catch (IOException e) {
             LOG.error("Cannot read file", e);
