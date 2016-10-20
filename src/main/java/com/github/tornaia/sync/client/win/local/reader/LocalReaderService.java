@@ -3,6 +3,7 @@ package com.github.tornaia.sync.client.win.local.reader;
 import com.github.tornaia.sync.client.win.remote.RemoteKnownState;
 import com.github.tornaia.sync.client.win.util.FileUtils;
 import com.github.tornaia.sync.shared.api.FileMetaInfo;
+import com.sun.nio.file.ExtendedWatchEventModifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +19,7 @@ import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static java.nio.file.StandardWatchEventKinds.*;
 
@@ -38,11 +40,13 @@ public class LocalReaderService {
     @Autowired
     private FileUtils fileUtils;
 
-    private Set<LocalFileEvent> events = new LinkedHashSet<>();
-
     private WatchService watchService;
 
     private Path syncDirectory;
+
+    private Set<LocalFileEvent> createdEvents = new LinkedHashSet<>();
+    private Set<LocalFileEvent> modifiedEvents = new LinkedHashSet<>();
+    private Set<LocalFileEvent> deletedEvents = new LinkedHashSet<>();
 
     private volatile boolean contextIsRunning;
 
@@ -70,60 +74,36 @@ public class LocalReaderService {
         directoryEventsReaderThread.setName(userid + "-" + syncDirectoryPath.substring(syncDirectoryPath.length() - 1) + "-LocalR");
         directoryEventsReaderThread.start();
 
-        Thread directoryWatcherRegisterThread = new Thread(() -> registerWatchersAndAddAllFiles());
-        directoryWatcherRegisterThread.setDaemon(true);
-        directoryWatcherRegisterThread.setName(userid + "-" + syncDirectoryPath.substring(syncDirectoryPath.length() - 1) + "-DirWR");
-        directoryWatcherRegisterThread.start();
+        registerWatcherAndAddAllFiles();
     }
 
-    private void registerWatchersAndAddAllFiles() {
-        while (contextIsRunning) {
-            LOG.debug("Rescan directory tree");
-            register(syncDirectory);
-            registerChildrenDirectoriesRecursively(syncDirectory);
-            Set<LocalFileEvent> newOrModifiedChangeList = getNewOrModifiedChangeList(syncDirectory);
-            addNewEvents(newOrModifiedChangeList);
-            try {
-                Thread.sleep(30000L);
-            } catch (InterruptedException ie) {
-                LOG.warn("Run terminated: " + ie.getMessage());
-            }
-        }
+    private void registerWatcherAndAddAllFiles() {
+        LOG.debug("Rescan directory tree");
+        register(syncDirectory);
+        Set<LocalFileEvent> newOrModifiedChangeList = getNewOrModifiedChangeList(syncDirectory);
+        addNewEvents(newOrModifiedChangeList);
     }
 
     public Optional<LocalFileEvent> getNextCreated() {
-        synchronized (this) {
-            Optional<LocalFileEvent> first = events.stream()
-                    .filter(e -> Objects.equals(LocalEventType.CREATED, e.eventType))
-                    .findFirst();
-            if (first.isPresent()) {
-                events.remove(first.get());
-            }
-            return first;
-        }
+        return getNext(createdEvents);
     }
 
     public Optional<LocalFileEvent> getNextModified() {
-        synchronized (this) {
-            Optional<LocalFileEvent> first = events.stream()
-                    .filter(e -> Objects.equals(LocalEventType.MODIFIED, e.eventType))
-                    .findFirst();
-            if (first.isPresent()) {
-                events.remove(first.get());
-            }
-            return first;
-        }
+        return getNext(modifiedEvents);
     }
 
     public Optional<LocalFileEvent> getNextDeleted() {
+        return getNext(deletedEvents);
+    }
+
+    private Optional<LocalFileEvent> getNext(Set<LocalFileEvent> events) {
         synchronized (this) {
-            Optional<LocalFileEvent> first = events.stream()
-                    .filter(e -> Objects.equals(LocalEventType.DELETED, e.eventType))
-                    .findFirst();
-            if (first.isPresent()) {
-                events.remove(first.get());
+            if (events.isEmpty()) {
+                return Optional.empty();
             }
-            return first;
+            LocalFileEvent next = events.iterator().next();
+            events.remove(next);
+            return Optional.of(next);
         }
     }
 
@@ -164,20 +144,54 @@ public class LocalReaderService {
     }
 
     private void addNewEvents(Set<LocalFileEvent> localFileEvents) {
-        LOG.info("Size of possibly new local events to process: " + localFileEvents.size());
+        Set<LocalFileEvent> newCreatedEvents = localFileEvents.stream().filter(lfe -> Objects.equals(LocalEventType.CREATED, lfe.eventType)).collect(Collectors.toSet());
+        Set<LocalFileEvent> newModifiedEvents = localFileEvents.stream().filter(lfe -> Objects.equals(LocalEventType.MODIFIED, lfe.eventType)).collect(Collectors.toSet());
+        Set<LocalFileEvent> newDeletedEvents = localFileEvents.stream().filter(lfe -> Objects.equals(LocalEventType.DELETED, lfe.eventType)).collect(Collectors.toSet());
+        LOG.info("Size of possibly new local events to process: c/m/d " + newCreatedEvents.size() + ", " + newModifiedEvents.size() + ", " + newDeletedEvents.size());
         synchronized (this) {
-            LOG.info("Size of pending events before adding possibly new local events to process: " + events.size());
-            events.addAll(localFileEvents);
-            LOG.info("Size of pending events after adding possibly new local events to process: " + events.size());
+            LOG.info("Size of pending events before adding possibly new local events to process: c/m/d " + createdEvents.size() + ", " + modifiedEvents.size() + ", " + deletedEvents.size());
+            createdEvents.addAll(newCreatedEvents);
+            modifiedEvents.addAll(newModifiedEvents);
+            deletedEvents.addAll(newDeletedEvents);
+            LOG.info("Size of pending events after adding possibly new local events to process: c/m/d " + createdEvents.size() + ", " + modifiedEvents.size() + ", " + deletedEvents.size());
         }
     }
 
+    // TODO ugly and poor design
     private void addNewEvent(LocalFileEvent localFileEvent) {
         // TODO later here we can combine events to optimize things like:
         // create-delete (same path) -> nothing
         // create-delete-create (same path) -> last create only
+        switch (localFileEvent.eventType) {
+            case CREATED:
+                addNewCreatedEvent((FileCreatedEvent) localFileEvent);
+                break;
+            case MODIFIED:
+                addNewModifiedEvent((FileModifiedEvent) localFileEvent);
+                break;
+            case DELETED:
+                addNewDeletedEvent((FileDeleteEvent) localFileEvent);
+                break;
+            default:
+                throw new IllegalStateException("Unknown localFileEvent: " + localFileEvent);
+        }
+    }
+
+    private void addNewCreatedEvent(FileCreatedEvent fileCreatedEvent) {
         synchronized (this) {
-            events.add(localFileEvent);
+            createdEvents.add(fileCreatedEvent);
+        }
+    }
+
+    private void addNewModifiedEvent(FileModifiedEvent fileModifiedEvent) {
+        synchronized (this) {
+            modifiedEvents.add(fileModifiedEvent);
+        }
+    }
+
+    private void addNewDeletedEvent(FileDeleteEvent fileDeleteEvent) {
+        synchronized (this) {
+            deletedEvents.add(fileDeleteEvent);
         }
     }
 
@@ -262,7 +276,7 @@ public class LocalReaderService {
             LOG.debug("File created event: " + fileUtils.getDescriptionForFile(file));
             addNewEvent(new FileCreatedEvent(relativePath));
         } else if (file.isDirectory()) {
-            registerChildrenDirectoriesRecursively(filePath.toAbsolutePath());
+            LOG.debug("Directory created event: " + fileUtils.getDescriptionForFile(file));
         } else {
             LOG.debug("Created event of an unknown file type. File/directory does not exist? " + file);
         }
@@ -271,6 +285,7 @@ public class LocalReaderService {
     private void onFileModified(Path filePath) {
         File file = filePath.toFile();
         if (file.isDirectory()) {
+            LOG.trace("Directory modified event: " + fileUtils.getDescriptionForFile(file));
             return;
         } else if (file.isFile()) {
             String relativePath = getRelativePath(file);
@@ -295,30 +310,9 @@ public class LocalReaderService {
 
     private void register(Path syncDirectory) {
         try {
-            syncDirectory.register(watchService, new WatchEvent.Kind[]{ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY, OVERFLOW});
+            syncDirectory.register(watchService, new WatchEvent.Kind[]{ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY, OVERFLOW}, ExtendedWatchEventModifier.FILE_TREE);
         } catch (IOException e) {
             LOG.warn("Cannot register watcher: " + e);
-        }
-    }
-
-    private void registerChildrenDirectoriesRecursively(Path root) {
-        try {
-            Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
-                @Override
-                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-                    LOG.debug("WatchService (re)registered for dir: " + dir.toFile().getAbsolutePath());
-                    register(dir);
-                    return FileVisitResult.CONTINUE;
-                }
-
-                @Override
-                public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
-                    LOG.warn("Visit of file failed: " + file + ", exception: " + exc.getMessage());
-                    return FileVisitResult.CONTINUE;
-                }
-            });
-        } catch (IOException e) {
-            throw new RuntimeException(e);
         }
     }
 

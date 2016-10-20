@@ -2,7 +2,6 @@ package com.github.tornaia.sync.client.win.remote.reader;
 
 import com.github.tornaia.sync.client.win.ClientidService;
 import com.github.tornaia.sync.shared.api.FileMetaInfo;
-import com.github.tornaia.sync.shared.api.RemoteEventType;
 import com.github.tornaia.sync.shared.api.RemoteFileEvent;
 import com.google.gson.Gson;
 import org.slf4j.Logger;
@@ -35,7 +34,12 @@ public class RemoteReaderService {
     @Autowired
     private ClientidService clientidService;
 
-    private final List<RemoteFileEvent> events = new ArrayList<>();
+    private final List<RemoteFileEvent> createdEvents = new ArrayList<>();
+
+    private final List<RemoteFileEvent> modifiedEvents = new ArrayList<>();
+
+    private final List<RemoteFileEvent> deletedEvents = new ArrayList<>();
+
 
     private volatile boolean initDone;
 
@@ -57,7 +61,7 @@ public class RemoteReaderService {
     public void onMessage(String message) {
         LOG.debug("Received msg: " + message);
         if (Objects.equals("init-done", message)) {
-            LOG.info("Init done. Number of remote events to process: " + events.size());
+            LOG.info("Init done. Number of remote events to process c/m/d: " + createdEvents.size() + ", " + modifiedEvents.size() + ", " + deletedEvents.size());
             initDone = true;
             return;
         }
@@ -67,43 +71,37 @@ public class RemoteReaderService {
 
     private void addNewEvent(RemoteFileEvent remoteFileEvent) {
         synchronized (this) {
-            events.add(remoteFileEvent);
+            switch (remoteFileEvent.eventType) {
+                case CREATED:
+                    createdEvents.add(remoteFileEvent);
+                    break;
+                case MODIFIED:
+                    modifiedEvents.add(remoteFileEvent);
+                    break;
+                case DELETED:
+                    deletedEvents.add(remoteFileEvent);
+                    break;
+                default:
+                    throw new IllegalStateException("Unknown message: " + remoteFileEvent);
+            }
         }
     }
 
     public Optional<RemoteFileEvent> getNextCreated() {
         synchronized (this) {
-            Optional<RemoteFileEvent> first = events.stream()
-                    .filter(e -> Objects.equals(RemoteEventType.CREATED, e.eventType))
-                    .findFirst();
-            if (first.isPresent()) {
-                events.remove(first.get());
-            }
-            return first;
+            return createdEvents.isEmpty() ? Optional.empty() : Optional.of(createdEvents.remove(0));
         }
     }
 
     public Optional<RemoteFileEvent> getNextModified() {
         synchronized (this) {
-            Optional<RemoteFileEvent> first = events.stream()
-                    .filter(e -> Objects.equals(RemoteEventType.MODIFIED, e.eventType))
-                    .findFirst();
-            if (first.isPresent()) {
-                events.remove(first.get());
-            }
-            return first;
+            return modifiedEvents.isEmpty() ? Optional.empty() : Optional.of(modifiedEvents.remove(0));
         }
     }
 
     public Optional<RemoteFileEvent> getNextDeleted() {
         synchronized (this) {
-            Optional<RemoteFileEvent> first = events.stream()
-                    .filter(e -> Objects.equals(RemoteEventType.DELETED, e.eventType))
-                    .findFirst();
-            if (first.isPresent()) {
-                events.remove(first.get());
-            }
-            return first;
+            return deletedEvents.isEmpty() ? Optional.empty() : Optional.of(deletedEvents.remove(0));
         }
     }
 
