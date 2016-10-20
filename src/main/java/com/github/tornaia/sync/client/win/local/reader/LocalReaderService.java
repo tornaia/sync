@@ -245,6 +245,7 @@ public class LocalReaderService {
                 Path filename = ev.context();
 
                 if (kind == OVERFLOW) {
+                    LOG.error("Overflow is an unhandled event type: " + event);
                     continue;
                 }
 
