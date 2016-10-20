@@ -22,10 +22,10 @@ public class RemoteWriterService {
 
     private static final Logger LOG = LoggerFactory.getLogger(RemoteWriterService.class);
 
-    @Value("${frosch-sync.userid:7247234}")
+    @Value("${frosch-sync.userid}")
     private String userid;
 
-    @Value("${client.sync.directory.path:C:\\temp\\client}")
+    @Value("${client.sync.directory.path}")
     private String syncDirectoryPath;
 
     @Autowired

@@ -11,7 +11,7 @@ public class WebSocketMessageTest {
 
     @Test
     public void canParse() {
-        String message = "{\"id\":\"57f536d845669f4324af0e1c\",\"userid\":\"42342\",\"relativePath\":\"1475688144638\",\"length\":\"7777\",\"creationDateTime\":\"1475688152764\",\"modificationDateTime\":\"1475688152765\"}";
+        String message = "{\"id\":\"57f536d845669f4324af0e1c\",\"userid\":\"42342\",\"relativePath\":\"1475688144638\",\"size\":\"7777\",\"creationDateTime\":\"1475688152764\",\"modificationDateTime\":\"1475688152765\"}";
 
         FileMetaInfo fileMetaInfo = new Gson().fromJson(message, FileMetaInfo.class);
 
@@ -19,7 +19,7 @@ public class WebSocketMessageTest {
                 .id("57f536d845669f4324af0e1c")
                 .userid("42342")
                 .relativePath("1475688144638")
-                .length(7777)
+                .size(7777L)
                 .creationDateTime(1475688152764L)
                 .modificationDateTime(1475688152765L));
     }

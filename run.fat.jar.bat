@@ -1,1 +1,0 @@
-java -Dserver.host=valami111.scapp.io -Dserver.port=80 -Dclient.sync.directory.path=C:\\temp\\idea\\cloud-1 -Dfrosch-sync.userid=7247234 -jar ./target/sync-client-win-1.0-SNAPSHOT.jar

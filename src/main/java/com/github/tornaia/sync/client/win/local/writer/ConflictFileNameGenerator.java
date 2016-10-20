@@ -16,7 +16,7 @@ public class ConflictFileNameGenerator {
     public Path resolve(Path absolutePath, FileMetaInfo localFileMetaInfo) {
         String originalFileName = absolutePath.toFile().getAbsolutePath();
         boolean hasExtension = originalFileName.indexOf('.') != -1;
-        String postFix = "_conflict_" + localFileMetaInfo.length + "_" + localFileMetaInfo.creationDateTime + "_" + localFileMetaInfo.modificationDateTime;
+        String postFix = "_conflict_" + localFileMetaInfo.size + "_" + localFileMetaInfo.creationDateTime + "_" + localFileMetaInfo.modificationDateTime;
         String conflictFileName = hasExtension ? originalFileName.split("\\.", 2)[0] + postFix + "." + originalFileName.split("\\.", 2)[1] : originalFileName + postFix;
 
         // TODO what should happen when this renamed/conflictFileName file exists? or if the generated file name/path is too log?

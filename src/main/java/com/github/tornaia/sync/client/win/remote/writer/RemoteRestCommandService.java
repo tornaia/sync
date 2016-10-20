@@ -35,7 +35,7 @@ public class RemoteRestCommandService {
 
     private static final String FILE_PATH = "/api/files";
 
-    @Value("${frosch-sync.userid:7247234}")
+    @Value("${frosch-sync.userid}")
     private String userid;
 
     @Autowired
@@ -50,6 +50,7 @@ public class RemoteRestCommandService {
     public FileCreateResponse onFileCreate(FileMetaInfo fileMetaInfo, File file) {
         CreateFileRequest createFileRequest = new CreateFileRequestBuilder()
                 .userid(userid)
+                .size(fileMetaInfo.size)
                 .creationDateTime(fileMetaInfo.creationDateTime)
                 .modificationDateTime(fileMetaInfo.modificationDateTime)
                 .create();
@@ -98,6 +99,7 @@ public class RemoteRestCommandService {
     public FileModifyResponse onFileModify(FileMetaInfo fileMetaInfo, File file) {
         UpdateFileRequest updateFileRequest = new UpdateFileRequestBuilder()
                 .userid(userid)
+                .size(fileMetaInfo.size)
                 .creationDateTime(fileMetaInfo.creationDateTime)
                 .modificationDateTime(fileMetaInfo.modificationDateTime)
                 .create();

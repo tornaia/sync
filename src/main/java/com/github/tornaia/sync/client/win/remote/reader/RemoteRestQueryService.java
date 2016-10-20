@@ -24,7 +24,7 @@ public class RemoteRestQueryService {
     @Autowired
     private HttpClientProvider httpClientProvider;
 
-    @Value("${frosch-sync.userid:7247234}")
+    @Value("${frosch-sync.userid}")
     private String userid;
 
     public byte[] getFile(FileMetaInfo fileMetaInfo) {

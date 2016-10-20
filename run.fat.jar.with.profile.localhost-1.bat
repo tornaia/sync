@@ -1,0 +1,1 @@
+java -Dspring.profiles.active=localhost-1 -jar ./target/sync-client-win-1.0-SNAPSHOT.jar

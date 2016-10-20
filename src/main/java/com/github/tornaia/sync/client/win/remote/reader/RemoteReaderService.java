@@ -23,7 +23,7 @@ public class RemoteReaderService {
 
     private static final Logger LOG = LoggerFactory.getLogger(RemoteReaderService.class);
 
-    @Value("${frosch-sync.userid:7247234}")
+    @Value("${frosch-sync.userid}")
     private String userid;
 
     @Autowired

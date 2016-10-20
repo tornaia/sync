@@ -18,22 +18,22 @@ public class SyncWebSocketReConnectService {
 
     private static final Logger LOG = LoggerFactory.getLogger(SyncWebSocketReConnectService.class);
 
-    @Value("${server.scheme.web.socket:ws}")
+    @Value("${sync.pusher.server.scheme}")
     private String serverSchemeWebSocket;
 
-    @Value("${server.host:127.0.0.1}")
+    @Value("${sync.pusher.server.host}")
     private String serverHost;
 
-    @Value("${server.port:8080}")
+    @Value("${sync.pusher.server.port}")
     private int serverPort;
 
-    @Value("${server.web.socket.path:/echo}")
+    @Value("${sync.pusher.server.path}")
     private String webSocketPath;
 
-    @Value("${frosch-sync.userid:7247234}")
+    @Value("${frosch-sync.userid}")
     private String userid;
 
-    @Value("${client.sync.directory.path:C:\\temp\\client}")
+    @Value("${client.sync.directory.path}")
     private String syncDirectoryPath;
 
     @Autowired

@@ -7,13 +7,13 @@ import org.springframework.stereotype.Component;
 @Component
 public class HttpClientProvider {
 
-    @Value("${server.scheme.http:http}")
+    @Value("${sync.backend.server.scheme}")
     private String serverSchemeHttp;
 
-    @Value("${server.host:127.0.0.1}")
+    @Value("${sync.backend.server.host}")
     private String serverHost;
 
-    @Value("${server.port:8080}")
+    @Value("${sync.backend.server.port}")
     private int serverPort;
 
     private final org.apache.http.client.HttpClient httpClient = HttpClientBuilder.
