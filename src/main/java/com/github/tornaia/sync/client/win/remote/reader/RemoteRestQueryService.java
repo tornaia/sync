@@ -33,6 +33,8 @@ public class RemoteRestQueryService {
         byte[] response;
         try {
             HttpEntity entity = httpClientProvider.get().execute(httpGet).getEntity();
+            // FIXME here sometimes we get 406 (0 content length is causing this)
+            // FIXME here we have a memory limitation: redesign to use inputstream instead of byte[]. 5GB file failed here with OOM
             response = IOUtils.toByteArray(entity.getContent());
             EntityUtils.consume(entity);
         } catch (IOException e) {
