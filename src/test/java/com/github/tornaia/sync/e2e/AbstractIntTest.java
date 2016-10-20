@@ -83,7 +83,7 @@ public abstract class AbstractIntTest {
     }
 
     protected void resetDB() throws Exception {
-        if (Objects.isNull(server)) {
+        if (server == null) {
             throw new IllegalStateException("Server not running!");
         }
 
