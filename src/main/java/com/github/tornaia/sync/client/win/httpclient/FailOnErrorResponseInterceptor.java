@@ -15,6 +15,8 @@ public class FailOnErrorResponseInterceptor implements HttpResponseInterceptor {
         if (!Objects.equals(statusCode, HttpStatus.SC_OK) &&
                 !Objects.equals(statusCode, HttpStatus.SC_CONFLICT) &&
                 !Objects.equals(statusCode, HttpStatus.SC_NOT_FOUND) &&
+                // TODO sometimes the servers return with 406 and the Engine should repeat the process of the event
+                // !Objects.equals(statusCode, HttpStatus.SC_NOT_ACCEPTABLE) &&
                 !Objects.equals(statusCode, HttpStatus.SC_BAD_GATEWAY)) {
             throw new IllegalStateException("Unexpected response: " + response);
         }
