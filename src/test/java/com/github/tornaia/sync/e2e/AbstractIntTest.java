@@ -41,16 +41,17 @@ public abstract class AbstractIntTest {
 
     private static final AtomicInteger clientIdGenerator = new AtomicInteger();
 
-    @Value("#{systemProperties['server.scheme.http'] ?: 'http'}")
+    @Value("#{systemProperties['sync.backend.server.protocol'] ?: 'http'}")
     private String serverSchemeHttp;
 
-    @Value("#{systemProperties['server.host'] ?: '127.0.0.1'}")
+    @Value("#{systemProperties['sync.backend.server.host'] ?: '127.0.0.1'}")
     private String serverHost;
 
-    @Value("#{systemProperties['server.port'] ?: '8080'}")
+    @Value("#{systemProperties['sync.backend.server.port'] ?: '8080'}")
     private int serverPort;
 
-    protected final String clientsRootDirectoryPath = "C:\\temp\\e2etests\\";
+    @Value("#{systemProperties['clients.root.path'] ?: 'C:\\temp\\e2etests\\\\'}")
+    protected String clientsRootDirectoryPath;
 
     protected ConfigurableApplicationContext server;
 
@@ -75,7 +76,10 @@ public abstract class AbstractIntTest {
     }
 
     protected void startServer() {
-        server = new SpringApplicationBuilder(ServerApp.class).headless(false).run();
+        server = new SpringApplicationBuilder(ServerApp.class)
+                .profiles("real-mongo-local", "jubos-s3-faker")
+                .headless(false)
+                .run();
     }
 
     protected void resetDB() throws Exception {
@@ -126,6 +130,7 @@ public abstract class AbstractIntTest {
             appContext = new SpringApplicationBuilder(WinClientApp.class)
                     .web(false)
                     .headless(false)
+                    .profiles("localhost")
                     .run("--client.sync.directory.path=" + syncDirectory.toFile().getAbsolutePath(),
                             "--frosch-sync.userid=" + userid);
 

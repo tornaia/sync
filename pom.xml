@@ -16,10 +16,10 @@
         <java.version>1.8</java.version>
         <spring-boot-starter-test.version>1.4.1.RELEASE</spring-boot-starter-test.version>
         <spring-beans.version>4.3.3.RELEASE</spring-beans.version>
+        <httpclient.version>4.5.2</httpclient.version>
         <junit.version>4.12</junit.version>
 
         <maven-compiler-plugin.version>3.5.1</maven-compiler-plugin.version>
-        <maven-jar-plugin.version>2.6</maven-jar-plugin.version>
     </properties>
 
     <build>
@@ -27,11 +27,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
             </plugin>
         </plugins>
 
@@ -45,19 +40,6 @@
                         <source>${java.version}</source>
                         <target>${java.version}</target>
                     </configuration>
-                </plugin>
-
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-jar-plugin</artifactId>
-                    <version>${maven-jar-plugin.version}</version>
-                    <executions>
-                        <execution>
-                            <goals>
-                                <goal>test-jar</goal>
-                            </goals>
-                        </execution>
-                    </executions>
                 </plugin>
             </plugins>
         </pluginManagement>
