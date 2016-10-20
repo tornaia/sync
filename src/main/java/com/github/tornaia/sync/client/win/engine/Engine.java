@@ -62,7 +62,7 @@ public class Engine {
     public void onContextClosedEvent() {
         LOG.info("Context closed event happened");
         contextIsRunning = false;
-        if (!Objects.isNull(thread)) {
+        if (thread != null) {
             thread.interrupt();
         }
     }

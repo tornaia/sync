@@ -19,7 +19,7 @@ public class RemoteKnownState {
 
     public synchronized Optional<FileMetaInfo> get(String relativePath) {
         FileMetaInfo fileMetaInfo = fileMetaInfos.get(relativePath);
-        if (Objects.isNull(fileMetaInfo)) {
+        if (fileMetaInfo == null) {
             return Optional.empty();
         }
         return Optional.of(fileMetaInfo);
