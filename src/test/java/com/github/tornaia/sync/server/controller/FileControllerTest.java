@@ -1,5 +1,6 @@
 package com.github.tornaia.sync.server.controller;
 
+import com.amazonaws.services.s3.AmazonS3;
 import com.github.tornaia.sync.server.service.FileCommandService;
 import com.github.tornaia.sync.server.service.FileQueryService;
 import com.github.tornaia.sync.server.service.exception.FileAlreadyExistsException;
@@ -16,9 +17,12 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+
+import java.io.InputStream;
 
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.doThrow;
@@ -27,6 +31,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @RunWith(SpringRunner.class)
+@ActiveProfiles({"fongo", "findify-s3"})
 @WebMvcTest(FileController.class)
 public class FileControllerTest {
 
@@ -36,16 +41,20 @@ public class FileControllerTest {
     @MockBean
     private FileQueryService fileQueryService;
 
+    @MockBean
+    private AmazonS3 s3Client;
+
     @Autowired
     private MockMvc mvc;
 
     @Test
     public void createFile() throws Exception {
         Mockito.doReturn(new FileMetaInfo("id", "userid", "path", 1024L, 1L, 2L))
-                .when(fileCommandService).createFile(anyString(), anyString(), anyLong(), anyLong(), anyString(), any(byte[].class));
+                .when(fileCommandService).createFile(anyString(), anyString(), anyLong(), anyLong(), anyLong(), anyString(), any(InputStream.class));
 
         CreateFileRequest createFileRequest = new CreateFileRequestBuilder()
                 .userid("userid")
+                .size(1024L)
                 .creationDateTime(1L)
                 .modificationDateTime(2L)
                 .create();
@@ -56,16 +65,17 @@ public class FileControllerTest {
                         .file(new MockMultipartFile("file", "4.txt", MediaType.APPLICATION_OCTET_STREAM_VALUE, "fileContent".getBytes()))
                         .param("clientid", "abc-clientid"))
                 .andExpect(status().isOk())
-                .andExpect(MockMvcResultMatchers.content().json("{\"id\":\"id\",\"userid\":\"userid\",\"relativePath\":\"path\",\"length\":1024,\"creationDateTime\":1,\"modificationDateTime\":2}"));
+                .andExpect(MockMvcResultMatchers.content().json("{\"id\":\"id\",\"userid\":\"userid\",\"relativePath\":\"path\",\"size\":1024,\"creationDateTime\":1,\"modificationDateTime\":2}"));
     }
 
     @Test
     public void createIfFileExists() throws Exception {
         doThrow(FileAlreadyExistsException.class)
-                .when(fileCommandService).createFile(anyString(), anyString(), anyLong(), anyLong(), anyString(), any(byte[].class));
+                .when(fileCommandService).createFile(anyString(), anyString(), anyLong(), anyLong(), anyLong(), anyString(), any(InputStream.class));
 
         CreateFileRequest createFileRequest = new CreateFileRequestBuilder()
                 .userid("userid")
+                .size(1000L)
                 .creationDateTime(1L)
                 .modificationDateTime(2L)
                 .create();

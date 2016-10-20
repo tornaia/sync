@@ -1,5 +1,6 @@
 package com.github.tornaia.sync.server.service;
 
+import com.github.tornaia.sync.server.data.config.SpringS3Config;
 import com.github.tornaia.sync.server.data.converter.FileToFileMetaInfoConverter;
 import com.github.tornaia.sync.server.data.document.File;
 import com.github.tornaia.sync.server.data.repository.FileRepository;
@@ -15,6 +16,8 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+
+import java.io.ByteArrayInputStream;
 
 import static com.github.tornaia.sync.shared.api.RemoteEventType.CREATED;
 import static org.hamcrest.Matchers.is;
@@ -38,6 +41,12 @@ public class FileCommandServiceTest {
     @Mock
     private FileToFileMetaInfoConverter fileToFileMetaInfoConverter;
 
+    @Mock
+    private SpringS3Config springS3Config;
+
+    @Mock
+    private S3Service s3Service;
+
     @InjectMocks
     private FileCommandService commandService;
 
@@ -46,22 +55,22 @@ public class FileCommandServiceTest {
         when(fileRepository.findByUseridAndPath("userid", "path")).thenReturn(new File());
 
         expectedException.expect(FileAlreadyExistsException.class);
-        commandService.createFile("clientid", "userid", 1L, 2L, "path", "Test".getBytes());
+        commandService.createFile("clientid", "userid", 1L, 2L, 666L, "path", new ByteArrayInputStream("Test".getBytes()));
     }
 
     @Test
     public void createFile() throws Exception {
-        when(fileRepository.insert(any(File.class))).thenReturn(new File("userid", "path", "test_content".getBytes(), 2L, 3L));
+        when(fileRepository.insert(any(File.class))).thenReturn(new File("userid", "path", 2L, 3L, 666L));
         when(fileToFileMetaInfoConverter.convert(any(File.class))).thenReturn(new FileMetaInfo(null, "userid", "path", 12, 2L, 3L));
 
-        commandService.createFile("clientid", "userid", 2L, 3L, "path", "test_content".getBytes());
+        commandService.createFile("clientid", "userid", 2L, 3L, 666L, "path", new ByteArrayInputStream("test_content".getBytes()));
 
         verify(syncWebSocketHandler).notifyClientsExceptForSource(argThat(is("clientid")), argThat(new RemoteFileEventMatcher()
                 .eventType(CREATED)
                 .fileMetaInfo(new FileMetaInfoMatcher()
                         .userid("userid")
                         .relativePath("path")
-                        .length(12L)
+                        .size(12L)
                         .creationDateTime(2L)
                         .modificationDateTime(3L))));
         verifyNoMoreInteractions(syncWebSocketHandler);

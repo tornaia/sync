@@ -23,6 +23,7 @@ public class FileControllerIntTest extends AbstractSyncServerIntTest {
         MockMultipartFile file = new MockMultipartFile("test", "test.png", "image/png", "TEST".getBytes());
         CreateFileRequest createFileRequest = new CreateFileRequestBuilder()
                 .userid("userid")
+                .size(4L)
                 .creationDateTime(1L)
                 .modificationDateTime(2L)
                 .create();
@@ -35,7 +36,7 @@ public class FileControllerIntTest extends AbstractSyncServerIntTest {
                 .relativePath("test.png")
                 .creationDateTime(1L)
                 .modificationDateTime(2L)
-                .length(4L);
+                .size(4L);
 
         assertThat(result, expected);
     }
@@ -45,6 +46,7 @@ public class FileControllerIntTest extends AbstractSyncServerIntTest {
         MockMultipartFile file = new MockMultipartFile("test", "test.png", "image/png", "TEST".getBytes());
         CreateFileRequest createFileRequest = new CreateFileRequestBuilder()
                 .userid("userid")
+                .size(4L)
                 .creationDateTime(2L)
                 .modificationDateTime(3L)
                 .create();
@@ -57,6 +59,7 @@ public class FileControllerIntTest extends AbstractSyncServerIntTest {
 
         UpdateFileRequest updateFileRequest = new UpdateFileRequestBuilder()
                 .userid("userid")
+                .size(4L)
                 .creationDateTime(3L)
                 .modificationDateTime(4L)
                 .create();
@@ -65,9 +68,9 @@ public class FileControllerIntTest extends AbstractSyncServerIntTest {
 
         FileMetaInfoMatcher expected = new FileMetaInfoMatcher()
                 .relativePath("test.png")
+                .size(4L)
                 .creationDateTime(3L)
-                .modificationDateTime(4L)
-                .length(5L);
+                .modificationDateTime(4L);
 
         assertThat(result, expected);
     }
@@ -78,6 +81,7 @@ public class FileControllerIntTest extends AbstractSyncServerIntTest {
 
         CreateFileRequest createFileRequest = new CreateFileRequestBuilder()
                 .userid("userid")
+                .size(4L)
                 .creationDateTime(1L)
                 .modificationDateTime(2L)
                 .create();
@@ -97,6 +101,7 @@ public class FileControllerIntTest extends AbstractSyncServerIntTest {
         MockMultipartFile file = new MockMultipartFile("test", "test.png", "image/png", "TEST".getBytes());
         CreateFileRequest createFileRequest = new CreateFileRequestBuilder()
                 .userid("userid")
+                .size(4L)
                 .creationDateTime(1L)
                 .modificationDateTime(1L)
                 .create();
@@ -105,6 +110,7 @@ public class FileControllerIntTest extends AbstractSyncServerIntTest {
         MockMultipartFile file2 = new MockMultipartFile("test2", "test2.png", "image/png", "TEST2".getBytes());
         CreateFileRequest createFileRequest2 = new CreateFileRequestBuilder()
                 .userid("userid")
+                .size(5L)
                 .creationDateTime(3L)
                 .modificationDateTime(3L)
                 .create();
@@ -114,9 +120,9 @@ public class FileControllerIntTest extends AbstractSyncServerIntTest {
 
         FileMetaInfoMatcher expected = new FileMetaInfoMatcher()
                 .relativePath("test2.png")
+                .size(5L)
                 .creationDateTime(3L)
-                .modificationDateTime(3L)
-                .length(5L);
+                .modificationDateTime(3L);
 
         assertThat(result, contains(expected));
     }

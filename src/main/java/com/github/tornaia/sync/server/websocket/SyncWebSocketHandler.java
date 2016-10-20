@@ -65,7 +65,7 @@ public class SyncWebSocketHandler extends TextWebSocketHandler {
         List<FileMetaInfo> modifiedFiles = fileQueryService.getModifiedFiles(userid, Long.MIN_VALUE);
 
         List<RemoteFileEvent> initMessages = modifiedFiles.stream()
-                .map(mf -> new RemoteFileEvent(RemoteEventType.CREATED, new FileMetaInfo(mf.id, mf.userid, mf.relativePath, mf.length, mf.creationDateTime, mf.modificationDateTime)))
+                .map(mf -> new RemoteFileEvent(RemoteEventType.CREATED, new FileMetaInfo(mf.id, mf.userid, mf.relativePath, mf.size, mf.creationDateTime, mf.modificationDateTime)))
                 .collect(Collectors.toList());
 
         initMessages.forEach(rfe -> sendMsg(session, rfe));

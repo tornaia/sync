@@ -15,7 +15,7 @@ public class File {
 
     private String path;
 
-    private byte[] data;
+    private long size;
 
     private long creationDate;
 
@@ -24,10 +24,10 @@ public class File {
     public File() {
     }
 
-    public File(String userid, String path, byte[] data, long creationDate, long lastModifiedDate) {
+    public File(String userid, String path, long size, long creationDate, long lastModifiedDate) {
         this.userid = userid;
         this.path = path;
-        this.data = data;
+        this.size = size;
         this.creationDate = creationDate;
         this.lastModifiedDate = lastModifiedDate;
     }
@@ -60,12 +60,12 @@ public class File {
         this.path = path;
     }
 
-    public byte[] getData() {
-        return data;
+    public long getSize() {
+        return size;
     }
 
-    public void setData(byte[] data) {
-        this.data = data;
+    public void setSize(long size) {
+        this.size = size;
     }
 
     public long getCreationDate() {

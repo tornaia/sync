@@ -8,6 +8,6 @@ import org.springframework.stereotype.Component;
 public class FileToFileMetaInfoConverter {
 
     public FileMetaInfo convert(File file) {
-        return new FileMetaInfo(file.getId(), file.getUserid(), file.getPath(), file.getData().length, file.getCreationDate(), file.getLastModifiedDate());
+        return new FileMetaInfo(file.getId(), file.getUserid(), file.getPath(), file.getSize(), file.getCreationDate(), file.getLastModifiedDate());
     }
 }

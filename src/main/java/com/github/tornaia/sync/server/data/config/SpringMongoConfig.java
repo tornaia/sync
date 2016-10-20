@@ -26,20 +26,19 @@ public class SpringMongoConfig extends AbstractMongoConfiguration {
     @Value("${VCAP_SERVICES:#{null}}")
     private String vcapServices;
 
-    @Value("${mongo.reset.on.start:false}")
-    private boolean resetOnStart;
-
-    @Value("${mongo.local.development.host:localhost}")
+    @Value("${mongo.host:#{null}}")
     private String host;
 
-    @Value("${mongo.local.development.port:27017}")
+    @Value("${mongo.port:-1}")
     private int port;
 
-    @Value("${mongo.local.development.database.name:sync-database}")
+    @Value("${mongo.database.name:#{null}}")
     private String databaseName;
 
-    @Value("${mongo.local.development.collection.name:sync-collection}")
+    @Value("${mongo.collection.name:#{null}}")
     private String collectionName;
+
+    private boolean resetOnStart = false;
 
     @Autowired
     private SerializerUtils serializerUtils;
@@ -63,7 +62,6 @@ public class SpringMongoConfig extends AbstractMongoConfiguration {
 
     private MongoClient initCloud() throws IOException {
         LOG.info("We are in cloud. Init Mongo for Cloud!");
-        LOG.info("Reset on start? " + resetOnStart);
         LOG.trace("vcapServices: " + vcapServices);
         Map<String, Object> vcapServicesMap = serializerUtils.toObject(vcapServices, Map.class);
         List<Map<String, Object>> mongoDbList = (List<Map<String, Object>>) vcapServicesMap.get("mongodb");

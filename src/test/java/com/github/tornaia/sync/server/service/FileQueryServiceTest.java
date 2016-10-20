@@ -41,7 +41,7 @@ public class FileQueryServiceTest {
 
     @Before
     public void setUp() {
-        List<File> storedFiles = Arrays.asList(new File("userid", "path", "data".getBytes(), 3L, 3L));
+        List<File> storedFiles = Arrays.asList(new File("userid", "path", 3L, 3L, 666L));
         when(fileRepository.findByUseridAndLastModifiedDateAfter("userid", 2L)).thenReturn(storedFiles);
     }
 

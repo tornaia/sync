@@ -8,6 +8,7 @@ import com.github.tornaia.sync.shared.api.FileMetaInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.io.InputStream;
 import java.util.List;
 import java.util.Objects;
 
@@ -23,6 +24,9 @@ public class FileQueryService {
 
     @Autowired
     private FileToFileMetaInfoConverter fileToFileMetaInfoConverter;
+
+    @Autowired
+    private S3Service s3Service;
 
     public List<FileMetaInfo> getModifiedFiles(String userid, long modTs) {
         List<File> fileList = fileRepository.findByUseridAndLastModifiedDateAfter(userid, modTs);
@@ -45,5 +49,9 @@ public class FileQueryService {
         }
 
         return file;
+    }
+
+    public InputStream getContent(String id) {
+        return s3Service.get(id);
     }
 }

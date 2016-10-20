@@ -13,8 +13,9 @@ import javax.servlet.MultipartConfigElement;
 @Configuration
 public class CustomizationBean implements EmbeddedServletContainerCustomizer {
 
-    private static final int _1GB = 1073741824;
-    private static final String _1024MB = "1024MB";
+    // move these limits to shared module (client should not send file bigger than this)
+    private static final int _5GB = 5*1073741824;
+    private static final String _5120MB = "5120MB";
 
     @Override
     public void customize(ConfigurableEmbeddedServletContainer container) {
@@ -30,7 +31,7 @@ public class CustomizationBean implements EmbeddedServletContainerCustomizer {
         return (ConfigurableEmbeddedServletContainer container) -> {
             if (container instanceof TomcatEmbeddedServletContainerFactory) {
                 TomcatEmbeddedServletContainerFactory tomcat = (TomcatEmbeddedServletContainerFactory) container;
-                tomcat.addConnectorCustomizers((connector) -> connector.setMaxPostSize(_1GB));
+                tomcat.addConnectorCustomizers((connector) -> connector.setMaxPostSize(_5GB));
             }
         };
     }
@@ -38,8 +39,8 @@ public class CustomizationBean implements EmbeddedServletContainerCustomizer {
     @Bean
     public MultipartConfigElement multipartConfigElement() {
         MultipartConfigFactory factory = new MultipartConfigFactory();
-        factory.setMaxFileSize(_1024MB);
-        factory.setMaxRequestSize(_1024MB);
+        factory.setMaxFileSize(_5120MB);
+        factory.setMaxRequestSize(_5120MB);
         return factory.createMultipartConfig();
     }
 }

@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Objects;
 
@@ -33,20 +34,25 @@ public class FileCommandService {
     @Autowired
     private FileToFileMetaInfoConverter fileToFileMetaInfoConverter;
 
-    public FileMetaInfo createFile(String clientid, String userid, long creationDateTime, long modificationDateTime, String path, byte[] content) throws IOException {
+    @Autowired
+    private S3Service s3Service;
+
+    public FileMetaInfo createFile(String clientid, String userid, long size, long creationDateTime, long modificationDateTime, String path, InputStream content) throws IOException {
         File file = fileRepository.findByUseridAndPath(userid, path);
         if (!Objects.isNull(file)) {
             throw new FileAlreadyExistsException(path);
         }
 
-        file = fileRepository.insert(new File(userid, path, content, creationDateTime, modificationDateTime));
+        file = fileRepository.insert(new File(userid, path, size, creationDateTime, modificationDateTime));
         FileMetaInfo fileMetaInfo = fileToFileMetaInfoConverter.convert(file);
+        s3Service.putFile(fileMetaInfo, content);
         syncWebSocketHandler.notifyClientsExceptForSource(clientid, new RemoteFileEvent(CREATED, fileMetaInfo));
         LOG.info("CREATE file: " + fileMetaInfo);
         return fileMetaInfo;
     }
 
-    public void modifyFile(String clientid, String id, long creationDateTime, long modificationDateTime, byte[] content) throws IOException {
+
+    public void modifyFile(String clientid, String id, long size, long creationDateTime, long modificationDateTime, InputStream content) throws IOException {
         File file = fileRepository.findOne(id);
         if (Objects.isNull(file)) {
             LOG.info("MODIFY Not found file: " + id);
@@ -54,9 +60,10 @@ public class FileCommandService {
         } else {
             file.setCreationDate(creationDateTime);
             file.setLastModifiedDate(modificationDateTime);
-            file.setData(content);
+            file.setSize(size);
             fileRepository.save(file);
             FileMetaInfo fileMetaInfo = fileToFileMetaInfoConverter.convert(file);
+            s3Service.putFile(fileMetaInfo, content);
             syncWebSocketHandler.notifyClientsExceptForSource(clientid, new RemoteFileEvent(MODIFIED, fileMetaInfo));
             LOG.info("MODIFY file: " + fileMetaInfo);
         }
@@ -71,6 +78,7 @@ public class FileCommandService {
         String path = file.getPath();
         fileRepository.delete(file);
         FileMetaInfo deletedFileMetaInfo = fileToFileMetaInfoConverter.convert(file);
+        s3Service.deleteFile(deletedFileMetaInfo);
         syncWebSocketHandler.notifyClientsExceptForSource(clientid, new RemoteFileEvent(DELETED, deletedFileMetaInfo));
         LOG.info("DELETE file: " + path);
     }
@@ -78,6 +86,7 @@ public class FileCommandService {
     public void deleteAll() {
         List<File> files = fileRepository.findAll();
         files.forEach(fileRepository::delete);
+        files.stream().map(fileToFileMetaInfoConverter::convert).forEach(s3Service::deleteFile);
         LOG.info("All files deleted from DB: " + files.size());
     }
 }

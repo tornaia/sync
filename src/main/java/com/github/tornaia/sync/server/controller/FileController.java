@@ -12,17 +12,21 @@ import com.github.tornaia.sync.shared.api.UpdateFileRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM;
 import static org.springframework.http.HttpHeaders.CONTENT_DISPOSITION;
-import static org.springframework.http.HttpStatus.*;
+import static org.springframework.http.HttpStatus.CONFLICT;
+import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.web.bind.annotation.RequestMethod.*;
 
 @RestController
@@ -49,12 +53,12 @@ public class FileController {
 
     @RequestMapping(method = POST)
     public FileMetaInfo postFile(@RequestPart("fileAttributes") CreateFileRequest request, @RequestPart("file") MultipartFile multipartFile, @RequestParam("clientid") String clientid) throws IOException {
-        return fileCommandService.createFile(clientid, request.getUserid(), request.getCreationDateTime(), request.getModificationDateTime(), multipartFile.getOriginalFilename(), multipartFile.getBytes());
+        return fileCommandService.createFile(clientid, request.getUserid(), request.getSize(), request.getCreationDateTime(), request.getModificationDateTime(), multipartFile.getOriginalFilename(), multipartFile.getInputStream());
     }
 
     @RequestMapping(value = "/{id}", method = PUT)
     public FileMetaInfo putFile(@PathVariable String id, @RequestPart("fileAttributes") UpdateFileRequest request, @RequestPart("file") MultipartFile multipartFile, @RequestParam("clientid") String clientid) throws IOException {
-        fileCommandService.modifyFile(clientid, id, request.getCreationDateTime(), request.getModificationDateTime(), multipartFile.getBytes());
+        fileCommandService.modifyFile(clientid, id, request.getSize(), request.getCreationDateTime(), request.getModificationDateTime(), multipartFile.getInputStream());
         return fileQueryService.getFileMetaInfoById(id);
     }
 
@@ -66,11 +70,16 @@ public class FileController {
     @RequestMapping(value = "/{id}", method = GET, produces = APPLICATION_OCTET_STREAM)
     public ResponseEntity getFile(@PathVariable String id) throws IOException {
         File file = fileQueryService.getFileById(id);
-        HttpHeaders responseHeaders = new HttpHeaders();
+        long size = file.getSize();
         String filename = file.getFilename();
+        HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.add(CONTENT_DISPOSITION, "attachment; filename=" + filename);
         LOG.info("GET file: " + file.getPath());
-        return new ResponseEntity<>(file.getData(), responseHeaders, OK);
+        InputStream content = fileQueryService.getContent(id);
+
+        InputStreamResource inputStreamResource = new InputStreamResource(content);
+        responseHeaders.setContentLength(size);
+        return new ResponseEntity(inputStreamResource, responseHeaders, HttpStatus.OK);
     }
 
     @RequestMapping(value = "/{id}/metaInfo", method = GET)
