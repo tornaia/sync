@@ -3,3 +3,4 @@
 target/
 /bin/
 temp/
+src/main/resources/application-real-s3-cloud.properties
