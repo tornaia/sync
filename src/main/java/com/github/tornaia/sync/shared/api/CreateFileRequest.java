@@ -3,9 +3,8 @@ package com.github.tornaia.sync.shared.api;
 public class CreateFileRequest extends AbstractRequest {
 
     private String userid;
-
+    private long size;
     private long creationDateTime;
-
     private long modificationDateTime;
 
     public String getUserid() {
@@ -14,6 +13,14 @@ public class CreateFileRequest extends AbstractRequest {
 
     public void setUserid(String userid) {
         this.userid = userid;
+    }
+
+    public long getSize() {
+        return size;
+    }
+
+    public void setSize(long size) {
+        this.size = size;
     }
 
     public long getCreationDateTime() {

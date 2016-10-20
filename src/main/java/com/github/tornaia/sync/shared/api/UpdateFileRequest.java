@@ -4,6 +4,8 @@ public class UpdateFileRequest extends AbstractRequest {
 
     private String userid;
 
+    private long size;
+
     private long creationDateTime;
 
     private long modificationDateTime;
@@ -14,6 +16,14 @@ public class UpdateFileRequest extends AbstractRequest {
 
     public void setUserid(String userid) {
         this.userid = userid;
+    }
+
+    public long getSize() {
+        return size;
+    }
+
+    public void setSize(long size) {
+        this.size = size;
     }
 
     public long getCreationDateTime() {

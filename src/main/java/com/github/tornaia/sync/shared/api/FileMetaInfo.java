@@ -16,7 +16,7 @@ public class FileMetaInfo implements Serializable {
     public final String id;
     public final String userid;
     public final String relativePath;
-    public final long length;
+    public final long size;
     public final long creationDateTime;
     public final long modificationDateTime;
 
@@ -24,7 +24,7 @@ public class FileMetaInfo implements Serializable {
         this.id = null;
         this.userid = null;
         this.relativePath = null;
-        this.length = -1;
+        this.size = -1;
         this.creationDateTime = -1;
         this.modificationDateTime = -1;
     }
@@ -38,16 +38,16 @@ public class FileMetaInfo implements Serializable {
         this.userid = userid;
         this.relativePath = relativePath;
         BasicFileAttributes attr = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
-        this.length = attr.size();
+        this.size = attr.size();
         this.creationDateTime = attr.creationTime().toMillis();
         this.modificationDateTime = attr.lastModifiedTime().toMillis();
     }
 
-    public FileMetaInfo(String id, String userid, String relativePath, long length, long creationDateTime, long modificationDateTime) {
+    public FileMetaInfo(String id, String userid, String relativePath, long size, long creationDateTime, long modificationDateTime) {
         this.id = id;
         this.userid = userid;
         this.relativePath = relativePath;
-        this.length = length;
+        this.size = size;
         this.creationDateTime = creationDateTime;
         this.modificationDateTime = modificationDateTime;
     }
@@ -57,7 +57,7 @@ public class FileMetaInfo implements Serializable {
         return new HashCodeBuilder()
                 .append(userid)
                 .append(relativePath)
-                .append(length)
+                .append(size)
                 .append(creationDateTime)
                 .append(modificationDateTime)
                 .toHashCode();
@@ -74,7 +74,7 @@ public class FileMetaInfo implements Serializable {
         return new EqualsBuilder()
                 .append(userid, other.userid)
                 .append(relativePath, other.relativePath)
-                .append(length, other.length)
+                .append(size, other.size)
                 .append(creationDateTime, other.creationDateTime)
                 .append(modificationDateTime, other.modificationDateTime)
                 .isEquals();
@@ -87,7 +87,7 @@ public class FileMetaInfo implements Serializable {
                 .append("id", id)
                 .append("userid", userid)
                 .append("relativePath", relativePath)
-                .append("length", length)
+                .append("size", size)
                 .append("creationDateTime", creationDateTime)
                 .append("modificationDateTime", modificationDateTime)
                 .toString();

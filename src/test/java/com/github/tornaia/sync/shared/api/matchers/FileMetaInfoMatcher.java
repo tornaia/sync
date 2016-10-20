@@ -15,7 +15,7 @@ public class FileMetaInfoMatcher extends AbstractSyncMatcher<FileMetaInfo> {
 
     private Matcher<String> relativePath = new IsAnything<>();
 
-    private Matcher<Long> length = new IsAnything<>();
+    private Matcher<Long> size = new IsAnything<>();
 
     private Matcher<Long> creationDateTime = new IsAnything<>();
 
@@ -36,8 +36,8 @@ public class FileMetaInfoMatcher extends AbstractSyncMatcher<FileMetaInfo> {
         return this;
     }
 
-    public FileMetaInfoMatcher length(long length) {
-        this.length = is(length);
+    public FileMetaInfoMatcher size(long size) {
+        this.size = is(size);
         return this;
     }
 
@@ -56,7 +56,7 @@ public class FileMetaInfoMatcher extends AbstractSyncMatcher<FileMetaInfo> {
         return matches(id, item.id, "id value: ", mismatchDescription) &&
                 matches(userid, item.userid, "userid value: ", mismatchDescription) &&
                 matches(relativePath, item.relativePath, "relativePath value: ", mismatchDescription) &&
-                matches(length, item.length, "length value: ", mismatchDescription) &&
+                matches(size, item.size, "size value: ", mismatchDescription) &&
                 matches(creationDateTime, item.creationDateTime, "creationDateTime value: ", mismatchDescription) &&
                 matches(modificationDateTime, item.modificationDateTime, "modificationDateTime value: ", mismatchDescription);
     }
@@ -67,7 +67,7 @@ public class FileMetaInfoMatcher extends AbstractSyncMatcher<FileMetaInfo> {
                 .appendText(", id: ").appendDescriptionOf(id)
                 .appendText(", userid: ").appendDescriptionOf(userid)
                 .appendText(", relativePath: ").appendDescriptionOf(relativePath)
-                .appendText(", length: ").appendDescriptionOf(length)
+                .appendText(", size: ").appendDescriptionOf(size)
                 .appendText(", creationDateTime: ").appendDescriptionOf(creationDateTime)
                 .appendText(", modificationDateTime: ").appendDescriptionOf(modificationDateTime);
     }
