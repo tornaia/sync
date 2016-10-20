@@ -49,7 +49,7 @@ public class SpringS3Config {
     @Bean
     public AmazonS3 s3Client() {
         LOG.info("vcapServices: " + vcapServices);
-        boolean isCloud = !Objects.isNull(vcapServices);
+        boolean isCloud = vcapServices != null;
 
         AmazonS3 s3Client;
         if (isCloud) {

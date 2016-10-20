@@ -10,10 +10,8 @@ import org.springframework.stereotype.Component;
 
 import java.io.InputStream;
 import java.util.List;
-import java.util.Objects;
 
 import static java.util.Collections.emptyList;
-import static java.util.Objects.isNull;
 import static java.util.stream.Collectors.toList;
 
 @Component
@@ -30,7 +28,7 @@ public class FileQueryService {
 
     public List<FileMetaInfo> getModifiedFiles(String userid, long modTs) {
         List<File> fileList = fileRepository.findByUseridAndLastModifiedDateAfter(userid, modTs);
-        if (isNull(fileList)) {
+        if (fileList == null) {
             return emptyList();
         }
 
@@ -44,7 +42,7 @@ public class FileQueryService {
 
     public File getFileById(String id) {
         File file = fileRepository.findOne(id);
-        if (Objects.isNull(file)) {
+        if (file == null) {
             throw new FileNotFoundException(id);
         }
 

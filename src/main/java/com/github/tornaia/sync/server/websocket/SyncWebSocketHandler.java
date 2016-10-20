@@ -113,12 +113,12 @@ public class SyncWebSocketHandler extends TextWebSocketHandler {
 
     public void notifyClientsExceptForSource(String sourceClientid, RemoteFileEvent remoteFileEvent) {
         List<WebSocketSession> webSocketSessionsToNotify = useridAndSessions.get(remoteFileEvent.fileMetaInfo.userid);
-        if (Objects.isNull(webSocketSessionsToNotify)) {
+        if (webSocketSessionsToNotify == null) {
             return;
         }
 
         WebSocketSession sourceSession = clientidAndSession.get(sourceClientid);
-        if (Objects.isNull(sourceSession)) {
+        if (sourceSession == null) {
             LOG.warn("source normally should have a webSocket session too: " + sourceClientid);
         }
 

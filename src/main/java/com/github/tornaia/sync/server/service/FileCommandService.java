@@ -39,7 +39,7 @@ public class FileCommandService {
 
     public FileMetaInfo createFile(String clientid, String userid, long size, long creationDateTime, long modificationDateTime, String path, InputStream content) throws IOException {
         File file = fileRepository.findByUseridAndPath(userid, path);
-        if (!Objects.isNull(file)) {
+        if (file != null) {
             throw new FileAlreadyExistsException(path);
         }
 
@@ -54,7 +54,7 @@ public class FileCommandService {
 
     public void modifyFile(String clientid, String id, long size, long creationDateTime, long modificationDateTime, InputStream content) throws IOException {
         File file = fileRepository.findOne(id);
-        if (Objects.isNull(file)) {
+        if (file == null) {
             LOG.info("MODIFY Not found file: " + id);
             throw new FileNotFoundException(id);
         } else {
@@ -71,7 +71,7 @@ public class FileCommandService {
 
     public void deleteFile(String clientid, String id) {
         File file = fileRepository.findOne(id);
-        if (Objects.isNull(file)) {
+        if (file == null) {
             LOG.info("DELETE not found file: " + id);
             throw new FileNotFoundException(id);
         }
