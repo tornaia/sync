@@ -32,7 +32,7 @@ public class SpringMongoConfig extends AbstractMongoConfiguration {
     @Value("${mongo.collection.name:#{null}}")
     private String collectionName;
 
-    private boolean resetOnStart = true;
+    private boolean resetOnStart = false;
 
     @Autowired
     private SerializerUtils serializerUtils;
