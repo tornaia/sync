@@ -5,6 +5,7 @@ import com.mongodb.Mongo;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
 import com.mongodb.client.MongoDatabase;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +17,6 @@ import org.springframework.data.mongodb.config.AbstractMongoConfiguration;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 @Configuration
 public class SpringMongoConfig extends AbstractMongoConfiguration {
@@ -26,26 +26,20 @@ public class SpringMongoConfig extends AbstractMongoConfiguration {
     @Value("${VCAP_SERVICES:#{null}}")
     private String vcapServices;
 
-    @Value("${mongo.host:#{null}}")
-    private String host;
-
-    @Value("${mongo.port:-1}")
-    private int port;
-
-    @Value("${mongo.database.name:#{null}}")
-    private String databaseName;
+    @Value("${mongo.database.uri:#{null}}")
+    private String databaseUri;
 
     @Value("${mongo.collection.name:#{null}}")
     private String collectionName;
 
-    private boolean resetOnStart = false;
+    private boolean resetOnStart = true;
 
     @Autowired
     private SerializerUtils serializerUtils;
 
     @Override
     protected String getDatabaseName() {
-        return databaseName;
+        return StringUtils.substringAfterLast(databaseUri, "/");
     }
 
     @Bean
@@ -53,8 +47,11 @@ public class SpringMongoConfig extends AbstractMongoConfiguration {
     public Mongo mongo() throws Exception {
         LOG.info("vcapServices: " + vcapServices);
         boolean isCloud = vcapServices != null;
+        boolean isFongo = "mongodb://fongo-so-dont-care/sync-database".equals(databaseUri);
         if (isCloud) {
             return initCloud();
+        } else if (isFongo) {
+            return initFongo();
         } else {
             return initLocal();
         }
@@ -81,15 +78,20 @@ public class SpringMongoConfig extends AbstractMongoConfiguration {
         return mongoClient;
     }
 
+    private MongoClient initFongo() {
+        LOG.info("Tests. Init Fongo for Tests!");
+        return new MongoClient(new MongoClientURI(databaseUri));
+    }
+
     private MongoClient initLocal() {
-        LOG.info("Local development. Init Mongo for Local!");
+        LOG.info("Local development. Init Mongo for Local development!");
         LOG.info("Reset on start? " + resetOnStart);
-        MongoClient mongoClient = new MongoClient(host, port);
-        MongoDatabase mongoDatabase = mongoClient.getDatabase(databaseName);
+        MongoClient mongoClient = new MongoClient(new MongoClientURI(StringUtils.substringBeforeLast(databaseUri, "/")));
+        MongoDatabase mongoDatabase = mongoClient.getDatabase(getDatabaseName());
         if (resetOnStart) {
             mongoDatabase.drop();
         }
-        mongoDatabase = mongoClient.getDatabase(databaseName);
+        mongoDatabase = mongoClient.getDatabase(getDatabaseName());
         if (resetOnStart) {
             mongoDatabase.createCollection(collectionName);
         }
