@@ -50,6 +50,7 @@ public class RemoteRestCommandService {
     public FileCreateResponse onFileCreate(FileMetaInfo fileMetaInfo, File file) {
         CreateFileRequest createFileRequest = new CreateFileRequestBuilder()
                 .userid(userid)
+                .relativePath(fileMetaInfo.relativePath)
                 .size(fileMetaInfo.size)
                 .creationDateTime(fileMetaInfo.creationDateTime)
                 .modificationDateTime(fileMetaInfo.modificationDateTime)
@@ -62,7 +63,7 @@ public class RemoteRestCommandService {
                 .setContentType(ContentType.MULTIPART_FORM_DATA)
                 .addPart(generateJsonFormBodyPart("fileAttributes",
                         serializerUtils.toJSON(createFileRequest)))
-                .addPart(FormBodyPartBuilder.create()
+                .addPart(file.isDirectory() ? null : FormBodyPartBuilder.create()
                         .setName("file")
                         .setBody(new FileBody(file, ContentType.APPLICATION_OCTET_STREAM, fileMetaInfo.relativePath))
                         .build())
@@ -111,7 +112,7 @@ public class RemoteRestCommandService {
                 .setContentType(ContentType.MULTIPART_FORM_DATA)
                 .addPart(generateJsonFormBodyPart("fileAttributes",
                         serializerUtils.toJSON(updateFileRequest)))
-                .addPart(FormBodyPartBuilder.create()
+                .addPart(file.isDirectory() ? null : FormBodyPartBuilder.create()
                         .setName("file")
                         .setBody(new FileBody(file, ContentType.APPLICATION_OCTET_STREAM, fileMetaInfo.relativePath))
                         .build())

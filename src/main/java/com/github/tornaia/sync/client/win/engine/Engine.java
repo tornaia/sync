@@ -163,22 +163,22 @@ public class Engine {
                         succeed = localWriterService.replace(relativePath, remoteFileMetaInfo, remoteFileContent);
                     }
                     if (succeed) {
-                        LOG.info("File was updated on disk: " + remoteFileMetaInfo);
+                        LOG.info("File modified event successfully finished: " + remoteFileMetaInfo);
                     } else {
-                        LOG.warn("Failed to update file on disk: " + remoteFileMetaInfo);
+                        LOG.warn("File modified event failed: " + remoteFileMetaInfo);
                     }
                 } else {
                     byte[] remoteFileContent = remoteReaderService.getFile(remoteFileMetaInfo);
                     boolean succeed = localWriterService.write(remoteFileMetaInfo, remoteFileContent);
                     if (succeed) {
-                        LOG.info("File created on disk: " + remoteFileMetaInfo);
+                        LOG.info("File created event successfully finished: " + remoteFileMetaInfo);
                     } else {
-                        LOG.warn("Failed to create file to disk: " + remoteFileMetaInfo);
+                        LOG.warn("File created event failed: " + remoteFileMetaInfo);
                     }
                 }
                 break;
             case DELETED:
-                remoteKnownState.add(remoteFileMetaInfo);
+                remoteKnownState.remove(remoteFileMetaInfo);
                 if (!localFileExists) {
                     LOG.debug("Local file does not exist, nothing to delete: " + relativePath);
                     return;
@@ -195,9 +195,9 @@ public class Engine {
                     LOG.debug("Remote and local fileMetaInfo equals: " + remoteFileMetaInfo.relativePath);
                     boolean succeed = localWriterService.delete(relativePath);
                     if (succeed) {
-                        LOG.info("File deleted from disk: " + remoteFileMetaInfo);
+                        LOG.info("File deleted event successfully finished: " + remoteFileMetaInfo);
                     } else {
-                        LOG.warn("Failed to deleted file from disk: " + remoteFileMetaInfo);
+                        LOG.warn("File deleted event failed: " + remoteFileMetaInfo);
                     }
                 } else {
                     LOG.warn("Remote and local fileMetaInfo differs, wont delete! Remote: " + remoteFileMetaInfo + ", localFileInfo: " + localFileMetaInfo);

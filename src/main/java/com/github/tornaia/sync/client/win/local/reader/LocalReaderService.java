@@ -200,13 +200,38 @@ public class LocalReaderService {
         try {
             Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
                 @Override
+                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                    if (dir.equals(syncDirectory)) {
+                        LOG.trace("Skipping syncDirectory: " + dir);
+                        return FileVisitResult.CONTINUE;
+                    }
+                    String relativePath = getRelativePath(dir.toFile());
+                    LOG.trace("Visit directory: " + relativePath);
+                    Optional<FileMetaInfo> optionalKnownFileMetaInfo = remoteKnownState.get(relativePath);
+                    if (!optionalKnownFileMetaInfo.isPresent()) {
+                        LOG.trace("New directory found: " + relativePath);
+                        newFileEvents.add(FileCreatedEvent.ofDirectory(relativePath));
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    /*
+                    FileMetaInfo knownFileMetaInfo = optionalKnownFileMetaInfo.get();
+                    FileMetaInfo localFileMetaInfo = new FileMetaInfo(null, userid, relativePath, attrs.size(), attrs.creationTime().toMillis(), attrs.lastModifiedTime().toMillis());
+                    if (!Objects.equals(knownFileMetaInfo, localFileMetaInfo)) {
+                        LOG.trace("Modified file found: " + knownFileMetaInfo + " -> " + localFileMetaInfo);
+                        newFileEvents.add(new FileModifiedEvent(relativePath));
+                    }*/
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                     String relativePath = getRelativePath(file.toFile());
                     LOG.trace("Visit file: " + relativePath);
                     Optional<FileMetaInfo> optionalKnownFileMetaInfo = remoteKnownState.get(getRelativePath(file.toFile()));
                     if (!optionalKnownFileMetaInfo.isPresent()) {
                         LOG.trace("New file found: " + relativePath);
-                        newFileEvents.add(new FileCreatedEvent(relativePath));
+                        newFileEvents.add(FileCreatedEvent.ofFile(relativePath));
                         return FileVisitResult.CONTINUE;
                     }
 
@@ -214,7 +239,7 @@ public class LocalReaderService {
                     FileMetaInfo localFileMetaInfo = new FileMetaInfo(null, userid, relativePath, attrs.size(), attrs.creationTime().toMillis(), attrs.lastModifiedTime().toMillis());
                     if (!Objects.equals(knownFileMetaInfo, localFileMetaInfo)) {
                         LOG.trace("Modified file found: " + knownFileMetaInfo + " -> " + localFileMetaInfo);
-                        newFileEvents.add(new FileModifiedEvent(relativePath));
+                        newFileEvents.add(FileModifiedEvent.ofFile(relativePath));
                     }
                     return FileVisitResult.CONTINUE;
                 }
@@ -275,9 +300,12 @@ public class LocalReaderService {
 
         if (file.isFile()) {
             LOG.debug("File created event: " + fileUtils.getDescriptionForFile(file));
-            addNewEvent(new FileCreatedEvent(relativePath));
+            addNewEvent(FileCreatedEvent.ofFile(relativePath));
         } else if (file.isDirectory()) {
+            addNewEvent(FileCreatedEvent.ofDirectory(relativePath));
             LOG.debug("Directory created event: " + fileUtils.getDescriptionForFile(file));
+            Set<LocalFileEvent> newOrModifiedChangeList = getNewOrModifiedChangeList(filePath);
+            addNewEvents(newOrModifiedChangeList);
         } else {
             LOG.debug("Created event of an unknown file type. File/directory does not exist? " + file);
         }
@@ -285,13 +313,14 @@ public class LocalReaderService {
 
     private void onFileModified(Path filePath) {
         File file = filePath.toFile();
-        if (file.isDirectory()) {
-            LOG.trace("Directory modified event: " + fileUtils.getDescriptionForFile(file));
-            return;
-        } else if (file.isFile()) {
-            String relativePath = getRelativePath(file);
+        String relativePath = getRelativePath(file);
+        if (file.isFile()) {
             LOG.debug("File modified event: " + fileUtils.getDescriptionForFile(file));
-            addNewEvent(new FileModifiedEvent(relativePath));
+            addNewEvent(FileModifiedEvent.ofFile(relativePath));
+        } else if (file.isDirectory()) {
+            addNewEvent(FileModifiedEvent.ofDirectory(relativePath));
+            LOG.debug("Directory modified event: " + fileUtils.getDescriptionForFile(file));
+            return;
         } else {
             LOG.debug("Modified event of an unknown file type. File/directory does not exist? " + file);
         }
@@ -299,14 +328,28 @@ public class LocalReaderService {
 
     private void onFileDeleted(Path filePath) {
         File file = filePath.toFile();
+        String relativePath = getRelativePath(file);
+
         if (file.exists()) {
-            LOG.debug("Deleted event of a non-existing file: " + file);
+            LOG.debug("Deleted event of an existing file is skipped: " + relativePath);
             return;
         }
 
-        String relativePath = getRelativePath(file);
-        LOG.debug("File deleted event: " + relativePath);
-        addNewEvent(new FileDeleteEvent(relativePath));
+        Optional<FileMetaInfo> fileMetaInfoAsFile = remoteKnownState.get(relativePath);
+
+        if (!fileMetaInfoAsFile.isPresent()) {
+            LOG.debug("Deleted event of a file that is unknown to the server is skipped: " + relativePath);
+            return;
+        }
+
+        FileMetaInfo fileMetaInfo = fileMetaInfoAsFile.get();
+        if (fileMetaInfo.isFile()) {
+            LOG.debug("File deleted event: " + fileUtils.getDescriptionForFile(file));
+            addNewEvent(FileDeleteEvent.ofFile(relativePath));
+        } else if (fileMetaInfo.isDirectory()) {
+            LOG.trace("Directory deleted event: " + fileUtils.getDescriptionForFile(file));
+            addNewEvent(FileDeleteEvent.ofDirectory(relativePath));
+        }
     }
 
     private void register(Path syncDirectory) {

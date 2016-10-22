@@ -1,5 +1,6 @@
 package com.github.tornaia.sync.client.win.local.writer;
 
+import com.github.tornaia.sync.client.win.remote.RemoteKnownState;
 import com.github.tornaia.sync.shared.api.FileMetaInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -8,6 +9,7 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import java.io.File;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Optional;
 
 @Component
@@ -18,6 +20,9 @@ public class LocalWriterService {
 
     @Autowired
     private DiskWriterService diskWriterService;
+
+    @Autowired
+    private RemoteKnownState remoteKnownState;
 
     private Path syncDirectory;
 
@@ -43,6 +48,13 @@ public class LocalWriterService {
 
     public boolean delete(String relativePath) {
         Path localFileAbsolutePath = getAbsolutePath(relativePath);
+        if (localFileAbsolutePath.toFile().isDirectory()) {
+            List<FileMetaInfo> itemsToDelete = remoteKnownState.getAllChildrenOrderedByPathLength(relativePath);
+            itemsToDelete.stream()
+                    .map(fmi -> fmi.relativePath)
+                    .map(rp -> getAbsolutePath(rp))
+                    .forEach(diskWriterService::delete);
+        }
         return diskWriterService.delete(localFileAbsolutePath);
     }
 

@@ -5,6 +5,9 @@ import org.apache.commons.lang3.builder.ToStringStyle;
 
 import java.util.Objects;
 
+import static com.github.tornaia.sync.shared.constant.FileSystemConstants.SEPARATOR_UNIX;
+import static com.github.tornaia.sync.shared.constant.FileSystemConstants.SEPARATOR_WINDOWS;
+
 public abstract class LocalFileEvent {
 
     public final LocalEventType eventType;
@@ -12,8 +15,18 @@ public abstract class LocalFileEvent {
     public final String relativePath;
 
     public LocalFileEvent(LocalEventType eventType, String relativePath) {
+        checkArgument(relativePath);
         this.eventType = eventType;
         this.relativePath = relativePath;
+    }
+
+    private static void checkArgument(String relativePath) {
+        if (relativePath.startsWith(SEPARATOR_WINDOWS) || relativePath.startsWith(SEPARATOR_UNIX)) {
+            throw new IllegalArgumentException("RelativePath of a file must never start with separator char: " + relativePath);
+        }
+        if (relativePath.endsWith(SEPARATOR_WINDOWS) || relativePath.endsWith(SEPARATOR_UNIX)) {
+            throw new IllegalArgumentException("RelativePath of a file must never end with separator char: " + relativePath);
+        }
     }
 
     @Override

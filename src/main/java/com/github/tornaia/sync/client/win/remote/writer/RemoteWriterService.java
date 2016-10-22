@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.AccessDeniedException;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.Objects;
@@ -75,7 +76,16 @@ public class RemoteWriterService {
 
         boolean conflict = Objects.equals(FileCreateResponse.Status.CONFLICT, fileCreateResponse.status);
         if (conflict) {
-            diskWriterService.handleConflict(absolutePath, localFileMetaInfo);
+            if (localFileMetaInfo.isFile()) {
+                diskWriterService.handleConflictOfFile(absolutePath, localFileMetaInfo);
+            } else {
+                if (optionalRemoteFileMetaInfo.isPresent()) {
+                    LOG.info("Directory already is on disk. Attributes are different but wont update: " + optionalRemoteFileMetaInfo.get());
+                    return true;
+                } else {
+                    LOG.error("RemoteFileMetaInfo does not exist but then how do we have a conflict for localFileMetaInfo: " + localFileMetaInfo);
+                }
+            }
             return false;
         }
 
@@ -92,6 +102,9 @@ public class RemoteWriterService {
         } catch (NoSuchFileException e) {
             LOG.warn("Skipping modified event of a non-existing file: " + relativePath);
             return true;
+        } catch (AccessDeniedException e) {
+            LOG.warn("Cannot read file since it is use: " + relativePath);
+            return false;
         } catch (IOException e) {
             LOG.error("Cannot read file", e);
             return false;
@@ -125,7 +138,7 @@ public class RemoteWriterService {
 
         boolean conflict = Objects.equals(FileModifyResponse.Status.CONFLICT, fileModifyResponse.status);
         if (conflict) {
-            diskWriterService.handleConflict(absolutePath, localFileMetaInfo);
+            diskWriterService.handleConflictOfFile(absolutePath, localFileMetaInfo);
             return false;
         }
 
@@ -165,7 +178,6 @@ public class RemoteWriterService {
     }
 
     private Path getAbsolutePath(String relativePath) {
-        String relativePathWithoutLeadingSlash = relativePath;
-        return syncDirectory.resolve(relativePathWithoutLeadingSlash);
+        return syncDirectory.resolve(relativePath);
     }
 }

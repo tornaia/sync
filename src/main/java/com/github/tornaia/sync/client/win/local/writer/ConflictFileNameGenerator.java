@@ -13,11 +13,14 @@ public class ConflictFileNameGenerator {
 
     private static final Logger LOG = LoggerFactory.getLogger(ConflictFileNameGenerator.class);
 
+    private static final char EXTENSION_SEPARATOR_CHAR = '.';
+    private static final String EXTENSION_SEPARATOR_STRING = ".";
+
     public Path resolve(Path absolutePath, FileMetaInfo localFileMetaInfo) {
         String originalFileName = absolutePath.toFile().getAbsolutePath();
-        boolean hasExtension = originalFileName.indexOf('.') != -1;
+        boolean hasExtension = originalFileName.indexOf(EXTENSION_SEPARATOR_CHAR) != -1;
         String postFix = "_conflict_" + localFileMetaInfo.size + "_" + localFileMetaInfo.creationDateTime + "_" + localFileMetaInfo.modificationDateTime;
-        String conflictFileName = hasExtension ? originalFileName.split("\\.", 2)[0] + postFix + "." + originalFileName.split("\\.", 2)[1] : originalFileName + postFix;
+        String conflictFileName = hasExtension ? originalFileName.split("\\.", 2)[0] + postFix + EXTENSION_SEPARATOR_STRING + originalFileName.split("\\.", 2)[1] : originalFileName + postFix;
 
         // TODO what should happen when this renamed/conflictFileName file exists? or if the generated file name/path is too log?
         Path renamed = new File(absolutePath.toFile().getParentFile().getAbsolutePath()).toPath().resolve(conflictFileName);
