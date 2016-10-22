@@ -7,7 +7,6 @@ import static java.util.Arrays.asList;
 import static org.hamcrest.Matchers.contains;
 import static org.junit.Assert.*;
 
-
 public class TwoClientsIntTest extends AbstractIntTest {
 
     private String userid = "100002";
@@ -343,5 +342,51 @@ public class TwoClientsIntTest extends AbstractIntTest {
 
         assertTrue(asList(client1.syncDirectory.toFile().listFiles()).isEmpty());
         assertTrue(asList(client2.syncDirectory.toFile().listFiles()).isEmpty());
+    }
+
+    @Test
+    @Repeat(REPEAT)
+    public void directoryAndFileNameEqualsSoConflict() throws Exception {
+        Client client1 = initClient(userid).start();
+        createFile(client1.syncDirectory.resolve("file-directory"), "whatever1", 100L, 200L);
+
+        Client client2 = initClient(userid);
+        createDirectory(client2.syncDirectory.resolve("file-directory"), 300L, 400L);
+        client2.start();
+        waitForSyncDone();
+
+        assertThat(asList(client1.syncDirectory.toFile().listFiles()),
+                contains(
+                        new FileMatcher(client1.syncDirectory).relativePath("file-directory").content("whatever1").creationTime(100L).lastModifiedTime(200L),
+                        new DirectoryMatcher(client1.syncDirectory).relativePath("file-directory_conflict_0_300_400")
+                ));
+        assertThat(asList(client2.syncDirectory.toFile().listFiles()),
+                contains(
+                        new FileMatcher(client2.syncDirectory).relativePath("file-directory").content("whatever1").creationTime(100L).lastModifiedTime(200L),
+                        new DirectoryMatcher(client2.syncDirectory).relativePath("file-directory_conflict_0_300_400")
+                ));
+    }
+
+    @Test
+    @Repeat(REPEAT)
+    public void directoryAndFileNameEqualsSoConflictOtherWay() throws Exception {
+        Client client1 = initClient(userid).start();
+        createDirectory(client1.syncDirectory.resolve("file-directory"), 100L, 200L);
+
+        Client client2 = initClient(userid);
+        createFile(client2.syncDirectory.resolve("file-directory"), "whatever1", 300L, 400L);
+        client2.start();
+        waitForSyncDone();
+
+        assertThat(asList(client1.syncDirectory.toFile().listFiles()),
+                contains(
+                        new DirectoryMatcher(client1.syncDirectory).relativePath("file-directory").creationTime(100L).lastModifiedTime(200L),
+                        new FileMatcher(client1.syncDirectory).relativePath("file-directory_conflict_9_300_400").content("whatever1").creationTime(300L).lastModifiedTime(400L)
+                ));
+        assertThat(asList(client2.syncDirectory.toFile().listFiles()),
+                contains(
+                        new DirectoryMatcher(client2.syncDirectory).relativePath("file-directory").creationTime(100L),
+                        new FileMatcher(client2.syncDirectory).relativePath("file-directory_conflict_9_300_400").content("whatever1").creationTime(300L).lastModifiedTime(400L)
+                ));
     }
 }
