@@ -19,6 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
@@ -52,13 +53,13 @@ public class FileController {
     }
 
     @RequestMapping(method = POST)
-    public FileMetaInfo postFile(@RequestPart("fileAttributes") CreateFileRequest request, @RequestPart("file") MultipartFile multipartFile, @RequestParam("clientid") String clientid) throws IOException {
-        return fileCommandService.createFile(clientid, request.getUserid(), request.getSize(), request.getCreationDateTime(), request.getModificationDateTime(), multipartFile.getOriginalFilename(), multipartFile.getInputStream());
+    public FileMetaInfo postFile(@RequestPart("fileAttributes") CreateFileRequest request, @RequestPart(value = "file", required = false) MultipartFile multipartFile, @RequestParam("clientid") String clientid) throws IOException {
+        return fileCommandService.createFile(clientid, request.getUserid(), request.getSize(), request.getCreationDateTime(), request.getModificationDateTime(), request.getRelativePath(), multipartFile == null ? null : multipartFile.getInputStream());
     }
 
     @RequestMapping(value = "/{id}", method = PUT)
-    public FileMetaInfo putFile(@PathVariable String id, @RequestPart("fileAttributes") UpdateFileRequest request, @RequestPart("file") MultipartFile multipartFile, @RequestParam("clientid") String clientid) throws IOException {
-        fileCommandService.modifyFile(clientid, id, request.getSize(), request.getCreationDateTime(), request.getModificationDateTime(), multipartFile.getInputStream());
+    public FileMetaInfo putFile(@PathVariable String id, @RequestPart("fileAttributes") UpdateFileRequest request, @RequestPart(value = "file", required = false) MultipartFile multipartFile, @RequestParam("clientid") String clientid) throws IOException {
+        fileCommandService.modifyFile(clientid, id, request.getSize(), request.getCreationDateTime(), request.getModificationDateTime(), multipartFile == null ? null : multipartFile.getInputStream());
         return fileQueryService.getFileMetaInfoById(id);
     }
 

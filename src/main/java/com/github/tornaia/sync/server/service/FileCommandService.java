@@ -13,10 +13,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
-import java.util.Objects;
 
 import static com.github.tornaia.sync.shared.api.RemoteEventType.*;
 
@@ -38,21 +38,27 @@ public class FileCommandService {
     private S3Service s3Service;
 
     public FileMetaInfo createFile(String clientid, String userid, long size, long creationDateTime, long modificationDateTime, String path, InputStream content) throws IOException {
+        if (content == null && size != 0L) {
+            throw new IllegalStateException("When content is NULL then the file is a directory so the size must be zero. Content: " + content + ", size: " + size);
+        }
         File file = fileRepository.findByUseridAndPath(userid, path);
         if (file != null) {
+            LOG.info("CREATE File already exist: " + path);
             throw new FileAlreadyExistsException(path);
         }
 
         file = fileRepository.insert(new File(userid, path, size, creationDateTime, modificationDateTime));
         FileMetaInfo fileMetaInfo = fileToFileMetaInfoConverter.convert(file);
-        s3Service.putFile(fileMetaInfo, content);
+        s3Service.putFile(fileMetaInfo, content == null ? new ByteArrayInputStream(new byte[0]) : content);
         syncWebSocketHandler.notifyClientsExceptForSource(clientid, new RemoteFileEvent(CREATED, fileMetaInfo));
         LOG.info("CREATE file: " + fileMetaInfo);
         return fileMetaInfo;
     }
 
-
     public void modifyFile(String clientid, String id, long size, long creationDateTime, long modificationDateTime, InputStream content) throws IOException {
+        if (content == null && size != 0L) {
+            throw new IllegalStateException("When content is NULL then the file is a directory so the size must be zero. Content: " + content + ", size: " + size);
+        }
         File file = fileRepository.findOne(id);
         if (file == null) {
             LOG.info("MODIFY Not found file: " + id);
@@ -63,7 +69,7 @@ public class FileCommandService {
             file.setSize(size);
             fileRepository.save(file);
             FileMetaInfo fileMetaInfo = fileToFileMetaInfoConverter.convert(file);
-            s3Service.putFile(fileMetaInfo, content);
+            s3Service.putFile(fileMetaInfo, content == null ? new ByteArrayInputStream(new byte[0]) : content);
             syncWebSocketHandler.notifyClientsExceptForSource(clientid, new RemoteFileEvent(MODIFIED, fileMetaInfo));
             LOG.info("MODIFY file: " + fileMetaInfo);
         }

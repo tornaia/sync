@@ -20,9 +20,10 @@ public class FileControllerIntTest extends AbstractSyncServerIntTest {
 
     @Test
     public void getMetaInfo() throws Exception {
-        MockMultipartFile file = new MockMultipartFile("test", "test.png", "image/png", "TEST".getBytes());
+        MockMultipartFile file = new MockMultipartFile("test", "this.does.not.count.test.png", "image/png", "TEST".getBytes());
         CreateFileRequest createFileRequest = new CreateFileRequestBuilder()
                 .userid("userid")
+                .relativePath("test.png")
                 .size(4L)
                 .creationDateTime(1L)
                 .modificationDateTime(2L)
@@ -43,9 +44,10 @@ public class FileControllerIntTest extends AbstractSyncServerIntTest {
 
     @Test
     public void putFile() throws Exception {
-        MockMultipartFile file = new MockMultipartFile("test", "test.png", "image/png", "TEST".getBytes());
+        MockMultipartFile file = new MockMultipartFile("test", "this.does.not.count.test.png", "image/png", "TEST".getBytes());
         CreateFileRequest createFileRequest = new CreateFileRequestBuilder()
                 .userid("userid")
+                .relativePath("test.png")
                 .size(4L)
                 .creationDateTime(2L)
                 .modificationDateTime(3L)
@@ -98,18 +100,20 @@ public class FileControllerIntTest extends AbstractSyncServerIntTest {
 
     @Test
     public void getModifiedFiles() throws Exception {
-        MockMultipartFile file = new MockMultipartFile("test", "test.png", "image/png", "TEST".getBytes());
+        MockMultipartFile file = new MockMultipartFile("test", "this.does.not.count.test.png", "image/png", "TEST".getBytes());
         CreateFileRequest createFileRequest = new CreateFileRequestBuilder()
                 .userid("userid")
+                .relativePath("test.png")
                 .size(4L)
                 .creationDateTime(1L)
                 .modificationDateTime(1L)
                 .create();
         fileController.postFile(createFileRequest, file, "clientid");
 
-        MockMultipartFile file2 = new MockMultipartFile("test2", "test2.png", "image/png", "TEST2".getBytes());
+        MockMultipartFile file2 = new MockMultipartFile("test2", "this.does.not.count.test2.png", "image/png", "TEST2".getBytes());
         CreateFileRequest createFileRequest2 = new CreateFileRequestBuilder()
                 .userid("userid")
+                .relativePath("test2.png")
                 .size(5L)
                 .creationDateTime(3L)
                 .modificationDateTime(3L)
