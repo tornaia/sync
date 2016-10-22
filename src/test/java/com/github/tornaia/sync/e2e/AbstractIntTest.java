@@ -30,18 +30,19 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.FileTime;
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @RunWith(SpringRunner.class)
 public abstract class AbstractIntTest {
 
+    protected static final int REPEAT = 1;
+
     private static final Logger LOG = LoggerFactory.getLogger(AbstractIntTest.class);
 
     private static final AtomicInteger clientIdGenerator = new AtomicInteger();
 
-    @Value("#{systemProperties['sync.backend.server.protocol'] ?: 'http'}")
+    @Value("#{systemProperties['sync.backend.server.scheme'] ?: 'http'}")
     private String serverSchemeHttp;
 
     @Value("#{systemProperties['sync.backend.server.host'] ?: '127.0.0.1'}")
@@ -153,8 +154,13 @@ public abstract class AbstractIntTest {
         return new Client(userid, syncDirectory);
     }
 
-    protected void createDirectory(Path path) throws IOException {
-        Files.createDirectory(path);
+    protected void createDirectory(Path path, long creationTime, long lastModifiedTime) throws IOException {
+        String tmpDir = System.getProperty("java.io.tmpdir");
+        Path tempDirectory = Files.createDirectory(new File(tmpDir).toPath().resolve(UUID.randomUUID().toString()));
+
+        setCreationTimeAndModifiedTime(tempDirectory, creationTime, lastModifiedTime);
+
+        Files.move(tempDirectory, path, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
     }
 
     protected void createFile(Path path, String content, long creationTime, long lastModifiedTime) throws IOException {
@@ -164,9 +170,19 @@ public abstract class AbstractIntTest {
             IOUtils.write(content, fos);
         }
 
-        setCreationTime(tempFile, creationTime);
-        setLastModifiedTime(tempFile, lastModifiedTime);
+        setCreationTimeAndModifiedTime(tempFile, creationTime, lastModifiedTime);
+
+        path.toFile().getParentFile().mkdirs();
         Files.move(tempFile, path, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+    }
+
+    protected void setCreationTimeAndModifiedTime(Path path, long creationTime, long lastModifiedTime) throws IOException {
+        setCreationTime(path, creationTime);
+        setLastModifiedTime(path, lastModifiedTime);
+    }
+
+    protected void deleteDirectory(Path path) throws IOException {
+        FileUtils.forceDelete(path.toFile());
     }
 
     protected void deleteFile(Path path) {
