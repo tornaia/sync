@@ -79,10 +79,11 @@ public class FileControllerIntTest extends AbstractSyncServerIntTest {
 
     @Test
     public void deleteFile() throws Exception {
-        MockMultipartFile file = new MockMultipartFile("test", "test.png", "image/png", "TEST".getBytes());
+        MockMultipartFile file = new MockMultipartFile("test", "this.does.not.count.test.png", "image/png", "TEST".getBytes());
 
         CreateFileRequest createFileRequest = new CreateFileRequestBuilder()
                 .userid("userid")
+                .relativePath("test.png")
                 .size(4L)
                 .creationDateTime(1L)
                 .modificationDateTime(2L)

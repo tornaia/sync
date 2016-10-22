@@ -19,6 +19,7 @@ import java.io.InputStream;
 import java.util.List;
 
 import static com.github.tornaia.sync.shared.api.RemoteEventType.*;
+import static com.github.tornaia.sync.shared.constant.FileSystemConstants.DIRECTORY_POSTFIX;
 
 @Service
 public class FileCommandService {
@@ -41,13 +42,19 @@ public class FileCommandService {
         if (content == null && size != 0L) {
             throw new IllegalStateException("When content is NULL then the file is a directory so the size must be zero. Content: " + content + ", size: " + size);
         }
-        File file = fileRepository.findByUseridAndPath(userid, path);
-        if (file != null) {
+
+        boolean isDirectory = path.endsWith(DIRECTORY_POSTFIX);
+        String pathAsFile = isDirectory ? path.substring(0, path.length() - DIRECTORY_POSTFIX.length()) : path;
+        String pathAsDirectory = isDirectory ? path : path + DIRECTORY_POSTFIX;
+
+        File fileAsFile = fileRepository.findByUseridAndPath(userid, pathAsFile);
+        File fileAsDirectory = fileRepository.findByUseridAndPath(userid, pathAsDirectory);
+        if (fileAsFile != null || fileAsDirectory != null) {
             LOG.info("CREATE File already exist: " + path);
             throw new FileAlreadyExistsException(path);
         }
 
-        file = fileRepository.insert(new File(userid, path, size, creationDateTime, modificationDateTime));
+        File file = fileRepository.insert(new File(userid, path, size, creationDateTime, modificationDateTime));
         FileMetaInfo fileMetaInfo = fileToFileMetaInfoConverter.convert(file);
         s3Service.putFile(fileMetaInfo, content == null ? new ByteArrayInputStream(new byte[0]) : content);
         syncWebSocketHandler.notifyClientsExceptForSource(clientid, new RemoteFileEvent(CREATED, fileMetaInfo));
