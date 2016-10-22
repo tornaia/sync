@@ -2,6 +2,7 @@ package com.github.tornaia.sync.client.win.local.writer;
 
 import com.github.tornaia.sync.client.win.util.FileUtils;
 import com.github.tornaia.sync.shared.api.FileMetaInfo;
+import com.github.tornaia.sync.shared.constant.FileSystemConstants;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +21,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.Objects;
 import java.util.Optional;
 
+import static com.github.tornaia.sync.shared.constant.FileSystemConstants.DIRECTORY_POSTFIX;
 import static com.github.tornaia.sync.shared.constant.FileSystemConstants.DOT_FILENAME;
 
 @Component
@@ -116,7 +118,11 @@ public class DiskWriterService {
 
         File file = absolutePath.toFile();
         if (file.exists()) {
-            String relativePath = getRelativePath(file);
+            boolean isDirectory = file.isDirectory();
+            if (isDirectory) {
+                file = file.toPath().resolve(DOT_FILENAME).toFile();
+            }
+            String relativePath = getRelativePath(absolutePath.toFile());
             FileMetaInfo localFileMetaInfo;
             try {
                 localFileMetaInfo = FileMetaInfo.createNonSyncedFileMetaInfo(userid, relativePath, file);
@@ -154,7 +160,7 @@ public class DiskWriterService {
     }
 
     private boolean writeDirectoryAtomically(Path absolutePath, long creationDateTime, long modificationDateTime) {
-        if (!absolutePath.endsWith(DOT_FILENAME)) {
+        if (!absolutePath.toString().endsWith(DIRECTORY_POSTFIX)) {
             throw new IllegalStateException("Directory's absolutePath must end with .");
         }
 
@@ -177,6 +183,10 @@ public class DiskWriterService {
 
         File file = absolutePath.toFile();
         if (file.exists()) {
+            boolean isFile = file.isFile();
+            if (isFile) {
+                file = file.toPath().normalize().toFile();
+            }
             String relativePath = getRelativePath(file);
             FileMetaInfo localFileMetaInfo;
             try {
@@ -191,8 +201,7 @@ public class DiskWriterService {
                 LOG.info("Directory already is on disk. Attributes are ok: " + newFileMetaInfo);
                 return true;
             } else {
-                LOG.info("Directory already is on disk. Attributes are different but wont update: " + newFileMetaInfo);
-                return true;
+                handleConflictOfFile(absolutePath, localFileMetaInfo);
             }
         }
 
@@ -216,30 +225,27 @@ public class DiskWriterService {
 
     public void handleConflictOfFile(Path absolutePath, FileMetaInfo localFileMetaInfo) {
         Path renamed = conflictFileNameGenerator.resolve(absolutePath, localFileMetaInfo);
-        replaceFileAtomically(absolutePath, renamed);
+        moveFileAtomically(absolutePath, renamed);
     }
 
-    public boolean replaceFileAtomically(Path source, Path target) {
-        LOG.trace("Replace " + target.toFile().getAbsolutePath() + " with " + source.toFile().getAbsolutePath());
-        boolean isDirectory = target.endsWith(DOT_FILENAME);
-        if (isDirectory) {
-            try {
-                long remoteCreationTime = fileUtils.getCreationTime(source);
-                long localCreationTime = fileUtils.getCreationTime(target);
-                if (remoteCreationTime != localCreationTime) {
-                    fileUtils.setCreationTime(target, remoteCreationTime);
-                }
-            } catch (IOException e) {
-                LOG.error("Cannot write target directory", e);
-                return false;
-            }
-        } else {
-            try {
-                Files.move(source, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
-            } catch (IOException e) {
-                LOG.error("Cannot write target file", e);
-                return false;
-            }
+    public boolean moveFileAtomically(Path source, Path target) {
+        boolean isSourceFileOnDisk = source.toFile().isFile();
+        if (isSourceFileOnDisk) {
+            source = source.normalize();
+            target = target.normalize();
+        }
+        boolean isSourceDirectoryOnDisk = source.toFile().isDirectory();
+        if (isSourceDirectoryOnDisk && !source.toFile().getAbsolutePath().endsWith(FileSystemConstants.DIRECTORY_POSTFIX)) {
+            source = source.normalize().resolve(FileSystemConstants.DOT_FILENAME);
+            target = target.normalize().resolve(FileSystemConstants.DOT_FILENAME);
+        }
+        LOG.trace("Move " + source.toFile().getAbsolutePath() + " with " + target.toFile().getAbsolutePath());
+
+        try {
+            Files.move(source, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            LOG.error("Cannot write target file", e);
+            return false;
         }
 
         return true;

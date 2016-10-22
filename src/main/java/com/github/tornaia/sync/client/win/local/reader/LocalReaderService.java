@@ -3,6 +3,7 @@ package com.github.tornaia.sync.client.win.local.reader;
 import com.github.tornaia.sync.client.win.remote.RemoteKnownState;
 import com.github.tornaia.sync.client.win.util.FileUtils;
 import com.github.tornaia.sync.shared.api.FileMetaInfo;
+import com.github.tornaia.sync.shared.constant.FileSystemConstants;
 import com.sun.nio.file.ExtendedWatchEventModifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -124,7 +125,13 @@ public class LocalReaderService {
 
     public boolean exists(String relativePath) {
         Path absolutePath = getAbsolutePath(relativePath);
-        return absolutePath.toFile().exists();
+        File file = absolutePath.toFile();
+        if (!file.exists()) {
+            return false;
+        }
+
+        boolean lookingForFile = !relativePath.endsWith(FileSystemConstants.DIRECTORY_POSTFIX);
+        return lookingForFile ? file.isFile() : file.isDirectory();
     }
 
     public void reAddEvent(LocalFileEvent localFileEvent) {

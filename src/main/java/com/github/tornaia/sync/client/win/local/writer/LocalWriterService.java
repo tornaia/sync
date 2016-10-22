@@ -43,7 +43,7 @@ public class LocalWriterService {
         if (!tempFileWithRemoteContent.isPresent()) {
             return false;
         }
-        return diskWriterService.replaceFileAtomically(tempFileWithRemoteContent.get(), localFileAbsolutePath);
+        return diskWriterService.moveFileAtomically(tempFileWithRemoteContent.get(), localFileAbsolutePath);
     }
 
     public boolean delete(String relativePath) {

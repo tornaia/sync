@@ -3,6 +3,7 @@ package com.github.tornaia.sync.client.win.remote.writer;
 import com.github.tornaia.sync.client.win.local.writer.DiskWriterService;
 import com.github.tornaia.sync.client.win.remote.RemoteKnownState;
 import com.github.tornaia.sync.shared.api.FileMetaInfo;
+import com.github.tornaia.sync.shared.constant.FileSystemConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +18,9 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
+
+import static com.github.tornaia.sync.shared.constant.FileSystemConstants.DIRECTORY_POSTFIX;
+import static com.github.tornaia.sync.shared.constant.FileSystemConstants.DOT_FILENAME;
 
 @Component
 public class RemoteWriterService {
@@ -48,6 +52,11 @@ public class RemoteWriterService {
     public boolean createFile(String relativePath) {
         Path absolutePath = getAbsolutePath(relativePath);
         File file = absolutePath.toFile();
+        if (absolutePath.toFile().isDirectory() && !absolutePath.toFile().getAbsolutePath().endsWith(DIRECTORY_POSTFIX)) {
+            absolutePath = absolutePath.resolve(DOT_FILENAME);
+            file = absolutePath.toFile();
+            relativePath = relativePath + DIRECTORY_POSTFIX;
+        }
 
         FileMetaInfo localFileMetaInfo;
         try {
