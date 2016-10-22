@@ -3,6 +3,7 @@ package com.github.tornaia.sync.shared.api;
 public class CreateFileRequestBuilder {
 
     private String userid;
+    private String relativePath;
     private Long size;
     private Long creationDateTime;
     private Long modificationDateTime;
@@ -10,6 +11,7 @@ public class CreateFileRequestBuilder {
     public CreateFileRequest create() {
         CreateFileRequest createFileRequest = new CreateFileRequest();
         createFileRequest.setUserid(userid);
+        createFileRequest.setRelativePath(relativePath);
         createFileRequest.setSize(size);
         createFileRequest.setCreationDateTime(creationDateTime);
         createFileRequest.setModificationDateTime(modificationDateTime);
@@ -18,6 +20,11 @@ public class CreateFileRequestBuilder {
 
     public CreateFileRequestBuilder userid(String userid) {
         this.userid = userid;
+        return this;
+    }
+
+    public CreateFileRequestBuilder relativePath(String relativePath) {
+        this.relativePath = relativePath;
         return this;
     }
 

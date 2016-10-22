@@ -1,5 +1,6 @@
 package com.github.tornaia.sync.shared.api;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -10,6 +11,9 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.nio.file.Files;
 import java.nio.file.attribute.BasicFileAttributes;
+
+import static com.github.tornaia.sync.shared.constant.FileSystemConstants.DOT_FILENAME;
+import static com.github.tornaia.sync.shared.constant.FileSystemConstants.SEPARATOR_WINDOWS;
 
 public class FileMetaInfo implements Serializable {
 
@@ -38,7 +42,7 @@ public class FileMetaInfo implements Serializable {
         this.userid = userid;
         this.relativePath = relativePath;
         BasicFileAttributes attr = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
-        this.size = attr.size();
+        this.size = isFile() ? attr.size() : 0L;
         this.creationDateTime = attr.creationTime().toMillis();
         this.modificationDateTime = attr.lastModifiedTime().toMillis();
     }
@@ -52,14 +56,24 @@ public class FileMetaInfo implements Serializable {
         this.modificationDateTime = modificationDateTime;
     }
 
+    @JsonIgnore
+    public boolean isFile() {
+        return !relativePath.endsWith(SEPARATOR_WINDOWS + DOT_FILENAME);
+    }
+
+    @JsonIgnore
+    public boolean isDirectory() {
+        return !isFile();
+    }
+
     @Override
     public int hashCode() {
         return new HashCodeBuilder()
                 .append(userid)
                 .append(relativePath)
                 .append(size)
-                .append(creationDateTime)
-                .append(modificationDateTime)
+                .append(isFile() ? creationDateTime : 0L)
+                .append(isFile() ? modificationDateTime : 0L)
                 .toHashCode();
     }
 
@@ -75,8 +89,8 @@ public class FileMetaInfo implements Serializable {
                 .append(userid, other.userid)
                 .append(relativePath, other.relativePath)
                 .append(size, other.size)
-                .append(creationDateTime, other.creationDateTime)
-                .append(modificationDateTime, other.modificationDateTime)
+                .append(isFile() ? creationDateTime : 0L, other.isFile() ? other.creationDateTime : 0L)
+                .append(isFile() ? modificationDateTime : 0L, other.isFile() ? other.modificationDateTime : 0L)
                 .isEquals();
     }
 

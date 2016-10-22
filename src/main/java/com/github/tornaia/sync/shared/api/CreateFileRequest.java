@@ -3,6 +3,7 @@ package com.github.tornaia.sync.shared.api;
 public class CreateFileRequest extends AbstractRequest {
 
     private String userid;
+    private String relativePath;
     private long size;
     private long creationDateTime;
     private long modificationDateTime;
@@ -13,6 +14,14 @@ public class CreateFileRequest extends AbstractRequest {
 
     public void setUserid(String userid) {
         this.userid = userid;
+    }
+
+    public String getRelativePath() {
+        return relativePath;
+    }
+
+    public void setRelativePath(String relativePath) {
+        this.relativePath = relativePath;
     }
 
     public long getSize() {
