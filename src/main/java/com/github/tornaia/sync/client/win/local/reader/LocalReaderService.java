@@ -154,13 +154,13 @@ public class LocalReaderService {
         Set<LocalFileEvent> newCreatedEvents = localFileEvents.stream().filter(lfe -> Objects.equals(LocalEventType.CREATED, lfe.eventType)).collect(Collectors.toSet());
         Set<LocalFileEvent> newModifiedEvents = localFileEvents.stream().filter(lfe -> Objects.equals(LocalEventType.MODIFIED, lfe.eventType)).collect(Collectors.toSet());
         Set<LocalFileEvent> newDeletedEvents = localFileEvents.stream().filter(lfe -> Objects.equals(LocalEventType.DELETED, lfe.eventType)).collect(Collectors.toSet());
-        LOG.info("Size of possibly new local events to process: c/m/d " + newCreatedEvents.size() + ", " + newModifiedEvents.size() + ", " + newDeletedEvents.size());
+        LOG.info("Size of possibly new local events to process: c/m/d " + newCreatedEvents.size() + "/" + newModifiedEvents.size() + "/" + newDeletedEvents.size());
         synchronized (this) {
-            LOG.info("Size of pending events before adding possibly new local events to process: c/m/d " + createdEvents.size() + ", " + modifiedEvents.size() + ", " + deletedEvents.size());
+            LOG.info("Size of pending events before adding possibly new local events to process: c/m/d " + createdEvents.size() + "/" + modifiedEvents.size() + "/" + deletedEvents.size());
             createdEvents.addAll(newCreatedEvents);
             modifiedEvents.addAll(newModifiedEvents);
             deletedEvents.addAll(newDeletedEvents);
-            LOG.info("Size of pending events after adding possibly new local events to process: c/m/d " + createdEvents.size() + ", " + modifiedEvents.size() + ", " + deletedEvents.size());
+            LOG.info("Size of pending events after adding possibly new local events to process: c/m/d " + createdEvents.size() + "/" + modifiedEvents.size() + "/" + deletedEvents.size());
         }
     }
 
