@@ -12,8 +12,7 @@ import java.io.Serializable;
 import java.nio.file.Files;
 import java.nio.file.attribute.BasicFileAttributes;
 
-import static com.github.tornaia.sync.shared.constant.FileSystemConstants.DOT_FILENAME;
-import static com.github.tornaia.sync.shared.constant.FileSystemConstants.SEPARATOR_WINDOWS;
+import static com.github.tornaia.sync.shared.constant.FileSystemConstants.DIRECTORY_POSTFIX;
 
 public class FileMetaInfo implements Serializable {
 
@@ -58,7 +57,7 @@ public class FileMetaInfo implements Serializable {
 
     @JsonIgnore
     public boolean isFile() {
-        return !relativePath.endsWith(SEPARATOR_WINDOWS + DOT_FILENAME);
+        return !relativePath.endsWith(DIRECTORY_POSTFIX);
     }
 
     @JsonIgnore
