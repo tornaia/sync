@@ -221,13 +221,6 @@ public class LocalReaderService {
                         return FileVisitResult.CONTINUE;
                     }
 
-                    /*
-                    FileMetaInfo knownFileMetaInfo = optionalKnownFileMetaInfo.get();
-                    FileMetaInfo localFileMetaInfo = new FileMetaInfo(null, userid, relativePath, attrs.size(), attrs.creationTime().toMillis(), attrs.lastModifiedTime().toMillis());
-                    if (!Objects.equals(knownFileMetaInfo, localFileMetaInfo)) {
-                        LOG.trace("Modified file found: " + knownFileMetaInfo + " -> " + localFileMetaInfo);
-                        newFileEvents.add(new FileModifiedEvent(relativePath));
-                    }*/
                     return FileVisitResult.CONTINUE;
                 }
 
