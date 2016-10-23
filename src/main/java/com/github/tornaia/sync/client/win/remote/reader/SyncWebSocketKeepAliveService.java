@@ -15,7 +15,7 @@ public class SyncWebSocketKeepAliveService {
     private RemoteReaderService remoteReaderService;
 
     @Scheduled(fixedDelay = 60000, initialDelay = 30000)
-    public void doSomething() {
+    public void keepConnectionAliveBySendingPingMessage() {
         try {
             remoteReaderService.sendMessage("ping");
         } catch (IllegalStateException e) {
