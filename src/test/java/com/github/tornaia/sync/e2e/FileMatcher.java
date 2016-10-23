@@ -20,7 +20,7 @@ public class FileMatcher extends AbstractSyncMatcher<File> {
 
     private Matcher<String> relativePath = new IsAnything<>();
 
-    private Matcher<Long> length = new IsAnything<>();
+    private Matcher<Long> size = new IsAnything<>();
 
     private Matcher<Long> creationTime = new IsAnything<>();
 
@@ -37,8 +37,8 @@ public class FileMatcher extends AbstractSyncMatcher<File> {
         return this;
     }
 
-    public FileMatcher length(long length) {
-        this.length = is(length);
+    public FileMatcher size(long size) {
+        this.size = is(size);
         return this;
     }
 
@@ -61,7 +61,7 @@ public class FileMatcher extends AbstractSyncMatcher<File> {
     protected boolean matchesSafely(File item, Description mismatchDescription) {
         try {
             return matches(relativePath, rootDirectory.relativize(item.toPath()).toString(), "relativePath: ", mismatchDescription) &&
-                    matches(length, Files.readAttributes(item.toPath(), BasicFileAttributes.class).size(), "length: ", mismatchDescription) &&
+                    matches(size, Files.readAttributes(item.toPath(), BasicFileAttributes.class).size(), "size: ", mismatchDescription) &&
                     matches(creationTime, Files.readAttributes(item.toPath(), BasicFileAttributes.class).creationTime().toMillis(), "creationTime: ", mismatchDescription) &&
                     matches(lastModifiedTime, Files.readAttributes(item.toPath(), BasicFileAttributes.class).lastModifiedTime().toMillis(), "lastModifiedTime: ", mismatchDescription) &&
                     matches(content, FileUtils.readFileToString(item), "content: ", mismatchDescription);
@@ -74,7 +74,7 @@ public class FileMatcher extends AbstractSyncMatcher<File> {
     public void describeTo(Description description) {
         description.appendText(File.class.getSimpleName())
                 .appendText(", relativePath: ").appendDescriptionOf(relativePath)
-                .appendText(", length: ").appendDescriptionOf(length)
+                .appendText(", size: ").appendDescriptionOf(size)
                 .appendText(", creationTime: ").appendDescriptionOf(creationTime)
                 .appendText(", lastModifiedTime: ").appendDescriptionOf(lastModifiedTime)
                 .appendText(", content: ").appendDescriptionOf(content);

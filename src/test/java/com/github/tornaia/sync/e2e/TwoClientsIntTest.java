@@ -27,7 +27,7 @@ public class TwoClientsIntTest extends AbstractIntTest {
                         .relativePath(uglyFilename)
                         .creationTime(500L)
                         .lastModifiedTime(600L)
-                        .length(1)
+                        .size(1L)
                         .content("\r")));
 
         assertThat(asList(client2.syncDirectory.toFile().listFiles()),
@@ -35,7 +35,7 @@ public class TwoClientsIntTest extends AbstractIntTest {
                         .relativePath(uglyFilename)
                         .creationTime(500L)
                         .lastModifiedTime(600L)
-                        .length(1)
+                        .size(1L)
                         .content("\r")));
     }
 
@@ -53,7 +53,7 @@ public class TwoClientsIntTest extends AbstractIntTest {
                         .relativePath("dummy.txt")
                         .creationTime(500L)
                         .lastModifiedTime(600L)
-                        .length(13)
+                        .size(13L)
                         .content("dummy content")));
 
         assertThat(asList(client2.syncDirectory.toFile().listFiles()),
@@ -61,7 +61,7 @@ public class TwoClientsIntTest extends AbstractIntTest {
                         .relativePath("dummy.txt")
                         .creationTime(500L)
                         .lastModifiedTime(600L)
-                        .length(13)
+                        .size(13L)
                         .content("dummy content")));
     }
 
@@ -81,7 +81,7 @@ public class TwoClientsIntTest extends AbstractIntTest {
                         .relativePath("dummy.txt")
                         .creationTime(500L)
                         .lastModifiedTime(600L)
-                        .length(13)
+                        .size(13L)
                         .content("dummy content")));
 
         assertThat(asList(client2.syncDirectory.toFile().listFiles()),
@@ -89,7 +89,7 @@ public class TwoClientsIntTest extends AbstractIntTest {
                         .relativePath("dummy.txt")
                         .creationTime(500L)
                         .lastModifiedTime(600L)
-                        .length(13)
+                        .size(13L)
                         .content("dummy content")));
     }
 
@@ -110,7 +110,7 @@ public class TwoClientsIntTest extends AbstractIntTest {
                         .relativePath("dummy.txt")
                         .creationTime(500L)
                         .lastModifiedTime(600L)
-                        .length(13)
+                        .size(13L)
                         .content("dummy content")));
 
         assertThat(asList(client2.syncDirectory.toFile().listFiles()),
@@ -118,7 +118,7 @@ public class TwoClientsIntTest extends AbstractIntTest {
                         .relativePath("dummy.txt")
                         .creationTime(500L)
                         .lastModifiedTime(600L)
-                        .length(13)
+                        .size(13L)
                         .content("dummy content")));
     }
 
@@ -139,7 +139,7 @@ public class TwoClientsIntTest extends AbstractIntTest {
                         .relativePath("dummy.txt")
                         .creationTime(700L)
                         .lastModifiedTime(800L)
-                        .length(14)
+                        .size(14L)
                         .content("dummy content2")));
 
         assertThat(asList(client2.syncDirectory.toFile().listFiles()),
@@ -147,7 +147,7 @@ public class TwoClientsIntTest extends AbstractIntTest {
                         .relativePath("dummy.txt")
                         .creationTime(700L)
                         .lastModifiedTime(800L)
-                        .length(14)
+                        .size(14L)
                         .content("dummy content2")));
     }
 
@@ -167,13 +167,13 @@ public class TwoClientsIntTest extends AbstractIntTest {
 
         assertThat(asList(client1.syncDirectory.toFile().listFiles()),
                 contains(
-                        new FileMatcher(client1.syncDirectory).relativePath("dummy.txt").creationTime(1476000000000L).lastModifiedTime(1476900000000L).length(1).content("1"),
-                        new FileMatcher(client1.syncDirectory).relativePath("dummy_conflict_2_1481400000000_1485000000000.txt").creationTime(1481400000000L).lastModifiedTime(1485000000000L).length(2).content("22")
+                        new FileMatcher(client1.syncDirectory).relativePath("dummy.txt").creationTime(1476000000000L).lastModifiedTime(1476900000000L).size(1L).content("1"),
+                        new FileMatcher(client1.syncDirectory).relativePath("dummy_conflict_2_1481400000000_1485000000000.txt").creationTime(1481400000000L).lastModifiedTime(1485000000000L).size(2L).content("22")
                 ));
         assertThat(asList(client2.syncDirectory.toFile().listFiles()),
                 contains(
-                        new FileMatcher(client2.syncDirectory).relativePath("dummy.txt").creationTime(1476000000000L).lastModifiedTime(1476900000000L).length(1).content("1"),
-                        new FileMatcher(client2.syncDirectory).relativePath("dummy_conflict_2_1481400000000_1485000000000.txt").creationTime(1481400000000L).lastModifiedTime(1485000000000L).length(2).content("22")
+                        new FileMatcher(client2.syncDirectory).relativePath("dummy.txt").creationTime(1476000000000L).lastModifiedTime(1476900000000L).size(1L).content("1"),
+                        new FileMatcher(client2.syncDirectory).relativePath("dummy_conflict_2_1481400000000_1485000000000.txt").creationTime(1481400000000L).lastModifiedTime(1485000000000L).size(2L).content("22")
                 ));
     }
 
@@ -216,15 +216,15 @@ public class TwoClientsIntTest extends AbstractIntTest {
 
         assertThat(asList(client1.syncDirectory.toFile().listFiles()),
                 contains(
-                        new FileMatcher(client1.syncDirectory).relativePath("dummy.txt").creationTime(1476000000000L).lastModifiedTime(1476900000000L).length(2).content("00"),
-                        new FileMatcher(client1.syncDirectory).relativePath("dummy_conflict_2_10000_20000.txt").creationTime(10000L).lastModifiedTime(20000L).length(2).content("11"),
-                        new FileMatcher(client1.syncDirectory).relativePath("dummy_conflict_2_30000_40000.txt").creationTime(30000L).lastModifiedTime(40000L).length(2).content("22")
+                        new FileMatcher(client1.syncDirectory).relativePath("dummy.txt").creationTime(1476000000000L).lastModifiedTime(1476900000000L).size(2L).content("00"),
+                        new FileMatcher(client1.syncDirectory).relativePath("dummy_conflict_2_10000_20000.txt").creationTime(10000L).lastModifiedTime(20000L).size(2L).content("11"),
+                        new FileMatcher(client1.syncDirectory).relativePath("dummy_conflict_2_30000_40000.txt").creationTime(30000L).lastModifiedTime(40000L).size(2L).content("22")
                 ));
         assertThat(asList(client2.syncDirectory.toFile().listFiles()),
                 contains(
-                        new FileMatcher(client2.syncDirectory).relativePath("dummy.txt").creationTime(1476000000000L).lastModifiedTime(1476900000000L).length(2).content("00"),
-                        new FileMatcher(client2.syncDirectory).relativePath("dummy_conflict_2_10000_20000.txt").creationTime(10000L).lastModifiedTime(20000L).length(2).content("11"),
-                        new FileMatcher(client2.syncDirectory).relativePath("dummy_conflict_2_30000_40000.txt").creationTime(30000L).lastModifiedTime(40000L).length(2).content("22")
+                        new FileMatcher(client2.syncDirectory).relativePath("dummy.txt").creationTime(1476000000000L).lastModifiedTime(1476900000000L).size(2L).content("00"),
+                        new FileMatcher(client2.syncDirectory).relativePath("dummy_conflict_2_10000_20000.txt").creationTime(10000L).lastModifiedTime(20000L).size(2L).content("11"),
+                        new FileMatcher(client2.syncDirectory).relativePath("dummy_conflict_2_30000_40000.txt").creationTime(30000L).lastModifiedTime(40000L).size(2L).content("22")
                 ));
     }
 

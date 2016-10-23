@@ -27,7 +27,7 @@ public class OneClientIntTest extends AbstractIntTest {
                         .relativePath("dummy.txt")
                         .creationTime(500L)
                         .lastModifiedTime(600L)
-                        .length(13)
+                        .size(13L)
                         .content("dummy content")));
     }
 }
