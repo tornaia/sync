@@ -19,22 +19,22 @@ public class SyncWebSocketReConnectService {
     private static final Logger LOG = LoggerFactory.getLogger(SyncWebSocketReConnectService.class);
 
     @Value("${sync.pusher.server.scheme}")
-    private String serverSchemeWebSocket;
+    private String pusherServerScheme;
 
     @Value("${sync.pusher.server.host}")
-    private String serverHost;
+    private String pusherServerHost;
 
     @Value("${sync.pusher.server.port}")
-    private int serverPort;
+    private int pusherServerPort;
 
     @Value("${sync.pusher.server.path}")
-    private String webSocketPath;
+    private String pusherServerPath;
 
     @Value("${client.sync.userid}")
     private String userid;
 
     @Value("${client.sync.directory.path}")
-    private String syncDirectoryPath;
+    private String directoryPath;
 
     @Autowired
     private RemoteReaderService remoteReaderService;
@@ -75,11 +75,11 @@ public class SyncWebSocketReConnectService {
             LOG.debug("WebSocket re-connect service fades out since the connection is up");
         });
         thread.setDaemon(true);
-        thread.setName(userid + "-" + syncDirectoryPath.substring(syncDirectoryPath.length() - 1) + "-WSKpAl");
+        thread.setName(userid + "-" + directoryPath.substring(directoryPath.length() - 1) + "-WSKpAl");
         thread.start();
     }
 
     private String getWebSocketUri() {
-        return serverSchemeWebSocket + "://" + serverHost + ":" + serverPort + webSocketPath;
+        return pusherServerScheme + "://" + pusherServerHost + ":" + pusherServerPort + pusherServerPath;
     }
 }

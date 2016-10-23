@@ -8,13 +8,13 @@ import org.springframework.stereotype.Component;
 public class HttpClientProvider {
 
     @Value("${sync.backend.server.scheme}")
-    private String serverSchemeHttp;
+    private String backendServerScheme;
 
     @Value("${sync.backend.server.host}")
-    private String serverHost;
+    private String backendServerHost;
 
     @Value("${sync.backend.server.port}")
-    private int serverPort;
+    private int backendServerPort;
 
     private final org.apache.http.client.HttpClient httpClient = HttpClientBuilder.
             create()
@@ -27,6 +27,6 @@ public class HttpClientProvider {
     }
 
     public String getServerUrl() {
-        return serverSchemeHttp + "://" + serverHost + ":" + serverPort;
+        return backendServerScheme + "://" + backendServerHost + ":" + backendServerPort;
     }
 }

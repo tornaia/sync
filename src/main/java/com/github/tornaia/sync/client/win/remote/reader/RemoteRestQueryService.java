@@ -20,7 +20,7 @@ public class RemoteRestQueryService {
     private static final Logger LOG = LoggerFactory.getLogger(RemoteRestQueryService.class);
 
     @Value("${sync.backend.file.api.path}")
-    private String fileApiPath;
+    private String backendFileApiPath;
 
     @Value("${client.sync.userid}")
     private String userid;
@@ -29,7 +29,7 @@ public class RemoteRestQueryService {
     private HttpClientProvider httpClientProvider;
 
     public byte[] getFile(FileMetaInfo fileMetaInfo) {
-        HttpGet httpGet = new HttpGet(httpClientProvider.getServerUrl() + fileApiPath + "/" + fileMetaInfo.id + "?userid=" + userid);
+        HttpGet httpGet = new HttpGet(httpClientProvider.getServerUrl() + backendFileApiPath + "/" + fileMetaInfo.id + "?userid=" + userid);
 
         byte[] response;
         try {

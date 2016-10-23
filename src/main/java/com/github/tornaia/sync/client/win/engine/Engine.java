@@ -30,7 +30,7 @@ public class Engine {
     private String userid;
 
     @Value("${client.sync.directory.path}")
-    private String syncDirectoryPath;
+    private String directoryPath;
 
     @Autowired
     private LocalReaderService localReaderService;
@@ -130,7 +130,7 @@ public class Engine {
             }
         });
         thread.setDaemon(true);
-        thread.setName(userid + "-" + syncDirectoryPath.substring(syncDirectoryPath.length() - 1) + "-Engine");
+        thread.setName(userid + "-" + directoryPath.substring(directoryPath.length() - 1) + "-Engine");
         thread.start();
     }
 

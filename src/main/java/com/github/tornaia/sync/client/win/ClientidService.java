@@ -16,6 +16,6 @@ public class ClientidService {
     @Autowired
     public ClientidService(RandomUtils randomUtils) {
         clientid = randomUtils.getRandomString();
-        LOG.info("Clientid: " + clientid);
+        LOG.debug("Clientid: " + clientid);
     }
 }

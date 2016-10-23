@@ -33,7 +33,7 @@ public class DiskWriterService {
     private String userid;
 
     @Value("${client.sync.directory.path}")
-    private String syncDirectoryPath;
+    private String directoryPath;
 
     @Autowired
     private ConflictFileNameGenerator conflictFileNameGenerator;
@@ -45,7 +45,7 @@ public class DiskWriterService {
 
     @PostConstruct
     public void init() {
-        syncDirectory = new File(syncDirectoryPath).toPath();
+        syncDirectory = new File(directoryPath).toPath();
     }
 
     public Optional<Path> createTempFile(byte[] fileContent, long creationDateTime, long modificationDateTime) {

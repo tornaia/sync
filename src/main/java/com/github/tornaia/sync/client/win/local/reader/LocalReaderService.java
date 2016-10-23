@@ -30,7 +30,7 @@ public class LocalReaderService {
     private static final Logger LOG = LoggerFactory.getLogger(LocalReaderService.class);
 
     @Value("${client.sync.directory.path}")
-    private String syncDirectoryPath;
+    private String directoryPath;
 
     @Value("${client.sync.userid}")
     private String userid;
@@ -67,12 +67,12 @@ public class LocalReaderService {
 
     public void startDiskWatch() throws IOException {
         this.watchService = FileSystems.getDefault().newWatchService();
-        this.syncDirectory = FileSystems.getDefault().getPath(syncDirectoryPath);
+        this.syncDirectory = FileSystems.getDefault().getPath(directoryPath);
         Files.createDirectories(syncDirectory);
 
         Thread directoryEventsReaderThread = new Thread(() -> consumeEventsFromWatchService());
         directoryEventsReaderThread.setDaemon(true);
-        directoryEventsReaderThread.setName(userid + "-" + syncDirectoryPath.substring(syncDirectoryPath.length() - 1) + "-LocalR");
+        directoryEventsReaderThread.setName(userid + "-" + directoryPath.substring(directoryPath.length() - 1) + "-LocalR");
         directoryEventsReaderThread.start();
 
         registerWatcherAndAddAllFiles();

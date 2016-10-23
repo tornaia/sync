@@ -3,7 +3,6 @@ package com.github.tornaia.sync.client.win.remote.writer;
 import com.github.tornaia.sync.client.win.local.writer.DiskWriterService;
 import com.github.tornaia.sync.client.win.remote.RemoteKnownState;
 import com.github.tornaia.sync.shared.api.FileMetaInfo;
-import com.github.tornaia.sync.shared.constant.FileSystemConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +30,7 @@ public class RemoteWriterService {
     private String userid;
 
     @Value("${client.sync.directory.path}")
-    private String syncDirectoryPath;
+    private String directoryPath;
 
     @Autowired
     private RemoteRestCommandService remoteRestCommandService;
@@ -46,7 +45,7 @@ public class RemoteWriterService {
 
     @PostConstruct
     public void init() {
-        syncDirectory = new File(syncDirectoryPath).toPath();
+        syncDirectory = new File(directoryPath).toPath();
     }
 
     public boolean createFile(String relativePath) {

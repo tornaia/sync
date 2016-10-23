@@ -16,7 +16,7 @@ import java.util.Optional;
 public class LocalWriterService {
 
     @Value("${client.sync.directory.path}")
-    private String syncDirectoryPath;
+    private String directoryPath;
 
     @Autowired
     private DiskWriterService diskWriterService;
@@ -28,7 +28,7 @@ public class LocalWriterService {
 
     @PostConstruct
     public void init() {
-        syncDirectory = new File(syncDirectoryPath).toPath();
+        syncDirectory = new File(directoryPath).toPath();
     }
 
     public boolean write(FileMetaInfo fileMetaInfo, byte[] fileContent) {
