@@ -6,7 +6,6 @@ import org.springframework.boot.context.embedded.tomcat.TomcatEmbeddedServletCon
 import org.springframework.boot.web.servlet.MultipartConfigFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.stereotype.Component;
 
 import javax.servlet.MultipartConfigElement;
 
@@ -14,7 +13,7 @@ import javax.servlet.MultipartConfigElement;
 public class CustomizationBean implements EmbeddedServletContainerCustomizer {
 
     // move these limits to shared module (client should not send file bigger than this)
-    private static final int _5GB = 5*1073741824;
+    private static final int _5GB = 5 * 1073741824;
     private static final String _5120MB = "5120MB";
 
     @Override
