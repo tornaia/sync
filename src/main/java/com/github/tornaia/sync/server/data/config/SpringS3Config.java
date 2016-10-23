@@ -95,7 +95,7 @@ public class SpringS3Config {
         boolean bucketExist = isBucketExist(s3Client, bucketName);
         LOG.info("Bucket exists: " + bucketExist);
         if (!bucketExist) {
-            LOG.info("Creating bucket: " + bucketExist);
+            LOG.info("Creating bucket: " + bucketName);
             s3Client.createBucket(new CreateBucketRequest(bucketName));
         }
     }
