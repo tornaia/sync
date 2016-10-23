@@ -9,6 +9,11 @@ public class RemoteFileEvent {
 
     public final FileMetaInfo fileMetaInfo;
 
+    public RemoteFileEvent() {
+        eventType = null;
+        fileMetaInfo = null;
+    }
+
     public RemoteFileEvent(RemoteEventType eventType, FileMetaInfo fileMetaInfo) {
         this.eventType = eventType;
         this.fileMetaInfo = fileMetaInfo;
