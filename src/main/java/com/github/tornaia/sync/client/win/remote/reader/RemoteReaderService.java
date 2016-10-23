@@ -106,6 +106,11 @@ public class RemoteReaderService {
     }
 
     public void sendMessage(String message) {
+        if (session == null) {
+            LOG.warn("Message will not be sent because the WebSocket session has not been initialized yet: " + message);
+            return;
+        }
+
         if (!session.isOpen()) {
             LOG.warn("Message will not be sent because the WebSocket session has been closed: " + message);
             return;
