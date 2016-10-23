@@ -3,6 +3,7 @@ package com.github.tornaia.sync.client.win.remote.writer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tornaia.sync.client.win.ClientidService;
 import com.github.tornaia.sync.client.win.httpclient.HttpClientProvider;
+import com.github.tornaia.sync.client.win.remote.SurvivableResponseStatusCodes;
 import com.github.tornaia.sync.shared.api.*;
 import com.github.tornaia.sync.shared.util.SerializerUtils;
 import org.apache.http.HttpEntity;
@@ -81,9 +82,8 @@ public class RemoteRestCommandService {
                 return FileCreateResponse.conflict(fileMetaInfo);
             }
 
-            // FIXME this error might occur everywhere... refactor this and the writer class
-            if (Objects.equals(response.getStatusLine().getStatusCode(), HttpStatus.SC_BAD_GATEWAY)) {
-                return FileCreateResponse.transferFailed(fileMetaInfo, "Bad gateway");
+            if (SurvivableResponseStatusCodes.isSolvableByRepeat(response.getStatusLine().getStatusCode())) {
+                return FileCreateResponse.transferFailed(fileMetaInfo, response.getStatusLine().getReasonPhrase());
             }
 
             remoteFileMetaInfo = new ObjectMapper().readValue(entity.getContent(), FileMetaInfo.class);

@@ -1,24 +1,23 @@
 package com.github.tornaia.sync.client.win.httpclient;
 
+import com.github.tornaia.sync.client.win.remote.SurvivableResponseStatusCodes;
+import com.github.tornaia.sync.client.win.remote.NormalResponseStatusCodes;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpResponseInterceptor;
-import org.apache.http.HttpStatus;
 import org.apache.http.protocol.HttpContext;
-
-import java.util.Objects;
 
 public class FailOnErrorResponseInterceptor implements HttpResponseInterceptor {
 
     @Override
     public void process(HttpResponse response, HttpContext context) {
         int statusCode = response.getStatusLine().getStatusCode();
-        if (!Objects.equals(statusCode, HttpStatus.SC_OK) &&
-                !Objects.equals(statusCode, HttpStatus.SC_CONFLICT) &&
-                !Objects.equals(statusCode, HttpStatus.SC_NOT_FOUND) &&
-                // TODO sometimes the servers return with 406 and the Engine should repeat the process of the event
-                // !Objects.equals(statusCode, HttpStatus.SC_NOT_ACCEPTABLE) &&
-                !Objects.equals(statusCode, HttpStatus.SC_BAD_GATEWAY)) {
-            throw new IllegalStateException("Unexpected response: " + response);
+        if (NormalResponseStatusCodes.isValid(statusCode)) {
+            return;
         }
+        if (SurvivableResponseStatusCodes.isSolvableByRepeat(statusCode)) {
+            return;
+        }
+
+        throw new IllegalStateException("Unexpected response: " + response);
     }
 }
