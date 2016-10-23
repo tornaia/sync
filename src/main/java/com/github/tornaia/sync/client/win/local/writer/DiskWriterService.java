@@ -136,6 +136,7 @@ public class DiskWriterService {
                 LOG.info("File already is on disk: " + newFileMetaInfo);
                 return true;
             } else {
+                LOG.warn("Conflict! local: " + localFileMetaInfo + ", remote: " + newFileMetaInfo);
                 handleConflictOfFile(absolutePath, localFileMetaInfo);
             }
         }
@@ -201,6 +202,7 @@ public class DiskWriterService {
                 LOG.info("Directory already is on disk. Attributes are ok: " + newFileMetaInfo);
                 return true;
             } else {
+                LOG.warn("Conflict! local: " + localFileMetaInfo + ", remote: " + newFileMetaInfo);
                 handleConflictOfFile(absolutePath, localFileMetaInfo);
             }
         }
