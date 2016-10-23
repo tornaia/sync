@@ -52,6 +52,7 @@ public class Engine {
     private volatile boolean contextIsRunning;
 
     @EventListener({ContextRefreshedEvent.class})
+    public void onContextRefreshedEvent() {
         LOG.info("Context refreshed event happened");
         contextIsRunning = true;
         init();
