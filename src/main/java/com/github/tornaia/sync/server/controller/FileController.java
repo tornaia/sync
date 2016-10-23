@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -23,7 +24,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 
-import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM;
 import static org.springframework.http.HttpHeaders.CONTENT_DISPOSITION;
 import static org.springframework.http.HttpStatus.CONFLICT;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
@@ -67,7 +67,7 @@ public class FileController {
         fileCommandService.deleteFile(clientid, id);
     }
 
-    @RequestMapping(value = "/{id}", method = GET, produces = APPLICATION_OCTET_STREAM)
+    @RequestMapping(value = "/{id}", method = GET, produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public ResponseEntity getFile(@PathVariable String id) throws IOException {
         File file = fileQueryService.getFileById(id);
         long size = file.getSize();
