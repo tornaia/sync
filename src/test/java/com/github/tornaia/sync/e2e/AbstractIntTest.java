@@ -3,7 +3,6 @@ package com.github.tornaia.sync.e2e;
 import com.github.tornaia.sync.client.win.WinClientApp;
 import com.github.tornaia.sync.client.win.httpclient.FailOnErrorResponseInterceptor;
 import com.github.tornaia.sync.server.ServerApp;
-import jersey.repackaged.com.google.common.collect.Lists;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.client.HttpClient;
@@ -29,6 +28,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.FileTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -56,7 +56,7 @@ public abstract class AbstractIntTest {
 
     protected ConfigurableApplicationContext server;
 
-    protected List<Client> clients = Lists.newArrayList();
+    protected List<Client> clients = new ArrayList<>();
 
     @Before
     public void init() throws Exception {
