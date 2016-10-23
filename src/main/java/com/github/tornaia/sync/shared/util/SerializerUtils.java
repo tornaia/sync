@@ -1,5 +1,6 @@
 package com.github.tornaia.sync.shared.util;
 
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.http.HttpEntity;
@@ -12,6 +13,10 @@ import java.io.InputStream;
 public class SerializerUtils {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+    private SerializerUtils() {
+        objectMapper.getFactory().configure(JsonGenerator.Feature.ESCAPE_NON_ASCII, true);
+    }
 
     public <T> T toObject(String json, Class<T> clazz) {
         try {
