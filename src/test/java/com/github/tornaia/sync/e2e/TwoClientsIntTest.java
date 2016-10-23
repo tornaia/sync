@@ -13,30 +13,35 @@ public class TwoClientsIntTest extends AbstractIntTest {
 
     @Test
     @Repeat(REPEAT)
-    public void uglyFilenameWithUglyContentTest() throws Exception {
+    public void uglyFilenamesWithUglyContentsTest() throws Exception {
+        String uglyFilename1 = "" + (char) 10000;
+        String uglyFilename2 = "" + (char) 55301;
+        String uglyFilename3 = "" + (char) 55447;
+        String uglyFilename4 = "" + (char) 56036;
+
         Client client1 = initClient(userid).start();
         Client client2 = initClient(userid).start();
 
-        String uglyFilename = "" + (char) 10000;
-        createFile(client1.syncDirectory.resolve(uglyFilename), "\r", 500L, 600L);
+        createFile(client1.syncDirectory.resolve(uglyFilename1), "", 50000L, 60000L);
+        createFile(client1.syncDirectory.resolve(uglyFilename2), "\r", 70000L, 80000L);
+        createFile(client1.syncDirectory.resolve(uglyFilename3), "\n\t", 90000L, 100000L);
+        createFile(client1.syncDirectory.resolve(uglyFilename4), "   ", 110000L, 120000L);
         waitForSyncDone();
 
         // TODO one check is OK, and then a recursive check to verify that the two directories are equal
         assertThat(asList(client1.syncDirectory.toFile().listFiles()),
-                contains(new FileMatcher(client1.syncDirectory)
-                        .relativePath(uglyFilename)
-                        .creationTime(500L)
-                        .lastModifiedTime(600L)
-                        .size(1L)
-                        .content("\r")));
+                contains(new FileMatcher(client1.syncDirectory).relativePath(uglyFilename1).creationTime(50000L).lastModifiedTime(60000L).size(0L).content(""),
+                        new FileMatcher(client1.syncDirectory).relativePath(uglyFilename2).creationTime(70000L).lastModifiedTime(80000L).size(1L).content("\r"),
+                        new FileMatcher(client1.syncDirectory).relativePath(uglyFilename3).creationTime(90000L).lastModifiedTime(100000L).size(2L).content("\n\t"),
+                        new FileMatcher(client1.syncDirectory).relativePath(uglyFilename4).creationTime(110000L).lastModifiedTime(120000L).size(3L).content("   ")
+                ));
 
         assertThat(asList(client2.syncDirectory.toFile().listFiles()),
-                contains(new FileMatcher(client2.syncDirectory)
-                        .relativePath(uglyFilename)
-                        .creationTime(500L)
-                        .lastModifiedTime(600L)
-                        .size(1L)
-                        .content("\r")));
+                contains(new FileMatcher(client2.syncDirectory).relativePath(uglyFilename1).creationTime(50000L).lastModifiedTime(60000L).size(0L).content(""),
+                        new FileMatcher(client2.syncDirectory).relativePath(uglyFilename2).creationTime(70000L).lastModifiedTime(80000L).size(1L).content("\r"),
+                        new FileMatcher(client2.syncDirectory).relativePath(uglyFilename3).creationTime(90000L).lastModifiedTime(100000L).size(2L).content("\n\t"),
+                        new FileMatcher(client2.syncDirectory).relativePath(uglyFilename4).creationTime(110000L).lastModifiedTime(120000L).size(3L).content("   ")
+                ));
     }
 
     @Test
