@@ -244,6 +244,10 @@ public class LocalReaderService {
                     return FileVisitResult.CONTINUE;
                 }
             });
+        } catch (FileSystemException e) {
+            LOG.warn("Cannot scan filesystem: " + e.getMessage());
+            // TODO recursive so stack overflow might occur if the fileSystem is blocked for long
+            registerWatcherAndAddAllFiles();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
