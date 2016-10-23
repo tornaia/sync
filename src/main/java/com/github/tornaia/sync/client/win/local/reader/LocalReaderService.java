@@ -79,7 +79,7 @@ public class LocalReaderService {
     }
 
     private void registerWatcherAndAddAllFiles() {
-        LOG.debug("Rescan directory tree");
+        LOG.info("Register watcherService and scan syncDirectory");
         register(syncDirectory);
         Set<LocalFileEvent> newOrModifiedChangeList = getNewOrModifiedChangeList(syncDirectory);
         addNewEvents(newOrModifiedChangeList);
