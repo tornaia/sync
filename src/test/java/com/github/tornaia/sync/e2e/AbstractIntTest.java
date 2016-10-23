@@ -133,7 +133,7 @@ public abstract class AbstractIntTest {
                     .headless(false)
                     .profiles("localhost")
                     .run("--client.sync.directory.path=" + syncDirectory.toFile().getAbsolutePath(),
-                            "--frosch-sync.userid=" + userid);
+                            "--client.sync.userid=" + userid);
 
             clients.add(this);
             LOG.info("Start client for userid: " + userid + ", syncDirectory: " + syncDirectory.toFile().getAbsolutePath());
