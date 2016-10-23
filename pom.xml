@@ -70,12 +70,12 @@
                         </execution>
                     </executions>
                 </plugin>
-				
-				<plugin>
-					<groupId>org.springframework.boot</groupId>
-					<artifactId>spring-boot-maven-plugin</artifactId>
-					<version>1.4.1.RELEASE</version>
-				</plugin>
+
+                <plugin>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-maven-plugin</artifactId>
+                    <version>1.4.1.RELEASE</version>
+                </plugin>
             </plugins>
         </pluginManagement>
     </build>
@@ -128,12 +128,6 @@
                 <groupId>org.glassfish.tyrus</groupId>
                 <artifactId>tyrus-container-jdk-client</artifactId>
                 <version>${tyrus.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>com.google.code.gson</groupId>
-                <artifactId>gson</artifactId>
-                <version>${gson.version}</version>
             </dependency>
 
             <dependency>
@@ -207,11 +201,6 @@
         <dependency>
             <groupId>org.glassfish.tyrus</groupId>
             <artifactId>tyrus-container-jdk-client</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>com.google.code.gson</groupId>
-            <artifactId>gson</artifactId>
         </dependency>
 
         <dependency>
