@@ -52,7 +52,7 @@ public class LocalReaderService {
     private volatile boolean contextIsRunning;
 
     @EventListener({ContextRefreshedEvent.class})
-    public void ContextRefreshedEvent() throws IOException {
+    public void contextRefreshedEvent() throws IOException {
         LOG.info("Context refreshed event happened");
         contextIsRunning = true;
         startDiskWatch();

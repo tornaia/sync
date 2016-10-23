@@ -42,7 +42,7 @@ public class SyncWebSocketReConnectService {
     private volatile boolean contextIsRunning;
 
     @EventListener({ContextRefreshedEvent.class})
-    public void ContextRefreshedEvent() {
+    public void contextRefreshedEvent() {
         LOG.info("Context refreshed event happened");
         contextIsRunning = true;
         reconnect();
