@@ -34,7 +34,8 @@ public class RemoteRestCommandService {
 
     private static final Logger LOG = LoggerFactory.getLogger(RemoteRestCommandService.class);
 
-    private static final String FILE_PATH = "/api/files";
+    @Value("${sync.backend.file.api.path}")
+    private String fileApiPath;
 
     @Value("${client.sync.userid}")
     private String userid;
@@ -70,7 +71,7 @@ public class RemoteRestCommandService {
                         .build())
                 .build();
 
-        HttpPost httpPost = new HttpPost(httpClientProvider.getServerUrl() + FILE_PATH + "?clientid=" + clientidService.clientid);
+        HttpPost httpPost = new HttpPost(httpClientProvider.getServerUrl() + fileApiPath + "?clientid=" + clientidService.clientid);
         httpPost.setEntity(multipart);
 
         FileMetaInfo remoteFileMetaInfo;
@@ -119,7 +120,7 @@ public class RemoteRestCommandService {
                         .build())
                 .build();
 
-        HttpPut httpPut = new HttpPut(httpClientProvider.getServerUrl() + FILE_PATH + "/" + fileMetaInfo.id + "?clientid=" + clientidService.clientid);
+        HttpPut httpPut = new HttpPut(httpClientProvider.getServerUrl() + fileApiPath + "/" + fileMetaInfo.id + "?clientid=" + clientidService.clientid);
         httpPut.setEntity(multipart);
 
         HttpEntity entity;
@@ -155,7 +156,7 @@ public class RemoteRestCommandService {
     }
 
     public FileDeleteResponse onFileDelete(FileMetaInfo fileMetaInfo) {
-        HttpDelete httpDelete = new HttpDelete(httpClientProvider.getServerUrl() + FILE_PATH + "/" + fileMetaInfo.id + "?clientid=" + clientidService.clientid);
+        HttpDelete httpDelete = new HttpDelete(httpClientProvider.getServerUrl() + fileApiPath + "/" + fileMetaInfo.id + "?clientid=" + clientidService.clientid);
         try {
             HttpResponse response = httpClientProvider.get().execute(httpDelete);
             HttpEntity entity = response.getEntity();

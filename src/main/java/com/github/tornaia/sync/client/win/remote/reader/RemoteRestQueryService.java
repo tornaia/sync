@@ -19,7 +19,8 @@ public class RemoteRestQueryService {
 
     private static final Logger LOG = LoggerFactory.getLogger(RemoteRestQueryService.class);
 
-    private static final String FILE_PATH = "/api/files";
+    @Value("${sync.backend.file.api.path}")
+    private String fileApiPath;
 
     @Autowired
     private HttpClientProvider httpClientProvider;
@@ -28,7 +29,7 @@ public class RemoteRestQueryService {
     private String userid;
 
     public byte[] getFile(FileMetaInfo fileMetaInfo) {
-        HttpGet httpGet = new HttpGet(httpClientProvider.getServerUrl() + FILE_PATH + "/" + fileMetaInfo.id + "?userid=" + userid);
+        HttpGet httpGet = new HttpGet(httpClientProvider.getServerUrl() + fileApiPath + "/" + fileMetaInfo.id + "?userid=" + userid);
 
         byte[] response;
         try {
