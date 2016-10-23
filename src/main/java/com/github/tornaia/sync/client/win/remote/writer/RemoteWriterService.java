@@ -109,7 +109,7 @@ public class RemoteWriterService {
         try {
             localFileMetaInfo = FileMetaInfo.createNonSyncedFileMetaInfo(userid, relativePath, file);
         } catch (NoSuchFileException e) {
-            LOG.warn("Skipping modified event of a non-existing file: " + relativePath);
+            LOG.info("Skipping modified event of a non-existing file: " + relativePath);
             return true;
         } catch (AccessDeniedException e) {
             LOG.warn("Cannot read file since it is use: " + relativePath);
