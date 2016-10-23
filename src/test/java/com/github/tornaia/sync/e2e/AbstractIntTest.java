@@ -54,9 +54,9 @@ public abstract class AbstractIntTest {
     @Value("#{systemProperties['clients.root.path'] ?: 'C:\\temp\\e2etests\\\\'}")
     protected String clientsRootDirectoryPath;
 
-    protected ConfigurableApplicationContext server;
+    private ConfigurableApplicationContext server;
 
-    protected List<Client> clients = new ArrayList<>();
+    private List<Client> clients = new ArrayList<>();
 
     @Before
     public void init() throws Exception {
