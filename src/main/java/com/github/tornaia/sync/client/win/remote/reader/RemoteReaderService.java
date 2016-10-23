@@ -133,6 +133,8 @@ public class RemoteReaderService {
     }
 
     public byte[] getFile(FileMetaInfo fileMetaInfo) {
-        return remoteRestQueryService.getFile(fileMetaInfo);
+        byte[] content = remoteRestQueryService.getFile(fileMetaInfo);
+        LOG.info("File read from server: " + fileMetaInfo);
+        return content;
     }
 }
