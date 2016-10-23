@@ -233,7 +233,7 @@ public class Engine {
             case DELETED:
                 boolean deleteSucceed = remoteWriterService.deleteFile(relativePath);
                 if (deleteSucceed) {
-                    LOG.info("File is in sync with the server (deleted): " + relativePath);
+                    LOG.debug("File is in sync with the server (deleted): " + relativePath);
                 } else {
                     LOG.warn("File deletion cannot synced with server: " + relativePath);
                     localReaderService.reAddEvent(localEvent);
