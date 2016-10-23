@@ -85,6 +85,12 @@ public class LocalReaderService {
         addNewEvents(newOrModifiedChangeList);
     }
 
+    public boolean hasNext() {
+        synchronized (this) {
+            return !createdEvents.isEmpty() || !modifiedEvents.isEmpty() || !deletedEvents.isEmpty();
+        }
+    }
+
     public Optional<LocalFileEvent> getNextCreated() {
         return getNext(createdEvents);
     }

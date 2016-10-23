@@ -121,8 +121,12 @@ public class Engine {
                     continue;
                 }
 
+                if (remoteReaderService.hasNext() || localReaderService.hasNext()) {
+                    continue;
+                }
+
                 try {
-                    // TODO use some kind of blocking queue instead of this ugly sleep
+                    // TODO use some kind of blocking mechanism (combined with the hasNext above instead of this ugly sleep
                     Thread.sleep(10L);
                 } catch (InterruptedException e) {
                     LOG.warn("Run terminated: " + e.getMessage());

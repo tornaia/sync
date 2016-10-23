@@ -40,7 +40,6 @@ public class RemoteReaderService {
 
     private final List<RemoteFileEvent> deletedEvents = new ArrayList<>();
 
-
     private volatile boolean initDone;
 
     private Session session;
@@ -69,21 +68,9 @@ public class RemoteReaderService {
         addNewEvent(remoteFileEvent);
     }
 
-    private void addNewEvent(RemoteFileEvent remoteFileEvent) {
+    public boolean hasNext() {
         synchronized (this) {
-            switch (remoteFileEvent.eventType) {
-                case CREATED:
-                    createdEvents.add(remoteFileEvent);
-                    break;
-                case MODIFIED:
-                    modifiedEvents.add(remoteFileEvent);
-                    break;
-                case DELETED:
-                    deletedEvents.add(remoteFileEvent);
-                    break;
-                default:
-                    throw new IllegalStateException("Unknown message: " + remoteFileEvent);
-            }
+            return !createdEvents.isEmpty() || !modifiedEvents.isEmpty() || !deletedEvents.isEmpty();
         }
     }
 
@@ -136,5 +123,23 @@ public class RemoteReaderService {
         byte[] content = remoteRestQueryService.getFile(fileMetaInfo);
         LOG.info("File read from server: " + fileMetaInfo);
         return content;
+    }
+
+    private void addNewEvent(RemoteFileEvent remoteFileEvent) {
+        synchronized (this) {
+            switch (remoteFileEvent.eventType) {
+                case CREATED:
+                    createdEvents.add(remoteFileEvent);
+                    break;
+                case MODIFIED:
+                    modifiedEvents.add(remoteFileEvent);
+                    break;
+                case DELETED:
+                    deletedEvents.add(remoteFileEvent);
+                    break;
+                default:
+                    throw new IllegalStateException("Unknown message: " + remoteFileEvent);
+            }
+        }
     }
 }
