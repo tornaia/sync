@@ -178,7 +178,7 @@ public class RemoteWriterService {
 
         boolean ok = Objects.equals(FileDeleteResponse.Status.OK, fileDeleteResponse.status);
         if (ok) {
-            LOG.debug("File deleted from server: " + fileMetaInfo);
+            LOG.info("File deleted from server: " + fileMetaInfo);
             remoteKnownState.remove(fileMetaInfo);
             return true;
         }
