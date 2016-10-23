@@ -163,7 +163,7 @@ public class Engine {
                         succeed = localWriterService.replace(relativePath, remoteFileMetaInfo, remoteFileContent);
                     }
                     if (succeed) {
-                        LOG.info("File modified event successfully finished: " + remoteFileMetaInfo);
+                        LOG.debug("File modified event successfully finished: " + remoteFileMetaInfo);
                     } else {
                         LOG.warn("File modified event failed: " + remoteFileMetaInfo);
                     }
@@ -171,7 +171,7 @@ public class Engine {
                     byte[] remoteFileContent = remoteReaderService.getFile(remoteFileMetaInfo);
                     boolean succeed = localWriterService.write(remoteFileMetaInfo, remoteFileContent);
                     if (succeed) {
-                        LOG.info("File created event successfully finished: " + remoteFileMetaInfo);
+                        LOG.debug("File created event successfully finished: " + remoteFileMetaInfo);
                     } else {
                         LOG.warn("File created event failed: " + remoteFileMetaInfo);
                     }
@@ -195,7 +195,7 @@ public class Engine {
                     LOG.debug("Remote and local fileMetaInfo equals: " + remoteFileMetaInfo.relativePath);
                     boolean succeed = localWriterService.delete(relativePath);
                     if (succeed) {
-                        LOG.info("File deleted event successfully finished: " + remoteFileMetaInfo);
+                        LOG.debug("File deleted event successfully finished: " + remoteFileMetaInfo);
                     } else {
                         LOG.warn("File deleted event failed: " + remoteFileMetaInfo);
                     }
