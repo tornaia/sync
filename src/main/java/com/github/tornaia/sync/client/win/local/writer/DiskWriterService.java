@@ -14,10 +14,7 @@ import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.file.DirectoryNotEmptyException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
+import java.nio.file.*;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -260,6 +257,9 @@ public class DiskWriterService {
             Files.delete(fileAbsolutePath);
         } catch (DirectoryNotEmptyException e) {
             LOG.warn("Cannot delete directory. It is not empty: " + fileAbsolutePath);
+            return true;
+        } catch (NoSuchFileException e) {
+            LOG.debug("Cannot delete a non-existing file: " + fileAbsolutePath);
             return true;
         } catch (IOException e) {
             LOG.warn("Cannot delete target file", e);
