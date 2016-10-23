@@ -43,7 +43,7 @@ public abstract class AbstractIntTest {
     private static final AtomicInteger clientIdGenerator = new AtomicInteger();
 
     @Value("#{systemProperties['sync.backend.server.scheme'] ?: 'http'}")
-    private String serverSchemeHttp;
+    private String serverScheme;
 
     @Value("#{systemProperties['sync.backend.server.host'] ?: '127.0.0.1'}")
     private String serverHost;
@@ -98,7 +98,7 @@ public abstract class AbstractIntTest {
                         .build();
 
                 URI uri = new URIBuilder()
-                        .setScheme(serverSchemeHttp)
+                        .setScheme(serverScheme)
                         .setHost(serverHost)
                         .setPort(serverPort)
                         .setPath("/api/files/reset")
