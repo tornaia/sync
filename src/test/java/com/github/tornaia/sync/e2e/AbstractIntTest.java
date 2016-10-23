@@ -133,7 +133,8 @@ public abstract class AbstractIntTest {
                     .headless(false)
                     .profiles("localhost")
                     .run("--client.sync.directory.path=" + syncDirectory.toFile().getAbsolutePath(),
-                            "--client.sync.userid=" + userid);
+                            "--client.sync.userid=" + userid,
+                            "--logging.file=" + syncDirectory.getParent().resolve("logs").resolve(syncDirectory.getFileName()));
 
             clients.add(this);
             LOG.info("Start client for userid: " + userid + ", syncDirectory: " + syncDirectory.toFile().getAbsolutePath());
