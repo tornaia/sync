@@ -29,7 +29,7 @@ public class ConflictFileNameGenerator {
         String postFix = "_conflict_" + localFileMetaInfo.size + "_" + localFileMetaInfo.creationDateTime + "_" + localFileMetaInfo.modificationDateTime;
         String conflictFileName = hasExtension ? originalFileName.split("\\.", 2)[0] + postFix + EXTENSION_SEPARATOR_STRING + originalFileName.split("\\.", 2)[1] : originalFileName + postFix;
 
-        // TODO what should happen when this renamed/conflictFileName file exists? or if the generated file name/path is too log?
+        // TODO what should happen when this renamed/conflictFileName file exists? or if the generated file name/path is too long?
         Path renamed = new File(absolutePath.toFile().getParentFile().getAbsolutePath()).toPath().resolve(conflictFileName);
         if (isDirectory) {
             renamed = renamed.resolve(FileSystemConstants.DOT_FILENAME);
