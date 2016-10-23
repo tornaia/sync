@@ -94,6 +94,7 @@ public class RemoteRestCommandService {
             return FileCreateResponse.transferFailed(fileMetaInfo, e.getMessage());
         }
 
+        LOG.debug("Created file: " + fileMetaInfo);
         return FileCreateResponse.ok(remoteFileMetaInfo);
     }
 
@@ -149,6 +150,7 @@ public class RemoteRestCommandService {
             return FileModifyResponse.transferFailed(fileMetaInfo, e.getMessage());
         }
 
+        LOG.debug("Modified file: " + fileMetaInfo);
         return FileModifyResponse.ok(remoteFileMetaInfo);
     }
 
@@ -162,7 +164,7 @@ public class RemoteRestCommandService {
             return FileDeleteResponse.transferFailed(fileMetaInfo, e.getMessage());
         }
 
-        LOG.info("DELETE file: " + fileMetaInfo);
+        LOG.debug("Deleted file: " + fileMetaInfo);
         return FileDeleteResponse.ok(fileMetaInfo);
     }
 
