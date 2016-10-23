@@ -9,12 +9,11 @@ import org.springframework.context.annotation.Configuration;
 
 import javax.servlet.MultipartConfigElement;
 
+import static com.github.tornaia.sync.shared.constant.FileSizeConstants.MAX_SYNC_FILE_SIZE_IN_BYTES;
+import static com.github.tornaia.sync.shared.constant.FileSizeConstants.MAX_SYNC_FILE_SIZE_IN_MEGABYTES;
+
 @Configuration
 public class CustomizationBean implements EmbeddedServletContainerCustomizer {
-
-    // move these limits to shared module (client should not send file bigger than this)
-    private static final int _5GB = 5 * 1073741824;
-    private static final String _5120MB = "5120MB";
 
     @Override
     public void customize(ConfigurableEmbeddedServletContainer container) {
@@ -30,7 +29,7 @@ public class CustomizationBean implements EmbeddedServletContainerCustomizer {
         return (ConfigurableEmbeddedServletContainer container) -> {
             if (container instanceof TomcatEmbeddedServletContainerFactory) {
                 TomcatEmbeddedServletContainerFactory tomcat = (TomcatEmbeddedServletContainerFactory) container;
-                tomcat.addConnectorCustomizers((connector) -> connector.setMaxPostSize(_5GB));
+                tomcat.addConnectorCustomizers((connector) -> connector.setMaxPostSize(MAX_SYNC_FILE_SIZE_IN_BYTES));
             }
         };
     }
@@ -38,8 +37,8 @@ public class CustomizationBean implements EmbeddedServletContainerCustomizer {
     @Bean
     public MultipartConfigElement multipartConfigElement() {
         MultipartConfigFactory factory = new MultipartConfigFactory();
-        factory.setMaxFileSize(_5120MB);
-        factory.setMaxRequestSize(_5120MB);
+        factory.setMaxFileSize(MAX_SYNC_FILE_SIZE_IN_MEGABYTES);
+        factory.setMaxRequestSize(MAX_SYNC_FILE_SIZE_IN_MEGABYTES);
         return factory.createMultipartConfig();
     }
 }
