@@ -36,7 +36,7 @@ public class RemoteRestCommandService {
 
     private static final String FILE_PATH = "/api/files";
 
-    @Value("${frosch-sync.userid}")
+    @Value("${client.sync.userid}")
     private String userid;
 
     @Autowired

@@ -30,7 +30,7 @@ public class SyncWebSocketReConnectService {
     @Value("${sync.pusher.server.path}")
     private String webSocketPath;
 
-    @Value("${frosch-sync.userid}")
+    @Value("${client.sync.userid}")
     private String userid;
 
     @Value("${client.sync.directory.path}")

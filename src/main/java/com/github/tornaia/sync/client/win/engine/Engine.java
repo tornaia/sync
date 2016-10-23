@@ -26,7 +26,7 @@ public class Engine {
 
     private static final Logger LOG = LoggerFactory.getLogger(Engine.class);
 
-    @Value("${frosch-sync.userid}")
+    @Value("${client.sync.userid}")
     private String userid;
 
     @Value("${client.sync.directory.path}")

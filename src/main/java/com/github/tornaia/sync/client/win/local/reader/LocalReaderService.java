@@ -32,7 +32,7 @@ public class LocalReaderService {
     @Value("${client.sync.directory.path}")
     private String syncDirectoryPath;
 
-    @Value("${frosch-sync.userid}")
+    @Value("${client.sync.userid}")
     private String userid;
 
     @Autowired
