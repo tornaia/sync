@@ -88,7 +88,7 @@ public class RemoteRestCommandService {
 
             remoteFileMetaInfo = new ObjectMapper().readValue(entity.getContent(), FileMetaInfo.class);
         } catch (FileNotFoundException e) {
-            LOG.info("File disappeared meanwhile it was under upload(post)? " + e.getMessage());
+            LOG.debug("File disappeared meanwhile it was under upload(post)? " + e.getMessage());
             return FileCreateResponse.transferFailed(fileMetaInfo, e.getMessage());
         } catch (IOException e) {
             return FileCreateResponse.transferFailed(fileMetaInfo, e.getMessage());
@@ -135,7 +135,7 @@ public class RemoteRestCommandService {
                 return FileModifyResponse.notFound(fileMetaInfo);
             }
         } catch (FileNotFoundException e) {
-            LOG.info("File disappeared meanwhile it was under upload(post)? " + e.getMessage());
+            LOG.debug("File disappeared meanwhile it was under upload(post)? " + e.getMessage());
             return FileModifyResponse.transferFailed(fileMetaInfo, e.getMessage());
         } catch (IOException e) {
             return FileModifyResponse.transferFailed(fileMetaInfo, e.getMessage());
