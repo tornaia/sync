@@ -106,14 +106,17 @@ public class DiskWriterService {
             return false;
         }
 
-        boolean parentDirectoryExist = absolutePath.toFile().getParentFile().exists();
+        File parentDirectory = absolutePath.toFile().getParentFile();
+        boolean parentDirectoryExist = parentDirectory.exists();
         if (!parentDirectoryExist) {
-            boolean parentDirectoryCreated = absolutePath.toFile().getParentFile().mkdirs();
-            if (!parentDirectoryCreated) {
-                LOG.error("Cannot create directories to target");
+            boolean parentDirectoryCreated = parentDirectory.mkdirs();
+            if (parentDirectory.isDirectory()) {
+                LOG.trace("Parent directory already exist: " + parentDirectory.getAbsolutePath());
+            } else if (!parentDirectoryCreated) {
+                LOG.warn("Cannot create directories to target: " + parentDirectory.getAbsolutePath());
                 return false;
             }
-            LOG.trace("Directory to target already exist");
+            LOG.trace("Directory to target already exist: " + parentDirectory.getAbsolutePath());
         }
 
         File file = absolutePath.toFile();
