@@ -22,11 +22,11 @@ public class RemoteRestQueryService {
     @Value("${sync.backend.file.api.path}")
     private String fileApiPath;
 
-    @Autowired
-    private HttpClientProvider httpClientProvider;
-
     @Value("${client.sync.userid}")
     private String userid;
+
+    @Autowired
+    private HttpClientProvider httpClientProvider;
 
     public byte[] getFile(FileMetaInfo fileMetaInfo) {
         HttpGet httpGet = new HttpGet(httpClientProvider.getServerUrl() + fileApiPath + "/" + fileMetaInfo.id + "?userid=" + userid);
