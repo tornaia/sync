@@ -3,7 +3,7 @@ package com.github.tornaia.sync.client.win.remote.reader;
 import com.github.tornaia.sync.client.win.ClientidService;
 import com.github.tornaia.sync.shared.api.FileMetaInfo;
 import com.github.tornaia.sync.shared.api.RemoteFileEvent;
-import com.google.gson.Gson;
+import com.github.tornaia.sync.shared.util.SerializerUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +33,9 @@ public class RemoteReaderService {
 
     @Autowired
     private ClientidService clientidService;
+
+    @Autowired
+    private SerializerUtils serializerUtils;
 
     private final List<RemoteFileEvent> createdEvents = new ArrayList<>();
 
@@ -64,7 +67,8 @@ public class RemoteReaderService {
             initDone = true;
             return;
         }
-        RemoteFileEvent remoteFileEvent = new Gson().fromJson(message, RemoteFileEvent.class);
+
+        RemoteFileEvent remoteFileEvent = serializerUtils.toObject(message, RemoteFileEvent.class);
         addNewEvent(remoteFileEvent);
     }
 
