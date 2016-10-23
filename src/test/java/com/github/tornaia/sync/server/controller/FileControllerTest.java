@@ -8,7 +8,7 @@ import com.github.tornaia.sync.server.service.exception.FileNotFoundException;
 import com.github.tornaia.sync.shared.api.CreateFileRequest;
 import com.github.tornaia.sync.shared.api.CreateFileRequestBuilder;
 import com.github.tornaia.sync.shared.api.FileMetaInfo;
-import com.google.gson.Gson;
+import com.github.tornaia.sync.shared.util.SerializerUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
@@ -45,6 +45,9 @@ public class FileControllerTest {
     private AmazonS3 s3Client;
 
     @Autowired
+    private SerializerUtils serializerUtils;
+
+    @Autowired
     private MockMvc mvc;
 
     @Test
@@ -61,7 +64,7 @@ public class FileControllerTest {
 
         mvc.perform(
                 fileUpload("/api/files")
-                        .file(new MockMultipartFile("fileAttributes", null, MediaType.APPLICATION_JSON_VALUE, new Gson().toJson(createFileRequest).getBytes()))
+                        .file(new MockMultipartFile("fileAttributes", null, MediaType.APPLICATION_JSON_VALUE, serializerUtils.toJSON(createFileRequest).getBytes()))
                         .file(new MockMultipartFile("file", "4.txt", MediaType.APPLICATION_OCTET_STREAM_VALUE, "fileContent".getBytes()))
                         .param("clientid", "abc-clientid"))
                 .andExpect(status().isOk())
@@ -82,7 +85,7 @@ public class FileControllerTest {
 
         mvc.perform(
                 fileUpload("/api/files")
-                        .file(new MockMultipartFile("fileAttributes", null, MediaType.APPLICATION_JSON_VALUE, new Gson().toJson(createFileRequest).getBytes()))
+                        .file(new MockMultipartFile("fileAttributes", null, MediaType.APPLICATION_JSON_VALUE, serializerUtils.toJSON(createFileRequest).getBytes()))
                         .file(new MockMultipartFile("file", "4.txt", MediaType.APPLICATION_OCTET_STREAM_VALUE, "fileContent".getBytes()))
                         .param("clientid", "abc-clientid"))
                 .andExpect(status().isConflict());
