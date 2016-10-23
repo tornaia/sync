@@ -98,8 +98,9 @@ public class FileCommandService {
 
     public void deleteAll() {
         List<File> files = fileRepository.findAll();
+        LOG.info("Deleting all files from DB: " + files.size());
         files.forEach(fileRepository::delete);
         files.stream().map(fileToFileMetaInfoConverter::convert).forEach(s3Service::deleteFile);
-        LOG.info("All files deleted from DB: " + files.size());
+        LOG.info("All files deleted from DB");
     }
 }
