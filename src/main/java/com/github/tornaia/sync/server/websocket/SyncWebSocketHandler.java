@@ -15,6 +15,7 @@ import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.io.IOException;
+import java.net.SocketTimeoutException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -134,6 +135,8 @@ public class SyncWebSocketHandler extends TextWebSocketHandler {
             synchronized (session) {
                 session.sendMessage(new TextMessage(remoteFileEventAsJson));
             }
+        } catch (SocketTimeoutException e) {
+            LOG.debug("Client timeout");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
