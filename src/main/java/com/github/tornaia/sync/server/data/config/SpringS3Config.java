@@ -93,9 +93,9 @@ public class SpringS3Config {
 
     private void reCreateBucketIfNecessary(AmazonS3 s3Client, String bucketName) {
         boolean bucketExist = isBucketExist(s3Client, bucketName);
-        LOG.info("Bucket does not exist: " + bucketExist);
+        LOG.info("Bucket exists: " + bucketExist);
         if (!bucketExist) {
-            LOG.info("Recreating bucket: " + bucketExist);
+            LOG.info("Creating bucket: " + bucketExist);
             s3Client.createBucket(new CreateBucketRequest(bucketName));
         }
     }
