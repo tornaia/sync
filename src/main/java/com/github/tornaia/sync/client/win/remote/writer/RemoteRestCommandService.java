@@ -191,7 +191,7 @@ public class RemoteRestCommandService {
         StringBuilder buffer = new StringBuilder();
         buffer.append("form-data" + "; name=\"" + name + "\"");
         buffer.append("\r\n");
-        buffer.append("Content-Type: application/json"); //<--tack this on to the
+        buffer.append("Content-Type: application/json;charset=UTF-8"); //<--tack this on to the
 
         String kludgeForDispositionAndContentType = buffer.toString();
 
