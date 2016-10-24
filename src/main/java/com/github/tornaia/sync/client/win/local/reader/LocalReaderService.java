@@ -45,9 +45,9 @@ public class LocalReaderService {
 
     private Path syncDirectory;
 
-    private Set<LocalFileEvent> createdEvents = new LinkedHashSet<>();
-    private Set<LocalFileEvent> modifiedEvents = new LinkedHashSet<>();
-    private Set<LocalFileEvent> deletedEvents = new LinkedHashSet<>();
+    private LinkedHashSet<LocalFileEvent> createdEvents = new LinkedHashSet<>();
+    private LinkedHashSet<LocalFileEvent> modifiedEvents = new LinkedHashSet<>();
+    private LinkedHashSet<LocalFileEvent> deletedEvents = new LinkedHashSet<>();
 
     private volatile boolean contextIsRunning;
 
@@ -157,16 +157,37 @@ public class LocalReaderService {
     }
 
     private void addNewEvents(Set<LocalFileEvent> localFileEvents) {
-        Set<LocalFileEvent> newCreatedEvents = localFileEvents.stream().filter(lfe -> Objects.equals(LocalEventType.CREATED, lfe.eventType)).collect(Collectors.toSet());
-        Set<LocalFileEvent> newModifiedEvents = localFileEvents.stream().filter(lfe -> Objects.equals(LocalEventType.MODIFIED, lfe.eventType)).collect(Collectors.toSet());
-        Set<LocalFileEvent> newDeletedEvents = localFileEvents.stream().filter(lfe -> Objects.equals(LocalEventType.DELETED, lfe.eventType)).collect(Collectors.toSet());
+        LinkedHashSet<LocalFileEvent> newCreatedEvents = localFileEvents.stream().filter(lfe -> Objects.equals(LocalEventType.CREATED, lfe.eventType)).collect(Collectors.toCollection(LinkedHashSet::new));
+        LinkedHashSet<LocalFileEvent> newModifiedEvents = localFileEvents.stream().filter(lfe -> Objects.equals(LocalEventType.MODIFIED, lfe.eventType)).collect(Collectors.toCollection(LinkedHashSet::new));
+        LinkedHashSet<LocalFileEvent> newDeletedEvents = localFileEvents.stream().filter(lfe -> Objects.equals(LocalEventType.DELETED, lfe.eventType)).collect(Collectors.toCollection(LinkedHashSet::new));
         LOG.debug("Size of possibly new local events to process: c/m/d " + newCreatedEvents.size() + "/" + newModifiedEvents.size() + "/" + newDeletedEvents.size());
         synchronized (this) {
             LOG.debug("Size of pending events before adding possibly new local events to process: c/m/d " + createdEvents.size() + "/" + modifiedEvents.size() + "/" + deletedEvents.size());
-            createdEvents.addAll(newCreatedEvents);
-            modifiedEvents.addAll(newModifiedEvents);
-            deletedEvents.addAll(newDeletedEvents);
+            addNewCreatedEventsToTheBeginningOfTheCreatedEventsLinkedHashSet(newCreatedEvents);
+            addNewModifiedEventsToTheBeginningOfTheModifiedEventsLinkedHashSet(newModifiedEvents);
+            addNewDeletedEventsToTheBeginningOfTheDeletedEventsLinkedHashSet(newDeletedEvents);
             LOG.debug("Size of pending events after adding possibly new local events to process: c/m/d " + createdEvents.size() + "/" + modifiedEvents.size() + "/" + deletedEvents.size());
+        }
+    }
+
+    private void addNewCreatedEventsToTheBeginningOfTheCreatedEventsLinkedHashSet(LinkedHashSet<LocalFileEvent> newCreatedEvents) {
+        synchronized (this) {
+            newCreatedEvents.addAll(createdEvents);
+            createdEvents = newCreatedEvents;
+        }
+    }
+
+    private void addNewModifiedEventsToTheBeginningOfTheModifiedEventsLinkedHashSet(LinkedHashSet<LocalFileEvent> newModifiedEvents) {
+        synchronized (this) {
+            newModifiedEvents.addAll(modifiedEvents);
+            modifiedEvents = newModifiedEvents;
+        }
+    }
+
+    private void addNewDeletedEventsToTheBeginningOfTheDeletedEventsLinkedHashSet(LinkedHashSet<LocalFileEvent> newDeletedEvents) {
+        synchronized (this) {
+            newDeletedEvents.addAll(deletedEvents);
+            deletedEvents = newDeletedEvents;
         }
     }
 
@@ -191,21 +212,21 @@ public class LocalReaderService {
     }
 
     private void addNewCreatedEvent(FileCreatedEvent fileCreatedEvent) {
-        synchronized (this) {
-            createdEvents.add(fileCreatedEvent);
-        }
+        LinkedHashSet<LocalFileEvent> set = new LinkedHashSet<>();
+        set.add(fileCreatedEvent);
+        addNewCreatedEventsToTheBeginningOfTheCreatedEventsLinkedHashSet(set);
     }
 
     private void addNewModifiedEvent(FileModifiedEvent fileModifiedEvent) {
-        synchronized (this) {
-            modifiedEvents.add(fileModifiedEvent);
-        }
+        LinkedHashSet<LocalFileEvent> set = new LinkedHashSet<>();
+        set.add(fileModifiedEvent);
+        addNewModifiedEventsToTheBeginningOfTheModifiedEventsLinkedHashSet(set);
     }
 
     private void addNewDeletedEvent(FileDeleteEvent fileDeleteEvent) {
-        synchronized (this) {
-            deletedEvents.add(fileDeleteEvent);
-        }
+        LinkedHashSet<LocalFileEvent> set = new LinkedHashSet<>();
+        set.add(fileDeleteEvent);
+        addNewDeletedEventsToTheBeginningOfTheDeletedEventsLinkedHashSet(set);
     }
 
     private Set<LocalFileEvent> getNewOrModifiedChangeList(Path root) {
