@@ -2,18 +2,26 @@ package com.github.tornaia.sync.client.win.local.writer;
 
 import com.github.tornaia.sync.client.win.remote.RemoteKnownState;
 import com.github.tornaia.sync.shared.api.FileMetaInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 
 @Component
 public class LocalWriterService {
+
+    private static final Logger LOG = LoggerFactory.getLogger(LocalWriterService.class);
+
+    @Value("${client.sync.userid}")
+    private String userid;
 
     @Value("${client.sync.directory.path}")
     private String directoryPath;
@@ -48,12 +56,33 @@ public class LocalWriterService {
 
     public boolean delete(String relativePath) {
         Path localFileAbsolutePath = getAbsolutePath(relativePath);
-        if (localFileAbsolutePath.toFile().isDirectory()) {
+        boolean isDirectory = localFileAbsolutePath.toFile().isDirectory();
+        if (isDirectory) {
+            boolean isDirectoryReadyForDeletion = true;
+            // TODO use streams
             List<FileMetaInfo> itemsToDelete = remoteKnownState.getAllChildrenOrderedByPathLength(relativePath);
-            itemsToDelete.stream()
-                    .map(fmi -> fmi.relativePath)
-                    .map(rp -> getAbsolutePath(rp))
-                    .forEach(diskWriterService::delete);
+            for (FileMetaInfo itemToDelete : itemsToDelete) {
+                File localFileToDelete = getAbsolutePath(itemToDelete.relativePath).toFile();
+                try {
+                    FileMetaInfo localFileMetaInfo = FileMetaInfo.createNonSyncedFileMetaInfo(userid, itemToDelete.relativePath, localFileToDelete);
+                    boolean localCopyIsSynced = localFileMetaInfo.equals(itemToDelete);
+                    if (localCopyIsSynced) {
+                        diskWriterService.delete(localFileToDelete.toPath());
+                    } else {
+                        LOG.info("Unsynced file found under the directory: " + localFileMetaInfo);
+                        isDirectoryReadyForDeletion = false;
+                        break;
+                    }
+                } catch (IOException e) {
+                    LOG.warn("Cannot delete file for some reason: " + e.getMessage());
+                    isDirectoryReadyForDeletion = false;
+                    break;
+                }
+            }
+            if (!isDirectoryReadyForDeletion) {
+                LOG.info("Directory wont be deleted. It has unsynced changes or locks: " + relativePath);
+                return false;
+            }
         }
         return diskWriterService.delete(localFileAbsolutePath);
     }
