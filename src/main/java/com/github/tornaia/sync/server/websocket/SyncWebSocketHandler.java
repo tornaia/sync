@@ -136,9 +136,9 @@ public class SyncWebSocketHandler extends TextWebSocketHandler {
                 session.sendMessage(new TextMessage(remoteFileEventAsJson));
             }
         } catch (SocketTimeoutException e) {
-            LOG.debug("Client timeout");
+            LOG.debug("SocketTimeoutException:" + e.getMessage());
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            LOG.warn("IOException: " + e.getMessage());
         }
     }
 }
