@@ -50,7 +50,7 @@ public class FileCommandService {
         File fileAsFile = fileRepository.findByUseridAndPath(userid, pathAsFile);
         File fileAsDirectory = fileRepository.findByUseridAndPath(userid, pathAsDirectory);
         if (fileAsFile != null || fileAsDirectory != null) {
-            LOG.info("CREATE File already exist: " + path);
+            LOG.warn("CREATE File already exist: " + path);
             throw new FileAlreadyExistsException(path);
         }
 
@@ -68,7 +68,7 @@ public class FileCommandService {
         }
         File file = fileRepository.findOne(id);
         if (file == null) {
-            LOG.info("MODIFY Not found file: " + id);
+            LOG.warn("MODIFY Not found file: " + id);
             throw new FileNotFoundException(id);
         } else {
             file.setCreationDate(creationDateTime);
@@ -85,16 +85,16 @@ public class FileCommandService {
     public void deleteFile(String clientid, String id, long size, long creationDateTime, long modificationDateTime) {
         File file = fileRepository.findOne(id);
         if (file == null) {
-            LOG.info("DELETE File not found: " + id);
+            LOG.warn("DELETE File not found: " + id);
             throw new FileNotFoundException(id);
         }
 
         if (file.getSize() != size || file.getCreationDate() != creationDateTime) {
-            LOG.info("DELETE File attributes mismatch: " + file + ", vs: " + size + ", " + creationDateTime + ", " + modificationDateTime);
+            LOG.warn("DELETE File attributes mismatch: " + file + ", vs: " + size + ", " + creationDateTime + ", " + modificationDateTime);
             throw new FileNotFoundException(id);
         }
         if (file.isFile() && file.getLastModifiedDate() != modificationDateTime) {
-            LOG.info("DELETE File attributes mismatch: " + file + ", vs: " + size + ", " + creationDateTime + ", " + modificationDateTime);
+            LOG.warn("DELETE File attributes mismatch: " + file + ", vs: " + size + ", " + creationDateTime + ", " + modificationDateTime);
             throw new FileNotFoundException(id);
         }
 
