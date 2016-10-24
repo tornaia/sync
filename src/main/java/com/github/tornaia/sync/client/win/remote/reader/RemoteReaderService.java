@@ -11,10 +11,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.websocket.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
+
+import static java.util.Collections.reverseOrder;
 
 @Component
 @ClientEndpoint
@@ -41,7 +40,7 @@ public class RemoteReaderService {
 
     private final List<RemoteFileEvent> modifiedEvents = new ArrayList<>();
 
-    private final List<RemoteFileEvent> deletedEvents = new ArrayList<>();
+    private final TreeSet<RemoteFileEvent> deletedEvents = new TreeSet<>(reverseOrder(new RelativePathLengthComparator()));
 
     private volatile boolean initDone;
 
@@ -92,7 +91,13 @@ public class RemoteReaderService {
 
     public Optional<RemoteFileEvent> getNextDeleted() {
         synchronized (this) {
-            return deletedEvents.isEmpty() ? Optional.empty() : Optional.of(deletedEvents.remove(0));
+            if (deletedEvents.isEmpty()) {
+                return Optional.empty();
+            } else {
+                RemoteFileEvent next = deletedEvents.iterator().next();
+                deletedEvents.remove(next);
+                return Optional.of(next);
+            }
         }
     }
 
@@ -144,6 +149,21 @@ public class RemoteReaderService {
                 default:
                     throw new IllegalStateException("Unknown message: " + remoteFileEvent);
             }
+        }
+    }
+
+    private class RelativePathLengthComparator implements Comparator<RemoteFileEvent> {
+        public int compare(RemoteFileEvent obj1, RemoteFileEvent obj2) {
+            if (obj1 == obj2) {
+                return 0;
+            }
+            if (obj1 == null) {
+                return -1;
+            }
+            if (obj2 == null) {
+                return 1;
+            }
+            return Integer.compare(obj1.fileMetaInfo.relativePath.length(), obj2.fileMetaInfo.relativePath.length());
         }
     }
 }

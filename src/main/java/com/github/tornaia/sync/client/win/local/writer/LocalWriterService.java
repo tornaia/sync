@@ -10,7 +10,6 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
@@ -58,29 +57,9 @@ public class LocalWriterService {
         Path localFileAbsolutePath = getAbsolutePath(relativePath);
         boolean isDirectory = localFileAbsolutePath.toFile().isDirectory();
         if (isDirectory) {
-            boolean isDirectoryReadyForDeletion = true;
-            // TODO use streams
-            List<FileMetaInfo> itemsToDelete = remoteKnownState.getAllChildrenOrderedByPathLength(relativePath);
-            for (FileMetaInfo itemToDelete : itemsToDelete) {
-                File localFileToDelete = getAbsolutePath(itemToDelete.relativePath).toFile();
-                try {
-                    FileMetaInfo localFileMetaInfo = FileMetaInfo.createNonSyncedFileMetaInfo(userid, itemToDelete.relativePath, localFileToDelete);
-                    boolean localCopyIsSynced = localFileMetaInfo.equals(itemToDelete);
-                    if (localCopyIsSynced) {
-                        diskWriterService.delete(localFileToDelete.toPath());
-                    } else {
-                        LOG.info("Unsynced file found under the directory: " + localFileMetaInfo);
-                        isDirectoryReadyForDeletion = false;
-                        break;
-                    }
-                } catch (IOException e) {
-                    LOG.warn("Cannot delete file for some reason: " + e.getMessage());
-                    isDirectoryReadyForDeletion = false;
-                    break;
-                }
-            }
-            if (!isDirectoryReadyForDeletion) {
-                LOG.info("Directory wont be deleted. It has unsynced changes or locks: " + relativePath);
+            List<FileMetaInfo> itemsUnderDirectory = remoteKnownState.getAllChildrenOrderedByPathLength(relativePath);
+            if (!itemsUnderDirectory.isEmpty()) {
+                LOG.warn("Wont delete a non-empty directory: " + relativePath + "(" + itemsUnderDirectory + ")");
                 return false;
             }
         }
