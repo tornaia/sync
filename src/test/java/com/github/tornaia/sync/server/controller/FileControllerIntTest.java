@@ -93,10 +93,42 @@ public class FileControllerIntTest extends AbstractSyncServerIntTest {
         List<FileMetaInfo> modifiedFiles = fileController.getModifiedFiles(new GetModifiedFilesRequestBuilder().userid("userid").modTS(-1L).create());
         FileMetaInfo createdFile = fileController.getMetaInfo(modifiedFiles.get(0).id);
 
-        fileController.deleteFile(createdFile.id, "clientid");
+        DeleteFileRequest deleteFileRequest = new DeleteFileRequestBuilder()
+                .id(createdFile.id)
+                .size(4L)
+                .creationDateTime(1L)
+                .modificationDateTime(2L)
+                .create();
+        fileController.deleteFile(deleteFileRequest, "clientid");
 
         expectedException.expect(FileNotFoundException.class);
         fileController.getMetaInfo(createdFile.id);
+    }
+
+    @Test
+    public void deleteFileWhenRequesterIsInAsync() throws Exception {
+        MockMultipartFile file = new MockMultipartFile("test", "this.does.not.count.test.png", "image/png", "TEST".getBytes());
+
+        CreateFileRequest createFileRequest = new CreateFileRequestBuilder()
+                .userid("userid")
+                .relativePath("test.png")
+                .size(4L)
+                .creationDateTime(1L)
+                .modificationDateTime(2L)
+                .create();
+        fileController.postFile(createFileRequest, file, "clientid");
+
+        List<FileMetaInfo> modifiedFiles = fileController.getModifiedFiles(new GetModifiedFilesRequestBuilder().userid("userid").modTS(-1L).create());
+        FileMetaInfo createdFile = fileController.getMetaInfo(modifiedFiles.get(0).id);
+
+        DeleteFileRequest deleteFileRequest = new DeleteFileRequestBuilder()
+                .id(createdFile.id)
+                .size(5L)
+                .creationDateTime(1L)
+                .modificationDateTime(3L)
+                .create();
+        expectedException.expect(FileNotFoundException.class);
+        fileController.deleteFile(deleteFileRequest, "clientid");
     }
 
     @Test

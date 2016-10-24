@@ -1,5 +1,8 @@
 package com.github.tornaia.sync.server.data.document;
 
+import com.github.tornaia.sync.shared.constant.FileSystemConstants;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -30,6 +33,14 @@ public class File {
         this.size = size;
         this.creationDate = creationDate;
         this.lastModifiedDate = lastModifiedDate;
+    }
+
+    public boolean isFile() {
+        return !isDirectory();
+    }
+
+    public boolean isDirectory() {
+        return path.endsWith(FileSystemConstants.DIRECTORY_POSTFIX);
     }
 
     public String getFilename() {
@@ -82,5 +93,18 @@ public class File {
 
     public void setLastModifiedDate(long lastModifiedDate) {
         this.lastModifiedDate = lastModifiedDate;
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder("File", ToStringStyle.JSON_STYLE)
+                .append("File", "")
+                .append("id", id)
+                .append("userid", userid)
+                .append("path", path)
+                .append("size", size)
+                .append("creationDate", creationDate)
+                .append("lastModifiedDate", lastModifiedDate)
+                .toString();
     }
 }

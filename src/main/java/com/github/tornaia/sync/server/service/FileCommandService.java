@@ -82,12 +82,22 @@ public class FileCommandService {
         }
     }
 
-    public void deleteFile(String clientid, String id) {
+    public void deleteFile(String clientid, String id, long size, long creationDateTime, long modificationDateTime) {
         File file = fileRepository.findOne(id);
         if (file == null) {
-            LOG.info("DELETE not found file: " + id);
+            LOG.info("DELETE File not found: " + id);
             throw new FileNotFoundException(id);
         }
+
+        if (file.getSize() != size || file.getCreationDate() != creationDateTime) {
+            LOG.info("DELETE File attributes mismatch: " + file + ", vs: " + size + ", " + creationDateTime + ", " + modificationDateTime);
+            throw new FileNotFoundException(id);
+        }
+        if (file.isFile() && file.getLastModifiedDate() != modificationDateTime) {
+            LOG.info("DELETE File attributes mismatch: " + file + ", vs: " + size + ", " + creationDateTime + ", " + modificationDateTime);
+            throw new FileNotFoundException(id);
+        }
+
         String path = file.getPath();
         fileRepository.delete(file);
         FileMetaInfo deletedFileMetaInfo = fileToFileMetaInfoConverter.convert(file);

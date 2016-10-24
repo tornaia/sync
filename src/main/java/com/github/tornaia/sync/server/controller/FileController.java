@@ -5,10 +5,7 @@ import com.github.tornaia.sync.server.service.FileCommandService;
 import com.github.tornaia.sync.server.service.FileQueryService;
 import com.github.tornaia.sync.server.service.exception.FileAlreadyExistsException;
 import com.github.tornaia.sync.server.service.exception.FileNotFoundException;
-import com.github.tornaia.sync.shared.api.CreateFileRequest;
-import com.github.tornaia.sync.shared.api.FileMetaInfo;
-import com.github.tornaia.sync.shared.api.GetModifiedFilesRequest;
-import com.github.tornaia.sync.shared.api.UpdateFileRequest;
+import com.github.tornaia.sync.shared.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,9 +59,9 @@ public class FileController {
         return fileQueryService.getFileMetaInfoById(id);
     }
 
-    @RequestMapping(value = "/{id}", method = DELETE)
-    public void deleteFile(@PathVariable String id, @RequestParam("clientid") String clientid) throws IOException {
-        fileCommandService.deleteFile(clientid, id);
+    @RequestMapping(value = "/delete/{id}", method = POST)
+    public void deleteFile(@RequestPart("fileAttributes") DeleteFileRequest request, @RequestParam("clientid") String clientid) throws IOException {
+        fileCommandService.deleteFile(clientid, request.getId(), request.getSize(), request.getCreationDateTime(), request.getModificationDateTime());
     }
 
     @RequestMapping(value = "/{id}", method = GET, produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
