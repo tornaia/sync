@@ -91,10 +91,10 @@ public class RemoteWriterService {
                     LOG.info("Directory already is on disk. Attributes are different but wont update: " + optionalRemoteFileMetaInfo.get());
                     return true;
                 } else {
-                    LOG.error("RemoteFileMetaInfo does not exist but then how do we have a conflict for localFileMetaInfo: " + localFileMetaInfo);
+                    LOG.info("RemoteFileMetaInfo does not exist but then how do we have a conflict for localFileMetaInfo: " + localFileMetaInfo);
+                    return true;
                 }
             }
-            return false;
         }
 
         return false;
