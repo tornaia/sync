@@ -9,7 +9,6 @@ import com.github.tornaia.sync.shared.util.SerializerUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.ContentType;
@@ -143,24 +142,40 @@ public class RemoteRestCommandService {
             return FileModifyResponse.transferFailed(fileMetaInfo, e.getMessage());
         }
 
-        FileMetaInfo remoteFileMetaInfo;
-        try {
-            remoteFileMetaInfo = new ObjectMapper().readValue(entity.getContent(), FileMetaInfo.class);
-        } catch (IOException e) {
-            LOG.error("Ok response with a malformed response body?", e);
-            return FileModifyResponse.transferFailed(fileMetaInfo, e.getMessage());
-        }
+        FileMetaInfo remoteFileMetaInfo = serializerUtils.toObject(entity, FileMetaInfo.class);
 
         LOG.debug("Modified file: " + fileMetaInfo);
         return FileModifyResponse.ok(remoteFileMetaInfo);
     }
 
     public FileDeleteResponse onFileDelete(FileMetaInfo fileMetaInfo) {
-        HttpDelete httpDelete = new HttpDelete(httpClientProvider.getServerUrl() + backendFileApiPath + "/" + fileMetaInfo.id + "?clientid=" + clientidService.clientid);
+        DeleteFileRequest deleteFileRequest = new DeleteFileRequestBuilder()
+                .id(fileMetaInfo.id)
+                .size(fileMetaInfo.size)
+                .creationDateTime(fileMetaInfo.creationDateTime)
+                .modificationDateTime(fileMetaInfo.modificationDateTime)
+                .create();
+
+        HttpEntity multipart = MultipartEntityBuilder
+                .create()
+                .setCharset(StandardCharsets.UTF_8)
+                .setMode(HttpMultipartMode.BROWSER_COMPATIBLE)
+                .setContentType(ContentType.MULTIPART_FORM_DATA)
+                .addPart(generateJsonFormBodyPart("fileAttributes", serializerUtils.toJSON(deleteFileRequest)))
+                .build();
+
+        HttpPost httpPost = new HttpPost(httpClientProvider.getServerUrl() + backendFileApiPath + "/delete/" + fileMetaInfo.id + "?clientid=" + clientidService.clientid);
+        httpPost.setEntity(multipart);
+
         try {
-            HttpResponse response = httpClientProvider.get().execute(httpDelete);
+            HttpResponse response = httpClientProvider.get().execute(httpPost);
             HttpEntity entity = response.getEntity();
             EntityUtils.consume(entity);
+
+            if (Objects.equals(response.getStatusLine().getStatusCode(), HttpStatus.SC_NOT_FOUND)) {
+                EntityUtils.consume(entity);
+                return FileDeleteResponse.notFound(fileMetaInfo, "Servers does not know about this file");
+            }
         } catch (IOException e) {
             return FileDeleteResponse.transferFailed(fileMetaInfo, e.getMessage());
         }

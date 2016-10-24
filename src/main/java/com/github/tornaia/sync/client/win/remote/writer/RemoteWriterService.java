@@ -91,7 +91,7 @@ public class RemoteWriterService {
                     LOG.info("Directory already is on disk. Attributes are different but wont update: " + optionalRemoteFileMetaInfo.get());
                     return true;
                 } else {
-                    LOG.info("RemoteFileMetaInfo does not exist but then how do we have a conflict for localFileMetaInfo: " + localFileMetaInfo);
+                    LOG.info("RemoteFileMetaInfo does not exist but then how do we have a notFound for localFileMetaInfo: " + localFileMetaInfo);
                     return true;
                 }
             }
@@ -178,6 +178,13 @@ public class RemoteWriterService {
         boolean ok = Objects.equals(FileDeleteResponse.Status.OK, fileDeleteResponse.status);
         if (ok) {
             LOG.info("File deleted from server: " + fileMetaInfo);
+            remoteKnownState.remove(fileMetaInfo);
+            return true;
+        }
+
+        boolean notFound = Objects.equals(FileDeleteResponse.Status.NOT_FOUND, fileDeleteResponse.status);
+        if (notFound) {
+            LOG.info("File was not deleted from server. It knows nothing about this file: " + fileDeleteResponse.fileMetaInfo);
             remoteKnownState.remove(fileMetaInfo);
             return true;
         }
