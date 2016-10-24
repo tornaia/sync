@@ -165,7 +165,7 @@ public class LocalReaderService {
             LOG.debug("Size of pending events before adding possibly new local events to process: c/m/d " + createdEvents.size() + "/" + modifiedEvents.size() + "/" + deletedEvents.size());
             addNewCreatedEventsToTheBeginningOfTheCreatedEventsLinkedHashSet(newCreatedEvents);
             addNewModifiedEventsToTheBeginningOfTheModifiedEventsLinkedHashSet(newModifiedEvents);
-            addNewDeletedEventsToTheBeginningOfTheDeletedEventsLinkedHashSet(newDeletedEvents);
+            addNewDeletedEventsToTheEndOfTheDeletedEventsLinkedHashSet(newDeletedEvents);
             LOG.debug("Size of pending events after adding possibly new local events to process: c/m/d " + createdEvents.size() + "/" + modifiedEvents.size() + "/" + deletedEvents.size());
         }
     }
@@ -184,10 +184,9 @@ public class LocalReaderService {
         }
     }
 
-    private void addNewDeletedEventsToTheBeginningOfTheDeletedEventsLinkedHashSet(LinkedHashSet<LocalFileEvent> newDeletedEvents) {
+    private void addNewDeletedEventsToTheEndOfTheDeletedEventsLinkedHashSet(LinkedHashSet<LocalFileEvent> newDeletedEvents) {
         synchronized (this) {
-            newDeletedEvents.addAll(deletedEvents);
-            deletedEvents = newDeletedEvents;
+            deletedEvents.addAll(newDeletedEvents);
         }
     }
 
@@ -224,9 +223,9 @@ public class LocalReaderService {
     }
 
     private void addNewDeletedEvent(FileDeleteEvent fileDeleteEvent) {
-        LinkedHashSet<LocalFileEvent> set = new LinkedHashSet<>();
-        set.add(fileDeleteEvent);
-        addNewDeletedEventsToTheBeginningOfTheDeletedEventsLinkedHashSet(set);
+        synchronized (this) {
+            deletedEvents.add(fileDeleteEvent);
+        }
     }
 
     private Set<LocalFileEvent> getNewOrModifiedChangeList(Path root) {
