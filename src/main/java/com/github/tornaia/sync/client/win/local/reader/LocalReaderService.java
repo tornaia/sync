@@ -65,7 +65,7 @@ public class LocalReaderService {
         watchService.close();
     }
 
-    public void startDiskWatch() throws IOException {
+    private void startDiskWatch() throws IOException {
         this.watchService = FileSystems.getDefault().newWatchService();
         this.syncDirectory = FileSystems.getDefault().getPath(directoryPath);
         Files.createDirectories(syncDirectory);
