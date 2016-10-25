@@ -94,20 +94,20 @@ public class FileControllerTest {
     @Test
     public void getIfFileDoesNotExist() throws Exception {
         doThrow(FileNotFoundException.class)
-                .when(fileQueryService).getFileById("12");
+                .when(fileQueryService).getFileById("1000", "12");
 
         mvc.perform(
-                get("/api/files/12"))
+                get("/api/files/12?userid=1000"))
                 .andExpect(status().isNotFound());
     }
 
     @Test
     public void getIfMetaInfoDoesNotExist() throws Exception {
         doThrow(FileNotFoundException.class)
-                .when(fileQueryService).getFileMetaInfoById("12");
+                .when(fileQueryService).getFileMetaInfoById("1000", "12");
 
         mvc.perform(
-                get("/api/files/12/metaInfo"))
+                get("/api/files/12/metaInfo?userid=1000"))
                 .andExpect(status().isNotFound());
     }
 }

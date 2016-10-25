@@ -31,7 +31,7 @@ public class FileControllerIntTest extends AbstractSyncServerIntTest {
         fileController.postFile(createFileRequest, file, "clientid");
 
         List<FileMetaInfo> modifiedFiles = fileController.getModifiedFiles(new GetModifiedFilesRequestBuilder().userid("userid").modTS(-1L).create());
-        FileMetaInfo result = fileController.getMetaInfo(modifiedFiles.get(0).id);
+        FileMetaInfo result = fileController.getMetaInfo(modifiedFiles.get(0).id, "userid");
 
         FileMetaInfoMatcher expected = new FileMetaInfoMatcher()
                 .relativePath("test.png")
@@ -55,7 +55,7 @@ public class FileControllerIntTest extends AbstractSyncServerIntTest {
         fileController.postFile(createFileRequest, file, "clientid");
 
         List<FileMetaInfo> modifiedFiles = fileController.getModifiedFiles(new GetModifiedFilesRequestBuilder().userid("userid").modTS(-1L).create());
-        FileMetaInfo fileMetaInfo = fileController.getMetaInfo(modifiedFiles.get(0).id);
+        FileMetaInfo fileMetaInfo = fileController.getMetaInfo(modifiedFiles.get(0).id, "userid");
 
         MockMultipartFile updatedFile = new MockMultipartFile("test", "test.png", "image/png", "TEST2".getBytes());
 
@@ -91,10 +91,11 @@ public class FileControllerIntTest extends AbstractSyncServerIntTest {
         fileController.postFile(createFileRequest, file, "clientid");
 
         List<FileMetaInfo> modifiedFiles = fileController.getModifiedFiles(new GetModifiedFilesRequestBuilder().userid("userid").modTS(-1L).create());
-        FileMetaInfo createdFile = fileController.getMetaInfo(modifiedFiles.get(0).id);
+        FileMetaInfo createdFile = fileController.getMetaInfo(modifiedFiles.get(0).id, "userid");
 
         DeleteFileRequest deleteFileRequest = new DeleteFileRequestBuilder()
                 .id(createdFile.id)
+                .userid("userid")
                 .size(4L)
                 .creationDateTime(1L)
                 .modificationDateTime(2L)
@@ -102,7 +103,7 @@ public class FileControllerIntTest extends AbstractSyncServerIntTest {
         fileController.deleteFile(deleteFileRequest, "clientid");
 
         expectedException.expect(FileNotFoundException.class);
-        fileController.getMetaInfo(createdFile.id);
+        fileController.getMetaInfo("userid", createdFile.id);
     }
 
     @Test
@@ -119,10 +120,11 @@ public class FileControllerIntTest extends AbstractSyncServerIntTest {
         fileController.postFile(createFileRequest, file, "clientid");
 
         List<FileMetaInfo> modifiedFiles = fileController.getModifiedFiles(new GetModifiedFilesRequestBuilder().userid("userid").modTS(-1L).create());
-        FileMetaInfo createdFile = fileController.getMetaInfo(modifiedFiles.get(0).id);
+        FileMetaInfo createdFile = fileController.getMetaInfo(modifiedFiles.get(0).id, "userid");
 
         DeleteFileRequest deleteFileRequest = new DeleteFileRequestBuilder()
                 .id(createdFile.id)
+                .userid("userid")
                 .size(5L)
                 .creationDateTime(1L)
                 .modificationDateTime(3L)

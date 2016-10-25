@@ -4,7 +4,7 @@ public class FileNotFoundException extends RuntimeException {
 
     private static final long serialVersionUID = 1L;
 
-    public FileNotFoundException(String path) {
-        super("Could not find file: " + path);
+    public FileNotFoundException(String userid, String id) {
+        super("Could not find file! userid: " + userid + ", id: " + id);
     }
 }

@@ -35,15 +35,15 @@ public class FileQueryService {
         return fileList.stream().map(fileToFileMetaInfoConverter::convert).collect(toList());
     }
 
-    public FileMetaInfo getFileMetaInfoById(String id) {
-        File file = getFileById(id);
+    public FileMetaInfo getFileMetaInfoById(String userid, String id) {
+        File file = getFileById(userid, id);
         return fileToFileMetaInfoConverter.convert(file);
     }
 
-    public File getFileById(String id) {
-        File file = fileRepository.findOne(id);
+    public File getFileById(String userid, String id) {
+        File file = fileRepository.findByUseridAndId(userid, id);
         if (file == null) {
-            throw new FileNotFoundException(id);
+            throw new FileNotFoundException(userid, id);
         }
 
         return file;

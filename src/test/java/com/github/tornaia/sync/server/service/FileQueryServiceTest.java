@@ -76,17 +76,17 @@ public class FileQueryServiceTest {
 
     @Test
     public void getFileByIdIfFileNotFound() {
-        when(fileRepository.findOne("")).thenReturn(null);
+        when(fileRepository.findByUseridAndId("", "")).thenReturn(null);
 
         expectedException.expect(FileNotFoundException.class);
-        fileQueryService.getFileById("");
+        fileQueryService.getFileById("", "");
     }
 
     @Test
     public void getMetaInfoByIdIfFileNotFound() {
-        when(fileRepository.findOne("")).thenReturn(null);
+        when(fileRepository.findByUseridAndId("userid", "id")).thenReturn(null);
 
         expectedException.expect(FileNotFoundException.class);
-        fileQueryService.getFileMetaInfoById("");
+        fileQueryService.getFileMetaInfoById("userid", "id");
     }
 }

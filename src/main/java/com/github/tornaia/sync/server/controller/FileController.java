@@ -3,6 +3,7 @@ package com.github.tornaia.sync.server.controller;
 import com.github.tornaia.sync.server.data.document.File;
 import com.github.tornaia.sync.server.service.FileCommandService;
 import com.github.tornaia.sync.server.service.FileQueryService;
+import com.github.tornaia.sync.server.service.exception.DirectoryNotEmptyException;
 import com.github.tornaia.sync.server.service.exception.FileAlreadyExistsException;
 import com.github.tornaia.sync.server.service.exception.FileNotFoundException;
 import com.github.tornaia.sync.shared.api.*;
@@ -55,18 +56,18 @@ public class FileController {
 
     @RequestMapping(value = "/{id}", method = PUT)
     public FileMetaInfo putFile(@PathVariable String id, @RequestPart("fileAttributes") UpdateFileRequest request, @RequestPart(value = "file", required = false) MultipartFile multipartFile, @RequestParam("clientid") String clientid) throws IOException {
-        fileCommandService.modifyFile(clientid, id, request.getSize(), request.getCreationDateTime(), request.getModificationDateTime(), multipartFile == null ? null : multipartFile.getInputStream());
-        return fileQueryService.getFileMetaInfoById(id);
+        fileCommandService.modifyFile(clientid, request.getUserid(), id, request.getSize(), request.getCreationDateTime(), request.getModificationDateTime(), multipartFile == null ? null : multipartFile.getInputStream());
+        return fileQueryService.getFileMetaInfoById(request.getUserid(), id);
     }
 
     @RequestMapping(value = "/delete/{id}", method = POST)
     public void deleteFile(@RequestPart("fileAttributes") DeleteFileRequest request, @RequestParam("clientid") String clientid) throws IOException {
-        fileCommandService.deleteFile(clientid, request.getId(), request.getSize(), request.getCreationDateTime(), request.getModificationDateTime());
+        fileCommandService.deleteFile(clientid, request.getUserid(), request.getId(), request.getSize(), request.getCreationDateTime(), request.getModificationDateTime());
     }
 
     @RequestMapping(value = "/{id}", method = GET, produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-    public ResponseEntity getFile(@PathVariable String id) throws IOException {
-        File file = fileQueryService.getFileById(id);
+    public ResponseEntity getFile(@PathVariable String id, @RequestParam("userid") String userid) throws IOException {
+        File file = fileQueryService.getFileById(userid, id);
         long size = file.getSize();
         String filename = file.getFilename();
         HttpHeaders responseHeaders = new HttpHeaders();
@@ -80,8 +81,8 @@ public class FileController {
     }
 
     @RequestMapping(value = "/{id}/metaInfo", method = GET)
-    public FileMetaInfo getMetaInfo(@PathVariable String id) throws IOException {
-        return fileQueryService.getFileMetaInfoById(id);
+    public FileMetaInfo getMetaInfo(@PathVariable String id, @RequestParam("userid") String userid) throws IOException {
+        return fileQueryService.getFileMetaInfoById(userid, id);
     }
 
     @ResponseStatus(value = NOT_FOUND, reason = "File was not found")
@@ -92,5 +93,10 @@ public class FileController {
     @ResponseStatus(value = CONFLICT, reason = "File already exists")
     @ExceptionHandler({FileAlreadyExistsException.class})
     private void convertFileAlreadyExistsExceptionTo409(FileAlreadyExistsException e) {
+    }
+
+    @ResponseStatus(value = CONFLICT, reason = "Directory is not empty")
+    @ExceptionHandler({DirectoryNotEmptyException.class})
+    private void convertDirectoryNotEmptyExceptionTo409(DirectoryNotEmptyException e) {
     }
 }

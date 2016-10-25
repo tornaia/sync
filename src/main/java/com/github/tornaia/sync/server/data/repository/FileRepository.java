@@ -13,4 +13,9 @@ public interface FileRepository extends MongoRepository<File, String> {
 
     @Query("{$and: [{'userid' : ?0}, {'lastModifiedDate' : {$gt : ?1}}] }")
     List<File> findByUseridAndLastModifiedDateAfter(String userid, long lastModifiedDate);
+
+    @Query("{'userid' : ?0, 'path' : {'$regex' : '^?1', '$options' : 'i'} }")
+    List<File> findByUseridAndPathStartsWith(String userid, String path);
+
+    File findByUseridAndId(String userid, String id);
 }

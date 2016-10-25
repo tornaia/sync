@@ -3,11 +3,13 @@ package com.github.tornaia.sync.server.service;
 import com.github.tornaia.sync.server.data.converter.FileToFileMetaInfoConverter;
 import com.github.tornaia.sync.server.data.document.File;
 import com.github.tornaia.sync.server.data.repository.FileRepository;
+import com.github.tornaia.sync.server.service.exception.DirectoryNotEmptyException;
 import com.github.tornaia.sync.server.service.exception.FileAlreadyExistsException;
 import com.github.tornaia.sync.server.service.exception.FileNotFoundException;
 import com.github.tornaia.sync.server.websocket.SyncWebSocketHandler;
 import com.github.tornaia.sync.shared.api.FileMetaInfo;
 import com.github.tornaia.sync.shared.api.RemoteFileEvent;
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,9 +19,11 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import static com.github.tornaia.sync.shared.api.RemoteEventType.*;
 import static com.github.tornaia.sync.shared.constant.FileSystemConstants.DIRECTORY_POSTFIX;
+import static com.github.tornaia.sync.shared.constant.FileSystemConstants.DOT_FILENAME;
 
 @Service
 public class FileCommandService {
@@ -62,14 +66,15 @@ public class FileCommandService {
         return fileMetaInfo;
     }
 
-    public void modifyFile(String clientid, String id, long size, long creationDateTime, long modificationDateTime, InputStream content) throws IOException {
+    public void modifyFile(String clientid, String userid, String id, long size, long creationDateTime, long modificationDateTime, InputStream content) throws IOException {
         if (content == null && size != 0L) {
             throw new IllegalStateException("When content is NULL then the file is a directory so the size must be zero. Content: " + content + ", size: " + size);
         }
-        File file = fileRepository.findOne(id);
+
+        File file = fileRepository.findByUseridAndId(userid, id);
         if (file == null) {
-            LOG.warn("MODIFY Not found file: " + id);
-            throw new FileNotFoundException(id);
+            LOG.warn("MODIFY Not found file! userid: " + userid + ", id: " + id);
+            throw new FileNotFoundException(userid, id);
         } else {
             file.setCreationDate(creationDateTime);
             file.setLastModifiedDate(modificationDateTime);
@@ -82,24 +87,33 @@ public class FileCommandService {
         }
     }
 
-    public void deleteFile(String clientid, String id, long size, long creationDateTime, long modificationDateTime) {
-        File file = fileRepository.findOne(id);
+    public void deleteFile(String clientid, String userid, String id, long size, long creationDateTime, long modificationDateTime) {
+        File file = fileRepository.findByUseridAndId(userid, id);
         if (file == null) {
             LOG.warn("DELETE File not found: " + id);
-            throw new FileNotFoundException(id);
+            throw new FileNotFoundException(userid, id);
         }
 
         if (file.getSize() != size || file.getCreationDate() != creationDateTime) {
             LOG.warn("DELETE File attributes mismatch: " + file + ", vs: " + size + ", " + creationDateTime + ", " + modificationDateTime);
-            throw new FileNotFoundException(id);
+            throw new FileNotFoundException(userid, id);
         }
         if (file.isFile() && file.getLastModifiedDate() != modificationDateTime) {
             LOG.warn("DELETE File attributes mismatch: " + file + ", vs: " + size + ", " + creationDateTime + ", " + modificationDateTime);
-            throw new FileNotFoundException(id);
+            throw new FileNotFoundException(userid, id);
         }
 
-        // FIXME if file is a directory then add a check whether it is really empty: there is no file or another directory under it so do not rely only on the client's logic. Master must keep data (as) consistent (as possible)
-        // this all stuff should be somehow atomic per user
+        if (file.isDirectory()) {
+            String directoryPathWithPostfix = file.getPath();
+            String directoryPath = directoryPathWithPostfix.substring(0, directoryPathWithPostfix.length() - DOT_FILENAME.length());
+            String directoryPathEscapedForRegex = Pattern.quote(directoryPath);
+            String directoryPathFullyEscaped = StringEscapeUtils.escapeJava(directoryPathEscapedForRegex);
+            List<File> filesUnderThisDirectory = fileRepository.findByUseridAndPathStartsWith(userid, directoryPathFullyEscaped);
+            if (filesUnderThisDirectory.size() > 1) {
+                LOG.warn("DELETE Directory is not empty: " + directoryPath + ", files under it: " + filesUnderThisDirectory);
+                throw new DirectoryNotEmptyException(directoryPath);
+            }
+        }
 
         String path = file.getPath();
         fileRepository.delete(file);
