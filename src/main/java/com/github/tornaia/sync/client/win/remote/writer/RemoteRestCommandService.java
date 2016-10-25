@@ -151,6 +151,7 @@ public class RemoteRestCommandService {
     public FileDeleteResponse onFileDelete(FileMetaInfo fileMetaInfo) {
         DeleteFileRequest deleteFileRequest = new DeleteFileRequestBuilder()
                 .id(fileMetaInfo.id)
+                .userid(userid)
                 .size(fileMetaInfo.size)
                 .creationDateTime(fileMetaInfo.creationDateTime)
                 .modificationDateTime(fileMetaInfo.modificationDateTime)
@@ -175,6 +176,11 @@ public class RemoteRestCommandService {
             if (Objects.equals(response.getStatusLine().getStatusCode(), HttpStatus.SC_NOT_FOUND)) {
                 EntityUtils.consume(entity);
                 return FileDeleteResponse.notFound(fileMetaInfo, "Servers does not know about this file");
+            }
+
+            if (Objects.equals(response.getStatusLine().getStatusCode(), HttpStatus.SC_CONFLICT)) {
+                EntityUtils.consume(entity);
+                return FileDeleteResponse.conflict(fileMetaInfo, "Servers does not allow to delete this file");
             }
         } catch (IOException e) {
             return FileDeleteResponse.transferFailed(fileMetaInfo, e.getMessage());

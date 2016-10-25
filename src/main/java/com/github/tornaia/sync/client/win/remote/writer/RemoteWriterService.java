@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -168,12 +169,21 @@ public class RemoteWriterService {
 
         FileMetaInfo fileMetaInfo = optionalRemoteFileMetaInfo.get();
 
-        boolean localFileExistWithThisRelativePath = getAbsolutePath(relativePath).toFile().exists();
+        File localFile = getAbsolutePath(relativePath).toFile();
+        boolean localFileExistWithThisRelativePath = localFile.exists();
         if (localFileExistWithThisRelativePath) {
             LOG.info("Do not delete a file on server that exists on disk: " + fileMetaInfo);
             return true;
         }
-        // FIXME here app should delete folders subfolders and subfiles recursively start with the leaves.
+
+        if (fileMetaInfo.isDirectory()) {
+            List<FileMetaInfo> allFilesUnderRelativePath = remoteKnownState.getAllChildrenOrderedByPathLength(fileMetaInfo.relativePath);
+            allFilesUnderRelativePath
+                    .stream()
+                    .map(fmi -> fmi.relativePath)
+                    .filter(rp -> !rp.equals(fileMetaInfo.relativePath))
+                    .forEachOrdered(this::deleteFile);
+        }
 
         FileDeleteResponse fileDeleteResponse = remoteRestCommandService.onFileDelete(fileMetaInfo);
 
@@ -189,6 +199,13 @@ public class RemoteWriterService {
             LOG.info("File was not deleted from server. It knows nothing about this file: " + fileDeleteResponse.fileMetaInfo);
             remoteKnownState.remove(fileMetaInfo);
             return true;
+        }
+
+        boolean conflict = Objects.equals(FileDeleteResponse.Status.CONFLICT, fileDeleteResponse.status);
+        if (conflict) {
+            LOG.warn("File was not deleted from server. It knows nothing about this file: " + fileDeleteResponse.fileMetaInfo);
+            remoteKnownState.remove(fileMetaInfo);
+            return false;
         }
 
         return false;
