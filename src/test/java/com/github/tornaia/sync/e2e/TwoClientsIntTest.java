@@ -394,4 +394,27 @@ public class TwoClientsIntTest extends AbstractIntTest {
                         new FileMatcher(client2.syncDirectory).relativePath("file-directory_conflict_9_300_400").content("whatever1").creationTime(300L).lastModifiedTime(400L)
                 ));
     }
+
+    @Test
+    @Repeat(REPEAT)
+    public void emptyDirectoryIsNotLost() throws Exception {
+        Client client1 = initClient(userid);
+        Client client2 = initClient(userid);
+
+        createFile(client1.syncDirectory.resolve("directory").resolve("file.txt"), "content", 1476000000000L, 1476900000000L);
+        client1.start();
+        deleteFile(client1.syncDirectory.resolve("directory").resolve("file.txt"));
+        waitForSyncDone();
+        client2.start();
+        waitForSyncDone();
+
+        assertThat(asList(client1.syncDirectory.toFile().listFiles()),
+                contains(
+                        new DirectoryMatcher(client1.syncDirectory).relativePath("directory")
+                ));
+        assertThat(asList(client2.syncDirectory.toFile().listFiles()),
+                contains(
+                        new DirectoryMatcher(client2.syncDirectory).relativePath("directory")
+                ));
+    }
 }
