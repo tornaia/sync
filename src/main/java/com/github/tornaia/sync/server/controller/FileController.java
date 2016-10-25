@@ -72,7 +72,7 @@ public class FileController {
         String filename = file.getFilename();
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.add(CONTENT_DISPOSITION, "attachment; filename=" + filename);
-        LOG.info("GET file: " + file.getPath());
+        LOG.info("GET file: " + file.getRelativePath());
         InputStream content = fileQueryService.getContent(id);
 
         InputStreamResource inputStreamResource = new InputStreamResource(content);

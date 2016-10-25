@@ -104,7 +104,7 @@ public class FileCommandService {
         }
 
         if (file.isDirectory()) {
-            String directoryPathWithPostfix = file.getPath();
+            String directoryPathWithPostfix = file.getRelativePath();
             String directoryPath = directoryPathWithPostfix.substring(0, directoryPathWithPostfix.length() - DOT_FILENAME.length());
             String directoryPathEscapedForRegex = Pattern.quote(directoryPath);
             String directoryPathFullyEscaped = StringEscapeUtils.escapeJava(directoryPathEscapedForRegex);
@@ -115,7 +115,7 @@ public class FileCommandService {
             }
         }
 
-        String path = file.getPath();
+        String path = file.getRelativePath();
         fileRepository.delete(file);
         FileMetaInfo deletedFileMetaInfo = fileToFileMetaInfoConverter.convert(file);
         s3Service.deleteFile(deletedFileMetaInfo);

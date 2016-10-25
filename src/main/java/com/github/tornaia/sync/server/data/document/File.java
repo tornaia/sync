@@ -16,7 +16,7 @@ public class File {
 
     private String userid;
 
-    private String path;
+    private String relativePath;
 
     private long size;
 
@@ -27,9 +27,9 @@ public class File {
     public File() {
     }
 
-    public File(String userid, String path, long size, long creationDate, long lastModifiedDate) {
+    public File(String userid, String relativePath, long size, long creationDate, long lastModifiedDate) {
         this.userid = userid;
-        this.path = path;
+        this.relativePath = relativePath;
         this.size = size;
         this.creationDate = creationDate;
         this.lastModifiedDate = lastModifiedDate;
@@ -40,11 +40,11 @@ public class File {
     }
 
     public boolean isDirectory() {
-        return path.endsWith(FileSystemConstants.DIRECTORY_POSTFIX);
+        return relativePath.endsWith(FileSystemConstants.DIRECTORY_POSTFIX);
     }
 
     public String getFilename() {
-        return Paths.get(path).getFileName().toString();
+        return Paths.get(relativePath).getFileName().toString();
     }
 
     public String getId() {
@@ -63,12 +63,12 @@ public class File {
         this.userid = userid;
     }
 
-    public String getPath() {
-        return path;
+    public String getRelativePath() {
+        return relativePath;
     }
 
-    public void setPath(String path) {
-        this.path = path;
+    public void setRelativePath(String relativePath) {
+        this.relativePath = relativePath;
     }
 
     public long getSize() {
@@ -101,7 +101,7 @@ public class File {
                 .append("File", "")
                 .append("id", id)
                 .append("userid", userid)
-                .append("path", path)
+                .append("relativePath", relativePath)
                 .append("size", size)
                 .append("creationDate", creationDate)
                 .append("lastModifiedDate", lastModifiedDate)
