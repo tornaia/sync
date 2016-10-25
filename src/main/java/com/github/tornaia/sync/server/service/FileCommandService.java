@@ -98,6 +98,9 @@ public class FileCommandService {
             throw new FileNotFoundException(id);
         }
 
+        // FIXME if file is a directory then add a check whether it is really empty: there is no file or another directory under it so do not rely only on the client's logic. Master must keep data (as) consistent (as possible)
+        // this all stuff should be somehow atomic per user
+
         String path = file.getPath();
         fileRepository.delete(file);
         FileMetaInfo deletedFileMetaInfo = fileToFileMetaInfoConverter.convert(file);
