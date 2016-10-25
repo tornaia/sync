@@ -8,7 +8,7 @@ import java.util.List;
 
 public interface FileRepository extends MongoRepository<File, String> {
 
-    @Query("{'userid' : ?0, 'path' : ?1, }")
+    @Query("{'userid' : ?0, 'path' : ?1 }")
     File findByUseridAndPath(String userid, String path);
 
     @Query("{$and: [{'userid' : ?0}, {'lastModifiedDate' : {$gt : ?1}}] }")
