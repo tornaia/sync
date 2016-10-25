@@ -3,6 +3,7 @@ package com.github.tornaia.sync.shared.api;
 public class DeleteFileRequest extends AbstractRequest {
 
     private String id;
+    private String userid;
     private long size;
     private long creationDateTime;
     private long modificationDateTime;
@@ -13,6 +14,14 @@ public class DeleteFileRequest extends AbstractRequest {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public String getUserid() {
+        return userid;
+    }
+
+    public void setUserid(String userid) {
+        this.userid = userid;
     }
 
     public long getSize() {
