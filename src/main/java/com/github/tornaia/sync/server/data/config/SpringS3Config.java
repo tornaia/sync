@@ -48,7 +48,6 @@ public class SpringS3Config {
 
     @Bean
     public AmazonS3 s3Client() {
-        LOG.info("vcapServices: " + vcapServices);
         boolean isCloud = vcapServices != null;
 
         AmazonS3 s3Client;
@@ -65,7 +64,6 @@ public class SpringS3Config {
 
     private AmazonS3 initCloud() {
         LOG.info("We are in cloud. Init S3 for Cloud!");
-        LOG.trace("vcapServices: " + vcapServices);
         Map<String, Object> vcapServicesMap = serializerUtils.toObject(vcapServices, Map.class);
         List<Map<String, Object>> dynstrgList = (List<Map<String, Object>>) vcapServicesMap.get("dynstrg");
         Map<String, Object> s3StorageFirstMap = dynstrgList.get(0);
