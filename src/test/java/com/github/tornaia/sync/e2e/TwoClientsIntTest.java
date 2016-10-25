@@ -417,4 +417,48 @@ public class TwoClientsIntTest extends AbstractIntTest {
                         new DirectoryMatcher(client2.syncDirectory).relativePath("directory")
                 ));
     }
+
+    @Test
+    @Repeat(REPEAT)
+    public void lowerUppercaseDifferenceIgnoredOnRename() throws Exception {
+        Client client1 = initClient(userid).start();
+        Client client2 = initClient(userid).start();
+
+        createFile(client1.syncDirectory.resolve("file.txt"), "content", 1476000000000L, 1476900000000L);
+        waitForSyncDone();
+        renameFile(client1.syncDirectory.resolve("file.txt"), "FILE.TXT");
+        waitForSyncDone();
+
+        assertThat(asList(client1.syncDirectory.toFile().listFiles()),
+                contains(
+                        new FileMatcher(client1.syncDirectory).relativePath("FILE.TXT").content("content").creationTime(1476000000000L)
+                ));
+        assertThat(asList(client2.syncDirectory.toFile().listFiles()),
+                contains(
+                        new FileMatcher(client2.syncDirectory).relativePath("file.txt").content("content").creationTime(1476000000000L)
+                ));
+    }
+
+    @Test
+    @Repeat(REPEAT)
+    public void lowerUppercaseDifferenceIgnoredOnModification() throws Exception {
+        Client client1 = initClient(userid).start();
+        Client client2 = initClient(userid).start();
+
+        createFile(client1.syncDirectory.resolve("file.txt"), "content", 1476000000000L, 1476900000000L);
+        waitForSyncDone();
+        renameFile(client1.syncDirectory.resolve("file.txt"), "FILE.TXT");
+        waitForSyncDone();
+        modifyContent(client1.syncDirectory.resolve("FILE.TXT"), "content2");
+        waitForSyncDone();
+
+        assertThat(asList(client1.syncDirectory.toFile().listFiles()),
+                contains(
+                        new FileMatcher(client1.syncDirectory).relativePath("FILE.TXT").content("content2").creationTime(1476000000000L)
+                ));
+        assertThat(asList(client2.syncDirectory.toFile().listFiles()),
+                contains(
+                        new FileMatcher(client2.syncDirectory).relativePath("FILE.TXT").content("content2").creationTime(1476000000000L)
+                ));
+    }
 }

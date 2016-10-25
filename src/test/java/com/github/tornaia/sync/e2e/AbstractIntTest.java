@@ -19,9 +19,7 @@ import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -175,6 +173,17 @@ public abstract class AbstractIntTest {
 
         path.toFile().getParentFile().mkdirs();
         Files.move(tempFile, path, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+    }
+
+
+    protected void renameFile(Path path, String newName) throws IOException {
+        path.toFile().renameTo(path.getParent().resolve(newName).toFile());
+    }
+
+    protected void modifyContent(Path path, String newContent) throws IOException {
+        try (Writer w = new FileWriter(path.toFile())) {
+            IOUtils.write(newContent, w);
+        }
     }
 
     protected void setCreationTimeAndModifiedTime(Path path, long creationTime, long lastModifiedTime) throws IOException {
