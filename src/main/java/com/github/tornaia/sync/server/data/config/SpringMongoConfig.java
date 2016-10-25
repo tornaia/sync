@@ -45,7 +45,6 @@ public class SpringMongoConfig extends AbstractMongoConfiguration {
     @Bean
     @Override
     public Mongo mongo() throws Exception {
-        LOG.info("vcapServices: " + vcapServices);
         boolean isCloud = vcapServices != null;
         boolean isFongo = "mongodb://fongo-so-dont-care/sync-database".equals(databaseUri);
         if (isCloud) {
@@ -59,7 +58,6 @@ public class SpringMongoConfig extends AbstractMongoConfiguration {
 
     private MongoClient initCloud() throws IOException {
         LOG.info("We are in cloud. Init Mongo for Cloud!");
-        LOG.trace("vcapServices: " + vcapServices);
         Map<String, Object> vcapServicesMap = serializerUtils.toObject(vcapServices, Map.class);
         List<Map<String, Object>> mongoDbList = (List<Map<String, Object>>) vcapServicesMap.get("mongodb");
         Map<String, Object> mongoDbFirstMap = mongoDbList.get(0);
