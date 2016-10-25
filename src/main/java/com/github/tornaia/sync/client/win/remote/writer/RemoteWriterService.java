@@ -173,6 +173,8 @@ public class RemoteWriterService {
             LOG.info("Do not delete a file on server that exists on disk: " + fileMetaInfo);
             return true;
         }
+        // FIXME here app should delete folders subfolders and subfiles recursively start with the leaves.
+
         FileDeleteResponse fileDeleteResponse = remoteRestCommandService.onFileDelete(fileMetaInfo);
 
         boolean ok = Objects.equals(FileDeleteResponse.Status.OK, fileDeleteResponse.status);
