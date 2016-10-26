@@ -3,6 +3,7 @@ package com.github.tornaia.sync.client.win.remote.reader;
 import com.github.tornaia.sync.client.win.httpclient.HttpClientProvider;
 import com.github.tornaia.sync.shared.api.FileMetaInfo;
 import org.apache.commons.io.IOUtils;
+import org.apache.http.ConnectionClosedException;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -53,8 +54,8 @@ public class RemoteRestQueryService {
             }
 
             return FileGetResponse.transferFailed(fileMetaInfo, "Transfer failed: " + statusCode);
-        } catch (SocketException e) {
-            return FileGetResponse.transferFailed(fileMetaInfo, "Transfer failed: " + HttpStatus.SC_REQUEST_TIMEOUT);
+        } catch (SocketException | ConnectionClosedException e) {
+            return FileGetResponse.transferFailed(fileMetaInfo, "Transfer failed: " + e.getMessage());
         } catch (IOException e) {
             throw new RuntimeException("Get from server failed", e);
         }
