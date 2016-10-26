@@ -25,7 +25,6 @@ import java.util.List;
 
 import static org.springframework.http.HttpHeaders.CONTENT_DISPOSITION;
 import static org.springframework.http.HttpStatus.CONFLICT;
-import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.web.bind.annotation.RequestMethod.*;
 
@@ -75,11 +74,14 @@ public class FileController {
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.add(CONTENT_DISPOSITION, "attachment; filename=" + filename);
         LOG.info("GET file: " + file.getRelativePath());
-        InputStream content = fileQueryService.getContent(id);
-
-        InputStreamResource inputStreamResource = new InputStreamResource(content);
-        responseHeaders.setContentLength(size);
-        return new ResponseEntity(inputStreamResource, responseHeaders, HttpStatus.OK);
+        try {
+            InputStream content = fileQueryService.getContent(id);
+            InputStreamResource inputStreamResource = new InputStreamResource(content);
+            responseHeaders.setContentLength(size);
+            return new ResponseEntity(inputStreamResource, responseHeaders, HttpStatus.OK);
+        } catch (DynamicStorageException e) {
+            return new ResponseEntity(responseHeaders, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @RequestMapping(value = "/{id}/metaInfo", method = GET)
@@ -87,23 +89,18 @@ public class FileController {
         return fileQueryService.getFileMetaInfoById(userid, id);
     }
 
-    @ResponseStatus(value = NOT_FOUND, reason = "File was not found")
+    @ResponseStatus(code = NOT_FOUND, reason = "File was not found")
     @ExceptionHandler({FileNotFoundException.class})
     private void convertFileNotFoundExceptionTo404(FileNotFoundException e) {
     }
 
-    @ResponseStatus(value = CONFLICT, reason = "File already exists")
+    @ResponseStatus(code = CONFLICT, reason = "File already exists")
     @ExceptionHandler({FileAlreadyExistsException.class})
     private void convertFileAlreadyExistsExceptionTo409(FileAlreadyExistsException e) {
     }
 
-    @ResponseStatus(value = CONFLICT, reason = "Directory is not empty")
+    @ResponseStatus(code = CONFLICT, reason = "Directory is not empty")
     @ExceptionHandler({DirectoryNotEmptyException.class})
     private void convertDirectoryNotEmptyExceptionTo409(DirectoryNotEmptyException e) {
-    }
-
-    @ResponseStatus(value = INTERNAL_SERVER_ERROR, reason = "DynamicStorage problem")
-    @ExceptionHandler({DynamicStorageException.class})
-    private void convertDynamicStorageExceptionTo500(DynamicStorageException e) {
     }
 }
