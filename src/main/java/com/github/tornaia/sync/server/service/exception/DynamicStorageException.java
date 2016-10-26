@@ -4,7 +4,7 @@ import com.amazonaws.AmazonClientException;
 
 public class DynamicStorageException extends RuntimeException {
 
-    public DynamicStorageException(AmazonClientException e) {
+    public DynamicStorageException(Exception e) {
         super(e);
     }
 }

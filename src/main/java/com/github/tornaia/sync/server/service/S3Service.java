@@ -5,12 +5,14 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.*;
 import com.github.tornaia.sync.server.service.exception.DynamicStorageException;
 import com.github.tornaia.sync.shared.api.FileMetaInfo;
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
 import java.io.InputStream;
 
 @Component
@@ -27,8 +29,12 @@ public class S3Service {
     public InputStream get(String id) {
         try {
             S3Object object = s3Client.getObject(new GetObjectRequest(bucketName, id));
-            return object.getObjectContent();
+            S3ObjectInputStream objectContent = object.getObjectContent();
+            return closeS3InputStreamAsFastAsPossible(objectContent);
         } catch (AmazonClientException e) {
+            LOG.warn("Communication problem with the dynamic storage", e);
+            throw new DynamicStorageException(e);
+        } catch (IOException e) {
             LOG.warn("Communication problem with the dynamic storage", e);
             throw new DynamicStorageException(e);
         }
@@ -54,5 +60,10 @@ public class S3Service {
             LOG.warn("Communication problem with the dynamic storage", e);
             throw new DynamicStorageException(e);
         }
+    }
+
+    // TODO write test... I hope it wont sit in the memory even for a single second...
+    private InputStream closeS3InputStreamAsFastAsPossible(S3ObjectInputStream objectContent) throws IOException {
+        return IOUtils.toBufferedInputStream(objectContent);
     }
 }

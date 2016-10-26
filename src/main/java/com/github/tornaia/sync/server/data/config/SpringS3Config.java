@@ -74,6 +74,11 @@ public class SpringS3Config {
 
         ClientConfiguration opts = new ClientConfiguration();
         opts.setSignerOverride("S3SignerType");
+        // TODO use properties (per profile)
+        opts.setConnectionTimeout(600000);
+        opts.setMaxConnections(50);
+        opts.setSocketTimeout(600000);
+        opts.setMaxErrorRetry(5);
 
         AmazonS3Client s3Client = new AmazonS3Client(new BasicAWSCredentials(accessKey, sharedSecret), opts);
         s3Client.setRegion(Region.getRegion(Regions.EU_CENTRAL_1));
