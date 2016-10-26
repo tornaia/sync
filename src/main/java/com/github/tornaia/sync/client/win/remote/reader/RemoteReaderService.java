@@ -101,6 +101,11 @@ public class RemoteReaderService {
         }
     }
 
+    public void reAddEvent(RemoteFileEvent remoteFileEvent) {
+        LOG.debug("External hint to re-add event: " + remoteFileEvent);
+        addNewEvent(remoteFileEvent);
+    }
+
     public void sendMessage(String message) {
         if (session == null) {
             LOG.warn("Message will not be sent because the WebSocket session has not been initialized yet: " + message);
