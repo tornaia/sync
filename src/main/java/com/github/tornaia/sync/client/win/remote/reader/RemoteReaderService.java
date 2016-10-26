@@ -128,10 +128,10 @@ public class RemoteReaderService {
         syncWebSocketReConnectService.reconnect();
     }
 
-    public byte[] getFile(FileMetaInfo fileMetaInfo) {
-        byte[] content = remoteRestQueryService.getFile(fileMetaInfo);
-        LOG.info("File read from server: " + fileMetaInfo);
-        return content;
+    public FileGetResponse getFile(FileMetaInfo fileMetaInfo) {
+        FileGetResponse fileGetResponse = remoteRestQueryService.getFile(fileMetaInfo);
+        LOG.info("File read from server: " + fileGetResponse.fileMetaInfo + " -> " + fileGetResponse.status);
+        return fileGetResponse;
     }
 
     private void addNewEvent(RemoteFileEvent remoteFileEvent) {
