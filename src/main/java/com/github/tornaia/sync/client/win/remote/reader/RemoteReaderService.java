@@ -62,7 +62,7 @@ public class RemoteReaderService {
     public void onMessage(String message) {
         LOG.debug("Received msg: " + message);
         if (Objects.equals("init-done", message)) {
-            LOG.info("Init done. Number of remote events to process c/m/d: " + createdEvents.size() + "/" + modifiedEvents.size() + "/" + deletedEvents.size());
+            LOG.info("Number of remote events to process c/m/d: " + createdEvents.size() + "/" + modifiedEvents.size() + "/" + deletedEvents.size());
             initDone = true;
             return;
         }
