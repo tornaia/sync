@@ -1,7 +1,9 @@
 package com.github.tornaia.sync.server.service;
 
+import com.amazonaws.AmazonClientException;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.*;
+import com.github.tornaia.sync.server.service.exception.DynamicStorageException;
 import com.github.tornaia.sync.shared.api.FileMetaInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,21 +25,34 @@ public class S3Service {
     private AmazonS3 s3Client;
 
     public InputStream get(String id) {
-        // TODO here sometimes AmazonClientException exception is thrown. What to send back to the sync clients?
-        S3Object object = s3Client.getObject(new GetObjectRequest(bucketName, id));
-        S3ObjectInputStream objectContent = object.getObjectContent();
-        return objectContent;
+        try {
+            S3Object object = s3Client.getObject(new GetObjectRequest(bucketName, id));
+            return object.getObjectContent();
+        } catch (AmazonClientException e) {
+            LOG.warn("Communication problem with the dynamic storage", e);
+            throw new DynamicStorageException(e);
+        }
     }
 
     public void putFile(FileMetaInfo fileMetaInfo, InputStream inputStream) {
         String keyName = fileMetaInfo.id;
         ObjectMetadata objectMetadata = new ObjectMetadata();
         objectMetadata.setContentLength(fileMetaInfo.size);
-        s3Client.putObject(new PutObjectRequest(bucketName, keyName, inputStream, objectMetadata));
+        try {
+            s3Client.putObject(new PutObjectRequest(bucketName, keyName, inputStream, objectMetadata));
+        } catch (AmazonClientException e) {
+            LOG.warn("Communication problem with the dynamic storage", e);
+            throw new DynamicStorageException(e);
+        }
     }
 
     public void deleteFile(FileMetaInfo fileMetaInfo) {
         String keyName = fileMetaInfo.id;
-        s3Client.deleteObject(new DeleteObjectRequest(bucketName, keyName));
+        try {
+            s3Client.deleteObject(new DeleteObjectRequest(bucketName, keyName));
+        } catch (AmazonClientException e) {
+            LOG.warn("Communication problem with the dynamic storage", e);
+            throw new DynamicStorageException(e);
+        }
     }
 }

@@ -4,6 +4,7 @@ import com.github.tornaia.sync.server.data.document.File;
 import com.github.tornaia.sync.server.service.FileCommandService;
 import com.github.tornaia.sync.server.service.FileQueryService;
 import com.github.tornaia.sync.server.service.exception.DirectoryNotEmptyException;
+import com.github.tornaia.sync.server.service.exception.DynamicStorageException;
 import com.github.tornaia.sync.server.service.exception.FileAlreadyExistsException;
 import com.github.tornaia.sync.server.service.exception.FileNotFoundException;
 import com.github.tornaia.sync.shared.api.*;
@@ -24,6 +25,7 @@ import java.util.List;
 
 import static org.springframework.http.HttpHeaders.CONTENT_DISPOSITION;
 import static org.springframework.http.HttpStatus.CONFLICT;
+import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.web.bind.annotation.RequestMethod.*;
 
@@ -98,5 +100,10 @@ public class FileController {
     @ResponseStatus(value = CONFLICT, reason = "Directory is not empty")
     @ExceptionHandler({DirectoryNotEmptyException.class})
     private void convertDirectoryNotEmptyExceptionTo409(DirectoryNotEmptyException e) {
+    }
+
+    @ResponseStatus(value = INTERNAL_SERVER_ERROR, reason = "DynamicStorage problem")
+    @ExceptionHandler({DynamicStorageException.class})
+    private void convertDynamicStorageExceptionTo500(DynamicStorageException e) {
     }
 }
