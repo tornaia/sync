@@ -24,6 +24,7 @@ public class S3Service {
     private AmazonS3 s3Client;
 
     public InputStream get(String id) {
+        // TODO here sometimes AmazonClientException exception is thrown. What to send back to the sync clients?
         S3Object object = s3Client.getObject(new GetObjectRequest(bucketName, id));
         S3ObjectInputStream objectContent = object.getObjectContent();
         return objectContent;
