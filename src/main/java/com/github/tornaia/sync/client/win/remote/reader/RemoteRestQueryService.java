@@ -45,7 +45,7 @@ public class RemoteRestQueryService {
             if (!ok) {
                 EntityUtils.consume(entity);
                 // FIXME introduce FileGetResponse (like FileDeleteResponse,FileCreateResponse,FileModifyResponse)...
-                throw new NotImplementedException("When servers is not available or something goes wrong (here) then the logic will break");
+                throw new NotImplementedException("When servers is not available or something goes wrong (here) then the logic might break");
             }
             // TODO here we have a memory limitation: redesign to use inputStream instead of byte[]. 5GB file failed here with OOM
             EntityUtils.consume(entity);
