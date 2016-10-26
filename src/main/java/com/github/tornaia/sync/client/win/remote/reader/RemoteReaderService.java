@@ -138,10 +138,10 @@ public class RemoteReaderService {
         synchronized (this) {
             switch (remoteFileEvent.eventType) {
                 case CREATED:
-                    createdEvents.add(remoteFileEvent);
+                    createdEvents.add(0, remoteFileEvent);
                     break;
                 case MODIFIED:
-                    modifiedEvents.add(remoteFileEvent);
+                    modifiedEvents.add(0, remoteFileEvent);
                     break;
                 case DELETED:
                     deletedEvents.add(remoteFileEvent);
