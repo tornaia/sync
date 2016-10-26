@@ -73,16 +73,16 @@ public class Engine {
 
         new Thread(() -> {
             while (!remoteReaderService.isInitDone()) {
-                LOG.trace("Engine init...");
+                LOG.trace("Processing of init messages started");
                 try {
                     Thread.sleep(250L);
                 } catch (InterruptedException e) {
-                    LOG.warn("Init terminated: " + e.getMessage());
+                    LOG.warn("Processing of init messages terminated: " + e.getMessage());
                 }
             }
 
             runInBackground();
-            LOG.info("Engine init finished");
+            LOG.info("Processing of init messages finished");
         }).start();
     }
 
