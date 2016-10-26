@@ -87,8 +87,8 @@ public class Engine {
     }
 
     private void runInBackground() {
-        LOG.info("Starting engine...");
         thread = new Thread(() -> {
+            LOG.info("Engine is running");
             while (contextIsRunning) {
                 Optional<RemoteFileEvent> remoteDeletedEvent = remoteReaderService.getNextDeleted();
                 if (remoteDeletedEvent.isPresent()) {
@@ -133,6 +133,7 @@ public class Engine {
                     LOG.warn("Run terminated: " + e.getMessage());
                 }
             }
+            LOG.info("Engine stopped");
         });
         thread.setDaemon(true);
         thread.setName(userid + "-" + directoryPath.substring(directoryPath.length() - 1) + "-Engine");
