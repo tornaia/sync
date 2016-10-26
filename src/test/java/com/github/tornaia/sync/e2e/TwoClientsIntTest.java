@@ -285,7 +285,7 @@ public class TwoClientsIntTest extends AbstractIntTest {
                 ));
         assertThat(asList(client2.syncDirectory.toFile().listFiles()),
                 contains(
-                        new DirectoryMatcher(client2.syncDirectory).relativePath("emptyDirectory").creationTime(1476000000000L)
+                        new DirectoryMatcher(client2.syncDirectory).relativePath("emptyDirectory").creationTime(1476000000000L).lastModifiedTime(1476900000000L)
                 ));
     }
 
