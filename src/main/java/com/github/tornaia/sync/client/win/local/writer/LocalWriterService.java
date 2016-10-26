@@ -38,13 +38,13 @@ public class LocalWriterService {
         syncDirectory = new File(directoryPath).toPath();
     }
 
-    public boolean write(FileMetaInfo fileMetaInfo, byte[] fileContent) {
+    public synchronized boolean write(FileMetaInfo fileMetaInfo, byte[] fileContent) {
         String relativePath = fileMetaInfo.relativePath;
         Path absolutePath = getAbsolutePath(relativePath);
         return diskWriterService.writeFileAtomically(absolutePath, fileContent, fileMetaInfo.creationDateTime, fileMetaInfo.modificationDateTime);
     }
 
-    public boolean replace(String relativePath, FileMetaInfo remoteFileMetaInfo, byte[] remoteFileContent) {
+    public synchronized boolean replace(String relativePath, FileMetaInfo remoteFileMetaInfo, byte[] remoteFileContent) {
         Path localFileAbsolutePath = getAbsolutePath(relativePath);
         Optional<Path> tempFileWithRemoteContent = diskWriterService.createTempFile(remoteFileContent, remoteFileMetaInfo.creationDateTime, remoteFileMetaInfo.modificationDateTime);
         if (!tempFileWithRemoteContent.isPresent()) {
@@ -53,7 +53,7 @@ public class LocalWriterService {
         return diskWriterService.moveFileAtomically(tempFileWithRemoteContent.get(), localFileAbsolutePath);
     }
 
-    public boolean delete(String relativePath) {
+    public synchronized boolean delete(String relativePath) {
         Path localFileAbsolutePath = getAbsolutePath(relativePath);
         boolean isDirectory = localFileAbsolutePath.toFile().isDirectory();
         if (isDirectory) {

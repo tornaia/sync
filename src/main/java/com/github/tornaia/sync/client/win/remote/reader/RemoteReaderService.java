@@ -77,10 +77,20 @@ public class RemoteReaderService {
         }
     }
 
-    public Optional<RemoteFileEvent> getNextCreated() {
+    public BulkRemoteFileCreatedEvent getNextCreated() {
+        BulkRemoteFileCreatedEvent bulkRemoteFileCreatedEvent = new BulkRemoteFileCreatedEvent();
         synchronized (this) {
-            return createdEvents.isEmpty() ? Optional.empty() : Optional.of(createdEvents.remove(0));
+            while (!createdEvents.isEmpty()) {
+                RemoteFileEvent remoteFileEvent = createdEvents.get(0);
+                boolean added = bulkRemoteFileCreatedEvent.add(remoteFileEvent);
+                if (added) {
+                    createdEvents.remove(remoteFileEvent);
+                } else {
+                    break;
+                }
+            }
         }
+        return bulkRemoteFileCreatedEvent;
     }
 
     public Optional<RemoteFileEvent> getNextModified() {

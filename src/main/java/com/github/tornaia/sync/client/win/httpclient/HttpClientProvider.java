@@ -19,6 +19,8 @@ public class HttpClientProvider {
     private final org.apache.http.client.HttpClient httpClient = HttpClientBuilder.
             create()
             .disableAutomaticRetries()
+            .setMaxConnPerRoute(20)
+            .setMaxConnTotal(20)
             .addInterceptorFirst(new FailOnErrorResponseInterceptor())
             .build();
 

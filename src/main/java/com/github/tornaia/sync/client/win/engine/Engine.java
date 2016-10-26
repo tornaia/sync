@@ -4,6 +4,7 @@ import com.github.tornaia.sync.client.win.local.reader.LocalFileEvent;
 import com.github.tornaia.sync.client.win.local.reader.LocalReaderService;
 import com.github.tornaia.sync.client.win.local.writer.LocalWriterService;
 import com.github.tornaia.sync.client.win.remote.RemoteKnownState;
+import com.github.tornaia.sync.client.win.remote.reader.BulkRemoteFileCreatedEvent;
 import com.github.tornaia.sync.client.win.remote.reader.FileGetResponse;
 import com.github.tornaia.sync.client.win.remote.reader.RemoteReaderService;
 import com.github.tornaia.sync.client.win.remote.writer.RemoteWriterService;
@@ -100,9 +101,11 @@ public class Engine {
                     handle(remoteModifiedEvent.get());
                     continue;
                 }
-                Optional<RemoteFileEvent> remoteCreatedEvent = remoteReaderService.getNextCreated();
-                if (remoteCreatedEvent.isPresent()) {
-                    handle(remoteCreatedEvent.get());
+                BulkRemoteFileCreatedEvent remoteCreatedEvents = remoteReaderService.getNextCreated();
+                if (!remoteCreatedEvents.createEvents.isEmpty()) {
+                    remoteCreatedEvents.createEvents.stream()
+                            .parallel()
+                            .forEach(rfe -> handle(rfe));
                     continue;
                 }
 
