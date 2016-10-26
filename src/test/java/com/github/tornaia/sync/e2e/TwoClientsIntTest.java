@@ -461,4 +461,38 @@ public class TwoClientsIntTest extends AbstractIntTest {
                         new FileMatcher(client2.syncDirectory).relativePath("FILE.TXT").content("content2").creationTime(1476000000000L)
                 ));
     }
+
+    @Test
+    @Repeat(REPEAT)
+    public void lowerUppercaseFileDeletionOneWay() throws Exception {
+        Client client1 = initClient(userid).start();
+        Client client2 = initClient(userid).start();
+
+        createFile(client1.syncDirectory.resolve("file.txt"), "content", 1476000000000L, 1476900000000L);
+        waitForSyncDone();
+        renameFile(client1.syncDirectory.resolve("file.txt"), "FILE.TXT");
+        waitForSyncDone();
+        deleteFile(client1.syncDirectory.resolve("file.txt"));
+        waitForSyncDone();
+
+        assertTrue(asList(client1.syncDirectory.toFile().listFiles()).isEmpty());
+        assertTrue(asList(client2.syncDirectory.toFile().listFiles()).isEmpty());
+    }
+
+    @Test
+    @Repeat(REPEAT)
+    public void lowerUppercaseFileDeletionOtherWay() throws Exception {
+        Client client1 = initClient(userid).start();
+        Client client2 = initClient(userid).start();
+
+        createFile(client1.syncDirectory.resolve("file.txt"), "content", 1476000000000L, 1476900000000L);
+        waitForSyncDone();
+        renameFile(client1.syncDirectory.resolve("file.txt"), "FILE.TXT");
+        waitForSyncDone();
+        deleteFile(client2.syncDirectory.resolve("FILE.TXT"));
+        waitForSyncDone();
+
+        assertTrue(asList(client1.syncDirectory.toFile().listFiles()).isEmpty());
+        assertTrue(asList(client2.syncDirectory.toFile().listFiles()).isEmpty());
+    }
 }
