@@ -2,7 +2,6 @@ package com.github.tornaia.sync.server.service;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.*;
-import com.github.tornaia.sync.server.data.config.SpringS3Config;
 import com.github.tornaia.sync.shared.api.FileMetaInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +14,7 @@ import java.io.InputStream;
 @Component
 public class S3Service {
 
-    private static final Logger LOG = LoggerFactory.getLogger(SpringS3Config.class);
+    private static final Logger LOG = LoggerFactory.getLogger(S3Service.class);
 
     @Value("${s3.bucket.name}")
     private String bucketName;
