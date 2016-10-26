@@ -133,7 +133,7 @@ public class DiskWriterService {
 
             FileMetaInfo newFileMetaInfo = new FileMetaInfo(null, userid, relativePath, file.length(), creationDateTime, modificationDateTime);
             if (Objects.equals(newFileMetaInfo, localFileMetaInfo)) {
-                LOG.info("File already is on disk: " + newFileMetaInfo);
+                LOG.debug("File already is on disk: " + newFileMetaInfo);
                 return true;
             } else {
                 LOG.warn("Conflict! local: " + localFileMetaInfo + ", remote: " + newFileMetaInfo);
@@ -199,7 +199,7 @@ public class DiskWriterService {
 
             FileMetaInfo newFileMetaInfo = new FileMetaInfo(null, userid, relativePath, file.length(), creationDateTime, modificationDateTime);
             if (Objects.equals(newFileMetaInfo, localFileMetaInfo)) {
-                LOG.info("Directory already is on disk. Attributes are ok: " + newFileMetaInfo);
+                LOG.debug("Directory already is on disk. Attributes are ok: " + newFileMetaInfo);
                 return true;
             } else {
                 LOG.warn("Conflict! local: " + localFileMetaInfo + ", remote: " + newFileMetaInfo);
