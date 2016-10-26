@@ -126,12 +126,13 @@ public class RemoteRestCommandService {
         try {
             HttpResponse response = httpClientProvider.get().execute(httpPut);
             entity = response.getEntity();
-            if (Objects.equals(response.getStatusLine().getStatusCode(), HttpStatus.SC_CONFLICT)) {
+            int statusCode = response.getStatusLine().getStatusCode();
+            if (Objects.equals(statusCode, HttpStatus.SC_CONFLICT)) {
                 EntityUtils.consume(entity);
                 return FileModifyResponse.conflict(fileMetaInfo);
             }
 
-            if (Objects.equals(response.getStatusLine().getStatusCode(), HttpStatus.SC_NOT_FOUND)) {
+            if (Objects.equals(statusCode, HttpStatus.SC_NOT_FOUND)) {
                 EntityUtils.consume(entity);
                 return FileModifyResponse.notFound(fileMetaInfo);
             }
