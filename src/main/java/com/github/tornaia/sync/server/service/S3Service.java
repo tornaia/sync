@@ -31,6 +31,12 @@ public class S3Service {
             S3Object object = s3Client.getObject(new GetObjectRequest(bucketName, id));
             S3ObjectInputStream objectContent = object.getObjectContent();
             return closeS3InputStreamAsFastAsPossible(objectContent);
+        } catch (AmazonS3Exception e) {
+            boolean isNotFound = e.getStatusCode() == 404;
+            if (isNotFound) {
+                throw new DynamicStorageException("Data inconsistency: " + id, e);
+            }
+            throw new DynamicStorageException("Unknown dynamic storage problem: " + id, e);
         } catch (AmazonClientException e) {
             LOG.warn("Communication problem with the dynamic storage", e);
             throw new DynamicStorageException(e);
