@@ -25,6 +25,7 @@ import java.util.List;
 
 import static org.springframework.http.HttpHeaders.CONTENT_DISPOSITION;
 import static org.springframework.http.HttpStatus.CONFLICT;
+import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.web.bind.annotation.RequestMethod.*;
 
@@ -67,20 +68,19 @@ public class FileController {
     }
 
     @RequestMapping(value = "/{id}", method = GET, produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-    public ResponseEntity getFile(@PathVariable String id, @RequestParam("userid") String userid) throws IOException {
+    public ResponseEntity getFile(@PathVariable String id, @RequestParam("userid") String userid) {
         File file = fileQueryService.getFileById(userid, id);
-        long size = file.getSize();
-        String filename = file.getFilename();
-        HttpHeaders responseHeaders = new HttpHeaders();
-        responseHeaders.add(CONTENT_DISPOSITION, "attachment; filename=" + filename);
         LOG.info("GET file: " + file.getRelativePath());
         try {
             InputStream content = fileQueryService.getContent(id);
             InputStreamResource inputStreamResource = new InputStreamResource(content);
-            responseHeaders.setContentLength(size);
+            HttpHeaders responseHeaders = new HttpHeaders();
+            responseHeaders.add(CONTENT_DISPOSITION, "attachment; filename=" + file.getFilename());
+            responseHeaders.setContentLength(file.getSize());
             return new ResponseEntity(inputStreamResource, responseHeaders, HttpStatus.OK);
-        } catch (DynamicStorageException e) {
-            return new ResponseEntity(responseHeaders, HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (FileNotFoundException e) {
+            fileCommandService.deleteFileFromMongoQuietly(id);
+            return new ResponseEntity(HttpStatus.NOT_FOUND);
         }
     }
 
@@ -102,5 +102,10 @@ public class FileController {
     @ResponseStatus(code = CONFLICT, reason = "Directory is not empty")
     @ExceptionHandler({DirectoryNotEmptyException.class})
     private void convertDirectoryNotEmptyExceptionTo409(DirectoryNotEmptyException e) {
+    }
+
+    @ResponseStatus(code = INTERNAL_SERVER_ERROR, reason = "Internal server error")
+    @ExceptionHandler({DynamicStorageException.class})
+    private void convertDirectoryNotEmptyExceptionTo500(DynamicStorageException e) {
     }
 }

@@ -7,4 +7,8 @@ public class FileNotFoundException extends RuntimeException {
     public FileNotFoundException(String userid, String id) {
         super("Could not find file! userid: " + userid + ", id: " + id);
     }
+
+    public FileNotFoundException(String message, Exception e) {
+        super(message, e);
+    }
 }

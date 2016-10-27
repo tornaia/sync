@@ -4,6 +4,7 @@ import com.github.tornaia.sync.server.data.converter.FileToFileMetaInfoConverter
 import com.github.tornaia.sync.server.data.document.File;
 import com.github.tornaia.sync.server.data.repository.FileRepository;
 import com.github.tornaia.sync.server.service.exception.DirectoryNotEmptyException;
+import com.github.tornaia.sync.server.service.exception.DynamicStorageException;
 import com.github.tornaia.sync.server.service.exception.FileAlreadyExistsException;
 import com.github.tornaia.sync.server.service.exception.FileNotFoundException;
 import com.github.tornaia.sync.server.websocket.SyncWebSocketHandler;
@@ -60,7 +61,15 @@ public class FileCommandService {
 
         File file = fileRepository.insert(new File(userid, path, size, creationDateTime, modificationDateTime));
         FileMetaInfo fileMetaInfo = fileToFileMetaInfoConverter.convert(file);
-        s3Service.putFile(fileMetaInfo, content == null ? new ByteArrayInputStream(new byte[0]) : content);
+
+        try {
+            s3Service.putFile(fileMetaInfo, content == null ? new ByteArrayInputStream(new byte[0]) : content);
+        } catch (DynamicStorageException e) {
+            LOG.warn("Cleanup because saving data to S3 failed", e);
+            fileRepository.delete(fileAsFile);
+            throw e;
+        }
+
         syncWebSocketHandler.notifyClientsExceptForSource(clientid, new RemoteFileEvent(CREATED, fileMetaInfo));
         LOG.info("CREATE file: " + fileMetaInfo);
         return fileMetaInfo;
@@ -75,16 +84,18 @@ public class FileCommandService {
         if (file == null) {
             LOG.warn("MODIFY Not found file! userid: " + userid + ", id: " + id);
             throw new FileNotFoundException(userid, id);
-        } else {
-            file.setCreationDate(creationDateTime);
-            file.setLastModifiedDate(modificationDateTime);
-            file.setSize(size);
-            fileRepository.save(file);
-            FileMetaInfo fileMetaInfo = fileToFileMetaInfoConverter.convert(file);
-            s3Service.putFile(fileMetaInfo, content == null ? new ByteArrayInputStream(new byte[0]) : content);
-            syncWebSocketHandler.notifyClientsExceptForSource(clientid, new RemoteFileEvent(MODIFIED, fileMetaInfo));
-            LOG.info("MODIFY file: " + fileMetaInfo);
         }
+
+        file.setCreationDate(creationDateTime);
+        file.setLastModifiedDate(modificationDateTime);
+        file.setSize(size);
+
+        FileMetaInfo fileMetaInfo = fileToFileMetaInfoConverter.convert(file);
+        s3Service.putFile(fileMetaInfo, content == null ? new ByteArrayInputStream(new byte[0]) : content);
+        fileRepository.save(file);
+
+        syncWebSocketHandler.notifyClientsExceptForSource(clientid, new RemoteFileEvent(MODIFIED, fileMetaInfo));
+        LOG.info("MODIFY file: " + fileMetaInfo);
     }
 
     public void deleteFile(String clientid, String userid, String id, long size, long creationDateTime, long modificationDateTime) {
@@ -115,19 +126,34 @@ public class FileCommandService {
             }
         }
 
-        String path = file.getRelativePath();
-        fileRepository.delete(file);
         FileMetaInfo deletedFileMetaInfo = fileToFileMetaInfoConverter.convert(file);
-        s3Service.deleteFile(deletedFileMetaInfo);
+        fileRepository.delete(file);
+
+        deleteFileFromDynamicStorageQuietly(id);
+
         syncWebSocketHandler.notifyClientsExceptForSource(clientid, new RemoteFileEvent(DELETED, deletedFileMetaInfo));
-        LOG.info("DELETE file: " + path);
+        LOG.info("DELETE file: " + deletedFileMetaInfo.relativePath);
+    }
+
+    public void deleteFileFromMongoQuietly(String id) {
+        LOG.warn("Delete file quietly: " + id);
+        fileRepository.delete(id);
     }
 
     public void deleteAll() {
         List<File> files = fileRepository.findAll();
         LOG.info("Deleting all files from DB: " + files.size());
         files.forEach(fileRepository::delete);
-        files.stream().map(fileToFileMetaInfoConverter::convert).forEach(s3Service::deleteFile);
+        files.stream().map(fileToFileMetaInfoConverter::convert).map(fmi -> fmi.id).forEach(s3Service::deleteFile);
         LOG.info("All files deleted from DB");
+    }
+
+    private void deleteFileFromDynamicStorageQuietly(String id) {
+        LOG.warn("Delete file quietly: " + id);
+        try {
+            s3Service.deleteFile(id);
+        } catch (DynamicStorageException e) {
+            LOG.warn("Failed to delete file from dynamic storage" + id, e);
+        }
     }
 }
