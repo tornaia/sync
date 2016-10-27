@@ -92,6 +92,7 @@ public class FileCommandService {
 
         FileMetaInfo fileMetaInfo = fileToFileMetaInfoConverter.convert(file);
         s3Service.putFile(fileMetaInfo, content == null ? new ByteArrayInputStream(new byte[0]) : content);
+        // FIXME what if the previous statement (update object in S3) works but the next (updating fileMetaInfo in Mongo) fails?
         fileRepository.save(file);
 
         syncWebSocketHandler.notifyClientsExceptForSource(clientid, new RemoteFileEvent(MODIFIED, fileMetaInfo));
