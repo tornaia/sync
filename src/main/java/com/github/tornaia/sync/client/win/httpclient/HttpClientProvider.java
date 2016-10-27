@@ -16,8 +16,8 @@ public class HttpClientProvider {
     @Value("${sync.backend.server.port}")
     private int backendServerPort;
 
-    private final org.apache.http.client.HttpClient httpClient = HttpClientBuilder.
-            create()
+    private final org.apache.http.client.HttpClient httpClient = HttpClientBuilder
+            .create()
             .disableAutomaticRetries()
             .setMaxConnPerRoute(20)
             .setMaxConnTotal(20)
