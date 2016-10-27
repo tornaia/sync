@@ -2,6 +2,7 @@ package com.github.tornaia.sync.client.win.remote.reader;
 
 import com.github.tornaia.sync.client.win.ClientidService;
 import com.github.tornaia.sync.shared.api.FileMetaInfo;
+import com.github.tornaia.sync.shared.api.RemoteEventType;
 import com.github.tornaia.sync.shared.api.RemoteFileEvent;
 import com.github.tornaia.sync.shared.util.SerializerUtils;
 import org.slf4j.Logger;
@@ -151,8 +152,11 @@ public class RemoteReaderService {
     }
 
     private void addNewEvent(RemoteFileEvent remoteFileEvent) {
+        FileMetaInfo fileMetaInfo = remoteFileEvent.fileMetaInfo;
+        RemoteEventType eventType = remoteFileEvent.eventType;
+        String relativePath = fileMetaInfo.relativePath;
         synchronized (this) {
-            switch (remoteFileEvent.eventType) {
+            switch (eventType) {
                 case CREATED:
                     createdEvents.add(0, remoteFileEvent);
                     break;
@@ -160,22 +164,28 @@ public class RemoteReaderService {
                     modifiedEvents.add(0, remoteFileEvent);
                     break;
                 case DELETED:
-                    Set<RemoteFileEvent> invalidModifiedEvents = modifiedEvents.parallelStream()
-                            .filter(me -> me.fileMetaInfo.relativePath.equals(remoteFileEvent.fileMetaInfo.relativePath))
-                            .collect(Collectors.toSet());
-                    modifiedEvents.removeAll(invalidModifiedEvents);
-
-                    Set<RemoteFileEvent> invalidCreatedEvents = createdEvents.parallelStream()
-                            .filter(me -> me.fileMetaInfo.relativePath.equals(remoteFileEvent.fileMetaInfo.relativePath))
-                            .collect(Collectors.toSet());
-                    createdEvents.removeAll(invalidCreatedEvents);
-
+                    removeAllModifiedEvents(relativePath);
+                    removeAllCreatedEventsS(relativePath);
                     deletedEvents.add(remoteFileEvent);
                     break;
                 default:
                     throw new IllegalStateException("Unknown message: " + remoteFileEvent);
             }
         }
+    }
+
+    private void removeAllModifiedEvents(String relativePath) {
+        Set<RemoteFileEvent> invalidModifiedEvents = modifiedEvents.parallelStream()
+                .filter(me -> me.fileMetaInfo.relativePath.equals(relativePath))
+                .collect(Collectors.toSet());
+        modifiedEvents.removeAll(invalidModifiedEvents);
+    }
+
+    private void removeAllCreatedEventsS(String relativePath) {
+        Set<RemoteFileEvent> invalidCreatedEvents = createdEvents.parallelStream()
+                .filter(me -> me.fileMetaInfo.relativePath.equals(relativePath))
+                .collect(Collectors.toSet());
+        createdEvents.removeAll(invalidCreatedEvents);
     }
 
     private class RelativePathLengthComparator implements Comparator<RemoteFileEvent> {
