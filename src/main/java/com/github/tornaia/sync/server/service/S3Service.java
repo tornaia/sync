@@ -64,6 +64,10 @@ public class S3Service {
 
     // TODO write test... I hope it wont sit in the memory even for a single second...
     private InputStream closeS3InputStreamAsFastAsPossible(S3ObjectInputStream objectContent) throws IOException {
-        return IOUtils.toBufferedInputStream(objectContent);
+        try {
+            return IOUtils.toBufferedInputStream(objectContent);
+        } finally {
+            objectContent.close();
+        }
     }
 }
