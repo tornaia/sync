@@ -35,9 +35,10 @@ public class RemoteRestQueryService {
     public FileGetResponse getFile(FileMetaInfo fileMetaInfo) {
         HttpGet httpGet = new HttpGet(httpClientProvider.getServerUrl() + backendFileApiPath + "/" + fileMetaInfo.id + "?userid=" + userid);
 
+        HttpEntity entity = null;
         try {
             HttpResponse response = httpClientProvider.get().execute(httpGet);
-            HttpEntity entity = response.getEntity();
+            entity = response.getEntity();
             // TODO here we have now some memory limitation: redesign to use inputStream instead of byte[]. OOM error might occur
             byte[] content = IOUtils.toByteArray(entity.getContent());
 
@@ -58,6 +59,8 @@ public class RemoteRestQueryService {
             return FileGetResponse.transferFailed(fileMetaInfo, "Transfer failed: " + e.getMessage());
         } catch (IOException e) {
             throw new RuntimeException("Get from server failed", e);
+        } finally {
+            httpClientProvider.consumeEntity(entity);
         }
     }
 }

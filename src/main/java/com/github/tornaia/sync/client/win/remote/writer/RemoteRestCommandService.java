@@ -15,7 +15,6 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.mime.*;
 import org.apache.http.entity.mime.content.FileBody;
 import org.apache.http.entity.mime.content.StringBody;
-import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -74,11 +73,11 @@ public class RemoteRestCommandService {
         httpPost.setEntity(multipart);
 
         FileMetaInfo remoteFileMetaInfo;
+        HttpEntity entity = null;
         try {
             HttpResponse response = httpClientProvider.get().execute(httpPost);
-            HttpEntity entity = response.getEntity();
+            entity = response.getEntity();
             if (Objects.equals(response.getStatusLine().getStatusCode(), HttpStatus.SC_CONFLICT)) {
-                EntityUtils.consume(entity);
                 return FileCreateResponse.conflict(fileMetaInfo);
             }
 
@@ -92,6 +91,8 @@ public class RemoteRestCommandService {
             return FileCreateResponse.transferFailed(fileMetaInfo, e.getMessage());
         } catch (IOException e) {
             return FileCreateResponse.transferFailed(fileMetaInfo, e.getMessage());
+        } finally {
+            httpClientProvider.consumeEntity(entity);
         }
 
         LOG.debug("Created file: " + fileMetaInfo);
@@ -122,31 +123,32 @@ public class RemoteRestCommandService {
         HttpPut httpPut = new HttpPut(httpClientProvider.getServerUrl() + backendFileApiPath + "/" + fileMetaInfo.id + "?clientid=" + clientidService.clientid);
         httpPut.setEntity(multipart);
 
-        HttpEntity entity;
+        HttpEntity entity = null;
         try {
             HttpResponse response = httpClientProvider.get().execute(httpPut);
             entity = response.getEntity();
             int statusCode = response.getStatusLine().getStatusCode();
             if (Objects.equals(statusCode, HttpStatus.SC_CONFLICT)) {
-                EntityUtils.consume(entity);
                 return FileModifyResponse.conflict(fileMetaInfo);
             }
 
             if (Objects.equals(statusCode, HttpStatus.SC_NOT_FOUND)) {
-                EntityUtils.consume(entity);
                 return FileModifyResponse.notFound(fileMetaInfo);
             }
+
+            FileMetaInfo remoteFileMetaInfo = serializerUtils.toObject(entity, FileMetaInfo.class);
+
+            LOG.debug("Modified file: " + fileMetaInfo);
+            return FileModifyResponse.ok(remoteFileMetaInfo);
+
         } catch (FileNotFoundException e) {
             LOG.debug("File disappeared meanwhile it was under upload(post)? " + e.getMessage());
             return FileModifyResponse.transferFailed(fileMetaInfo, e.getMessage());
         } catch (IOException e) {
             return FileModifyResponse.transferFailed(fileMetaInfo, e.getMessage());
+        } finally {
+            httpClientProvider.consumeEntity(entity);
         }
-
-        FileMetaInfo remoteFileMetaInfo = serializerUtils.toObject(entity, FileMetaInfo.class);
-
-        LOG.debug("Modified file: " + fileMetaInfo);
-        return FileModifyResponse.ok(remoteFileMetaInfo);
     }
 
     public FileDeleteResponse onFileDelete(FileMetaInfo fileMetaInfo) {
@@ -169,26 +171,26 @@ public class RemoteRestCommandService {
         HttpPost httpPost = new HttpPost(httpClientProvider.getServerUrl() + backendFileApiPath + "/delete/" + fileMetaInfo.id + "?clientid=" + clientidService.clientid);
         httpPost.setEntity(multipart);
 
+        HttpEntity entity = null;
         try {
             HttpResponse response = httpClientProvider.get().execute(httpPost);
-            HttpEntity entity = response.getEntity();
-            EntityUtils.consume(entity);
+            entity = response.getEntity();
 
             if (Objects.equals(response.getStatusLine().getStatusCode(), HttpStatus.SC_NOT_FOUND)) {
-                EntityUtils.consume(entity);
                 return FileDeleteResponse.notFound(fileMetaInfo, "Servers does not know about this file");
             }
 
             if (Objects.equals(response.getStatusLine().getStatusCode(), HttpStatus.SC_CONFLICT)) {
-                EntityUtils.consume(entity);
                 return FileDeleteResponse.conflict(fileMetaInfo, "Servers does not allow to delete this file");
             }
+
+            LOG.debug("Deleted file: " + fileMetaInfo);
+            return FileDeleteResponse.ok(fileMetaInfo);
         } catch (IOException e) {
             return FileDeleteResponse.transferFailed(fileMetaInfo, e.getMessage());
+        } finally {
+            httpClientProvider.consumeEntity(entity);
         }
-
-        LOG.debug("Deleted file: " + fileMetaInfo);
-        return FileDeleteResponse.ok(fileMetaInfo);
     }
 
     // http://stackoverflow.com/questions/35675679/apache-http-4-5-stringbody-constructor-not-exporting-content-type-in-request
