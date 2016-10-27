@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 
 import javax.websocket.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static java.util.Collections.reverseOrder;
 
@@ -159,6 +160,16 @@ public class RemoteReaderService {
                     modifiedEvents.add(0, remoteFileEvent);
                     break;
                 case DELETED:
+                    Set<RemoteFileEvent> invalidModifiedEvents = modifiedEvents.parallelStream()
+                            .filter(me -> me.fileMetaInfo.relativePath.equals(remoteFileEvent.fileMetaInfo.relativePath))
+                            .collect(Collectors.toSet());
+                    modifiedEvents.removeAll(invalidModifiedEvents);
+
+                    Set<RemoteFileEvent> invalidCreatedEvents = createdEvents.parallelStream()
+                            .filter(me -> me.fileMetaInfo.relativePath.equals(remoteFileEvent.fileMetaInfo.relativePath))
+                            .collect(Collectors.toSet());
+                    createdEvents.removeAll(invalidCreatedEvents);
+
                     deletedEvents.add(remoteFileEvent);
                     break;
                 default:
