@@ -1,12 +1,10 @@
 package com.github.tornaia.sync.client.win.remote.reader;
 
 import com.github.tornaia.sync.client.win.httpclient.HttpClientProvider;
+import com.github.tornaia.sync.client.win.remote.SurvivableResponseStatusCodes;
 import com.github.tornaia.sync.shared.api.FileMetaInfo;
 import org.apache.commons.io.IOUtils;
-import org.apache.http.ConnectionClosedException;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
+import org.apache.http.*;
 import org.apache.http.client.methods.HttpGet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,19 +40,25 @@ public class RemoteRestQueryService {
             // TODO here we have now some memory limitation: redesign to use inputStream instead of byte[]. OOM error might occur
             byte[] content = IOUtils.toByteArray(entity.getContent());
 
-            int statusCode = response.getStatusLine().getStatusCode();
-            boolean ok = Objects.equals(statusCode, HttpStatus.SC_OK);
-            if (ok) {
-                LOG.debug("GET file: " + fileMetaInfo);
-                return FileGetResponse.ok(fileMetaInfo, content);
-            }
+            StatusLine statusLine = response.getStatusLine();
+            int statusCode = statusLine.getStatusCode();
 
             boolean notFound = Objects.equals(statusCode, HttpStatus.SC_NOT_FOUND);
             if (notFound) {
                 return FileGetResponse.notFound(fileMetaInfo);
             }
 
-            return FileGetResponse.transferFailed(fileMetaInfo, "Transfer failed: " + statusCode);
+            if (SurvivableResponseStatusCodes.isSolvableByRepeat(statusCode)) {
+                return FileGetResponse.transferFailed(fileMetaInfo, response.getStatusLine().getReasonPhrase());
+            }
+
+            boolean ok = Objects.equals(statusCode, HttpStatus.SC_OK);
+            if (!ok) {
+                throw new IllegalStateException("Unhandled response: " + response);
+            }
+
+            LOG.debug("GET file: " + fileMetaInfo);
+            return FileGetResponse.ok(fileMetaInfo, content);
         } catch (SocketException | ConnectionClosedException e) {
             return FileGetResponse.transferFailed(fileMetaInfo, "Transfer failed: " + e.getMessage());
         } catch (IOException e) {

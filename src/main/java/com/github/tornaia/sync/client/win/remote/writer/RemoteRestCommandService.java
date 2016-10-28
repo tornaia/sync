@@ -8,6 +8,7 @@ import com.github.tornaia.sync.shared.util.SerializerUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
+import org.apache.http.StatusLine;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.ContentType;
@@ -76,12 +77,21 @@ public class RemoteRestCommandService {
         try {
             HttpResponse response = httpClientProvider.get().execute(httpPost);
             entity = response.getEntity();
-            if (Objects.equals(response.getStatusLine().getStatusCode(), HttpStatus.SC_CONFLICT)) {
+
+            StatusLine statusLine = response.getStatusLine();
+            int statusCode = statusLine.getStatusCode();
+
+            if (Objects.equals(statusCode, HttpStatus.SC_CONFLICT)) {
                 return FileCreateResponse.conflict(fileMetaInfo);
             }
 
-            if (SurvivableResponseStatusCodes.isSolvableByRepeat(response.getStatusLine().getStatusCode())) {
-                return FileCreateResponse.transferFailed(fileMetaInfo, response.getStatusLine().getReasonPhrase());
+            if (SurvivableResponseStatusCodes.isSolvableByRepeat(statusCode)) {
+                return FileCreateResponse.transferFailed(fileMetaInfo, statusLine.getReasonPhrase());
+            }
+
+            boolean ok = Objects.equals(statusCode, HttpStatus.SC_OK);
+            if (!ok) {
+                throw new IllegalStateException("Unhandled response: " + response);
             }
 
             remoteFileMetaInfo = serializerUtils.toObject(entity.getContent(), FileMetaInfo.class);
@@ -126,7 +136,10 @@ public class RemoteRestCommandService {
         try {
             HttpResponse response = httpClientProvider.get().execute(httpPut);
             entity = response.getEntity();
-            int statusCode = response.getStatusLine().getStatusCode();
+
+            StatusLine statusLine = response.getStatusLine();
+            int statusCode = statusLine.getStatusCode();
+
             if (Objects.equals(statusCode, HttpStatus.SC_CONFLICT)) {
                 return FileModifyResponse.conflict(fileMetaInfo);
             }
@@ -135,11 +148,19 @@ public class RemoteRestCommandService {
                 return FileModifyResponse.notFound(fileMetaInfo);
             }
 
+            if (SurvivableResponseStatusCodes.isSolvableByRepeat(statusCode)) {
+                return FileModifyResponse.transferFailed(fileMetaInfo, statusLine.getReasonPhrase());
+            }
+
+            boolean ok = Objects.equals(statusCode, HttpStatus.SC_OK);
+            if (!ok) {
+                throw new IllegalStateException("Unhandled response: " + response);
+            }
+
             FileMetaInfo remoteFileMetaInfo = serializerUtils.toObject(entity, FileMetaInfo.class);
 
             LOG.debug("Modified file: " + fileMetaInfo);
             return FileModifyResponse.ok(remoteFileMetaInfo);
-
         } catch (FileNotFoundException e) {
             LOG.debug("File disappeared meanwhile it was under upload(post)? " + e.getMessage());
             return FileModifyResponse.transferFailed(fileMetaInfo, e.getMessage());
@@ -175,12 +196,24 @@ public class RemoteRestCommandService {
             HttpResponse response = httpClientProvider.get().execute(httpPost);
             entity = response.getEntity();
 
-            if (Objects.equals(response.getStatusLine().getStatusCode(), HttpStatus.SC_NOT_FOUND)) {
+            StatusLine statusLine = response.getStatusLine();
+            int statusCode = statusLine.getStatusCode();
+
+            if (Objects.equals(statusCode, HttpStatus.SC_NOT_FOUND)) {
                 return FileDeleteResponse.notFound(fileMetaInfo, "Servers does not know about this file");
             }
 
-            if (Objects.equals(response.getStatusLine().getStatusCode(), HttpStatus.SC_CONFLICT)) {
+            if (Objects.equals(statusCode, HttpStatus.SC_CONFLICT)) {
                 return FileDeleteResponse.conflict(fileMetaInfo, "Servers does not allow to delete this file");
+            }
+
+            if (SurvivableResponseStatusCodes.isSolvableByRepeat(statusCode)) {
+                return FileDeleteResponse.transferFailed(fileMetaInfo, response.getStatusLine().getReasonPhrase());
+            }
+
+            boolean ok = Objects.equals(statusCode, HttpStatus.SC_OK);
+            if (!ok) {
+                throw new IllegalStateException("Unhandled response: " + response);
             }
 
             LOG.debug("Deleted file: " + fileMetaInfo);
