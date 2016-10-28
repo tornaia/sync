@@ -1,6 +1,5 @@
 package com.github.tornaia.sync.client.win.remote.writer;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tornaia.sync.client.win.ClientidService;
 import com.github.tornaia.sync.client.win.httpclient.HttpClientProvider;
 import com.github.tornaia.sync.client.win.remote.SurvivableResponseStatusCodes;
@@ -85,7 +84,7 @@ public class RemoteRestCommandService {
                 return FileCreateResponse.transferFailed(fileMetaInfo, response.getStatusLine().getReasonPhrase());
             }
 
-            remoteFileMetaInfo = new ObjectMapper().readValue(entity.getContent(), FileMetaInfo.class);
+            remoteFileMetaInfo = serializerUtils.toObject(entity.getContent(), FileMetaInfo.class);
         } catch (FileNotFoundException e) {
             LOG.debug("File disappeared meanwhile it was under upload(post)? " + e.getMessage());
             return FileCreateResponse.transferFailed(fileMetaInfo, e.getMessage());
