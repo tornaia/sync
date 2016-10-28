@@ -66,7 +66,7 @@ public class FileCommandService {
             s3Service.putFile(fileMetaInfo, content == null ? new ByteArrayInputStream(new byte[0]) : content);
         } catch (DynamicStorageException e) {
             LOG.warn("Cleanup because saving data to S3 failed", e);
-            fileRepository.delete(fileAsFile);
+            fileRepository.delete(file);
             throw e;
         }
 
