@@ -8,6 +8,8 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import java.util.Optional;
+
 import static org.junit.Assert.*;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -70,5 +72,21 @@ public class RemoteReaderServiceTest {
 
         assertTrue(remoteReaderService.getNextCreated().createEvents.isEmpty());
         assertTrue(remoteReaderService.getNextDeleted().isPresent());
+    }
+
+    @Test
+    public void relativePathLengthComparatorCompareMethodImplementedCorrectly() {
+        for (int i = 0; i < 1000; i++) {
+            FileMetaInfo fileMetaInfo = new FileMetaInfo("id", "userid", "relativePath" + i, 1L, 500L, 600L);
+            remoteReaderService.reAddEvent(new RemoteFileEvent(RemoteEventType.DELETED, fileMetaInfo));
+        }
+
+        for (int i = 0; i < 1000; i++) {
+            Optional<RemoteFileEvent> nextDeleted = remoteReaderService.getNextDeleted();
+            assertTrue("i: " + i, nextDeleted.isPresent());
+        }
+
+        Optional<RemoteFileEvent> nextDeleted = remoteReaderService.getNextDeleted();
+        assertFalse(nextDeleted.isPresent());
     }
 }

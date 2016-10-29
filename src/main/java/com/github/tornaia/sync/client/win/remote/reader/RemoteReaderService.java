@@ -204,7 +204,16 @@ public class RemoteReaderService {
             if (obj2 == null) {
                 return 1;
             }
-            return Integer.compare(obj1.fileMetaInfo.relativePath.length(), obj2.fileMetaInfo.relativePath.length());
+
+            String rp1 = obj1.fileMetaInfo.relativePath;
+            String rp2 = obj2.fileMetaInfo.relativePath;
+            int l1 = rp1.length();
+            int l2 = rp2.length();
+            if (l1 != l2) {
+                return Integer.compare(l1, l2);
+            }
+
+            return rp1.compareTo(rp2);
         }
     }
 }
