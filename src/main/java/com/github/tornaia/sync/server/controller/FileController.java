@@ -8,25 +8,16 @@ import com.github.tornaia.sync.server.service.exception.FileAlreadyExistsExcepti
 import com.github.tornaia.sync.server.service.exception.FileNotFoundException;
 import com.github.tornaia.sync.server.service.exception.OutdatedException;
 import com.github.tornaia.sync.shared.api.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.util.CollectionUtils;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 import static com.github.tornaia.sync.shared.api.GetFileResponseStatus.FILE_STATUS_HEADER_FIELD_NAME;
 import static org.springframework.http.HttpHeaders.CONTENT_DISPOSITION;
@@ -35,8 +26,6 @@ import static org.springframework.web.bind.annotation.RequestMethod.*;
 @RestController
 @RequestMapping("/api/files")
 public class FileController {
-
-    private static final Logger LOG = LoggerFactory.getLogger(FileController.class);
 
     @Autowired
     private FileCommandService fileCommandService;
@@ -101,25 +90,22 @@ public class FileController {
             File file = fileQueryService.getFileById(userid, id);
             InputStream content = fileQueryService.getContent(id);
             InputStreamResource inputStreamResource = new InputStreamResource(content);
-            HttpHeaders responseHeaders = new HttpHeaders();
+            HttpHeaders responseHeaders = createHeaderFor(GetFileResponseStatus.OK);
             responseHeaders.add(CONTENT_DISPOSITION, "attachment; filename=" + file.getFilename());
             responseHeaders.setContentLength(file.getSize());
-            responseHeaders.add(FILE_STATUS_HEADER_FIELD_NAME, GetFileResponseStatus.OK.name());
-            return new ResponseEntity(inputStreamResource, responseHeaders, HttpStatus.OK);
+            return ResponseEntity.ok().headers(responseHeaders).body(inputStreamResource);
         } catch (FileNotFoundException e) {
-            return new ResponseEntity(createHeaderFor(GetFileResponseStatus.NOT_FOUND), HttpStatus.OK);
+            return ResponseEntity.ok().headers(createHeaderFor(GetFileResponseStatus.NOT_FOUND)).build();
         } catch (DynamicStorageException e) {
-            return new ResponseEntity(createHeaderFor(GetFileResponseStatus.TRANSFER_FAILED), HttpStatus.OK);
+            return ResponseEntity.ok().headers(createHeaderFor(GetFileResponseStatus.TRANSFER_FAILED)).build();
         } catch (Exception e) {
-            return new ResponseEntity(createHeaderFor(GetFileResponseStatus.UNKNOWN_PROBLEM), HttpStatus.OK);
+            return ResponseEntity.ok().headers(createHeaderFor(GetFileResponseStatus.UNKNOWN_PROBLEM)).build();
         }
     }
 
-    private static MultiValueMap<String, String> createHeaderFor(GetFileResponseStatus getFileResponseStatus) {
-        Map<String, List<String>> httpHeaders = new HashMap<>();
-        List<String> values = new ArrayList<>();
-        values.add(getFileResponseStatus.name());
-        httpHeaders.put(FILE_STATUS_HEADER_FIELD_NAME, values);
-        return CollectionUtils.toMultiValueMap(httpHeaders);
+    private static HttpHeaders createHeaderFor(GetFileResponseStatus getFileResponseStatus) {
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.add(FILE_STATUS_HEADER_FIELD_NAME, getFileResponseStatus.name());
+        return httpHeaders;
     }
 }
