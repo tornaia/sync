@@ -17,6 +17,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.util.Objects;
 
 import static com.github.tornaia.sync.shared.api.GetFileResponseStatus.FILE_STATUS_HEADER_FIELD_NAME;
@@ -71,7 +72,7 @@ public class RemoteRestQueryService {
 
             LOG.debug("GET file: " + fileMetaInfo);
             return FileGetResponse.ok(fileMetaInfo, content);
-        } catch (SocketException | ConnectionClosedException e) {
+        } catch (SocketException | ConnectionClosedException | SocketTimeoutException e) {
             return FileGetResponse.transferFailed(fileMetaInfo, "Client side: " + e.getMessage());
         } catch (IOException e) {
             throw new IllegalStateException("Unhandled state", e);

@@ -2,8 +2,10 @@ package com.github.tornaia.sync.client.win.remote.writer;
 
 import com.github.tornaia.sync.client.win.ClientidService;
 import com.github.tornaia.sync.client.win.httpclient.HttpClientProvider;
+import com.github.tornaia.sync.client.win.remote.reader.FileGetResponse;
 import com.github.tornaia.sync.shared.api.*;
 import com.github.tornaia.sync.shared.util.SerializerUtils;
+import org.apache.http.ConnectionClosedException;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -21,6 +23,8 @@ import org.springframework.stereotype.Component;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
@@ -84,8 +88,10 @@ public class RemoteRestCommandService {
         } catch (FileNotFoundException e) {
             LOG.debug("File disappeared meanwhile it was under upload(post)? " + e.getMessage());
             return CreateFileResponse.transferFailed(e.getMessage());
+        } catch (SocketException | ConnectionClosedException | SocketTimeoutException e) {
+            return CreateFileResponse.transferFailed("Client side: " + e.getMessage());
         } catch (IOException e) {
-            return CreateFileResponse.transferFailed(e.getMessage());
+            throw new IllegalStateException("Unhandled state", e);
         } finally {
             httpClientProvider.consumeEntity(entity);
         }
@@ -134,8 +140,10 @@ public class RemoteRestCommandService {
         } catch (FileNotFoundException e) {
             LOG.debug("File disappeared meanwhile it was under upload(post)? " + e.getMessage());
             return ModifyFileResponse.transferFailed(e.getMessage());
+        } catch (SocketException | ConnectionClosedException | SocketTimeoutException e) {
+            return ModifyFileResponse.transferFailed("Client side: " + e.getMessage());
         } catch (IOException e) {
-            return ModifyFileResponse.transferFailed(e.getMessage());
+            throw new IllegalStateException("Unhandled state", e);
         } finally {
             httpClientProvider.consumeEntity(entity);
         }
@@ -173,8 +181,10 @@ public class RemoteRestCommandService {
             DeleteFileResponse deleteFileResponse = optionalDeleteFileResponse.get();
             LOG.debug("Deleted file: " + fileMetaInfo);
             return deleteFileResponse;
+        } catch (SocketException | ConnectionClosedException | SocketTimeoutException e) {
+            return DeleteFileResponse.transferFailed("Client side: " + e.getMessage());
         } catch (IOException e) {
-            return DeleteFileResponse.transferFailed(e.getMessage());
+            throw new IllegalStateException("Unhandled state", e);
         } finally {
             httpClientProvider.consumeEntity(entity);
         }
