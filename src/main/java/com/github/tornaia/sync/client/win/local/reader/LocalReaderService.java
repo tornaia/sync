@@ -336,8 +336,14 @@ public class LocalReaderService {
                 Path filename = ev.context();
 
                 if (kind == OVERFLOW) {
-                    LOG.error("Overflow is an unhandled event type: " + event);
-                    continue;
+                    LOG.error("Overflow! Restarting LocalReaderService");
+                    try {
+                        onContextClosedEvent();
+                        onContextRefreshedEvent();
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                    return;
                 }
 
                 Path ownerPath = (Path) key.watchable();
