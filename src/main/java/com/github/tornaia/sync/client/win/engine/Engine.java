@@ -1,5 +1,7 @@
 package com.github.tornaia.sync.client.win.engine;
 
+import com.github.tornaia.sync.client.win.local.reader.BulkLocalFileCreatedEvent;
+import com.github.tornaia.sync.client.win.local.reader.BulkLocalFileModifiedEvent;
 import com.github.tornaia.sync.client.win.local.reader.LocalFileEvent;
 import com.github.tornaia.sync.client.win.local.reader.LocalReaderService;
 import com.github.tornaia.sync.client.win.local.writer.LocalWriterService;
@@ -114,14 +116,20 @@ public class Engine {
                     handle(localDeletedEvent.get());
                     continue;
                 }
-                Optional<LocalFileEvent> localModifiedEvent = localReaderService.getNextModified();
-                if (localModifiedEvent.isPresent()) {
-                    handle(localModifiedEvent.get());
+
+                BulkLocalFileModifiedEvent localModifiedEvents = localReaderService.getNextModified();
+                if (!localModifiedEvents.modifyEvents.isEmpty()) {
+                    localModifiedEvents.modifyEvents.stream()
+                            .parallel()
+                            .forEach(lfe -> handle(lfe));
                     continue;
                 }
-                Optional<LocalFileEvent> localCreatedEvent = localReaderService.getNextCreated();
-                if (localCreatedEvent.isPresent()) {
-                    handle(localCreatedEvent.get());
+
+                BulkLocalFileCreatedEvent localCreatedEvents = localReaderService.getNextCreated();
+                if (!localCreatedEvents.createEvents.isEmpty()) {
+                    localCreatedEvents.createEvents.stream()
+                            .parallel()
+                            .forEach(lfe -> handle(lfe));
                     continue;
                 }
 
@@ -166,57 +174,59 @@ public class Engine {
 
                     // TODO localFileExist and the else branch here has some duplications
                     FileGetResponse fileGetResponse = remoteReaderService.getFile(remoteFileMetaInfo);
-                    boolean transferFailed = FileGetResponse.Status.TRANSFER_FAILED == fileGetResponse.status;
-                    if (transferFailed) {
-                        LOG.warn("Transfer failed: " + remoteFileMetaInfo.relativePath);
-                        remoteReaderService.reAddEvent(remoteEvent);
-                        return;
+                    if (FileGetResponse.Status.OK == fileGetResponse.status) {
+                        boolean succeed = false;
+                        if (remoteEvent.eventType == RemoteEventType.CREATED) {
+                            succeed = localWriterService.write(remoteFileMetaInfo, fileGetResponse.content);
+                        } else if (remoteEvent.eventType == RemoteEventType.MODIFIED) {
+                            succeed = localWriterService.replace(relativePath, remoteFileMetaInfo, fileGetResponse.content);
+                        }
+                        if (succeed) {
+                            LOG.debug("File modified event successfully finished: " + remoteFileMetaInfo);
+                        } else {
+                            LOG.warn("File modified event failed: " + remoteFileMetaInfo);
+                        }
                     }
 
                     boolean notFound = FileGetResponse.Status.NOT_FOUND == fileGetResponse.status;
                     if (notFound) {
                         LOG.warn("File not found so it does not exist anymore: " + remoteFileMetaInfo.relativePath);
-                        remoteReaderService.reAddEvent(remoteEvent);
                         return;
                     }
 
-                    boolean succeed = false;
-                    if (remoteEvent.eventType == RemoteEventType.CREATED) {
-                        succeed = localWriterService.write(remoteFileMetaInfo, fileGetResponse.content);
-                    } else if (remoteEvent.eventType == RemoteEventType.MODIFIED) {
-                        succeed = localWriterService.replace(relativePath, remoteFileMetaInfo, fileGetResponse.content);
-                    }
-                    if (succeed) {
-                        LOG.debug("File modified event successfully finished: " + remoteFileMetaInfo);
-                    } else {
-                        LOG.warn("File modified event failed: " + remoteFileMetaInfo);
+                    boolean transferFailed = FileGetResponse.Status.TRANSFER_FAILED == fileGetResponse.status;
+                    if (transferFailed) {
+                        LOG.warn("Transfer failed: " + remoteFileMetaInfo.relativePath);
+                        remoteReaderService.reAddEvent(remoteEvent);
+                        return;
                     }
                 } else {
                     FileGetResponse fileGetResponse = remoteReaderService.getFile(remoteFileMetaInfo);
-                    boolean transferFailed = FileGetResponse.Status.TRANSFER_FAILED == fileGetResponse.status;
-                    if (transferFailed) {
-                        LOG.warn("Transfer failed: " + remoteFileMetaInfo.relativePath);
-                        remoteReaderService.reAddEvent(remoteEvent);
-                        return;
+                    if (FileGetResponse.Status.OK == fileGetResponse.status) {
+                        boolean succeed = false;
+                        if (remoteEvent.eventType == RemoteEventType.CREATED) {
+                            succeed = localWriterService.write(remoteFileMetaInfo, fileGetResponse.content);
+                        } else if (remoteEvent.eventType == RemoteEventType.MODIFIED) {
+                            succeed = localWriterService.replace(relativePath, remoteFileMetaInfo, fileGetResponse.content);
+                        }
+                        if (succeed) {
+                            LOG.debug("File created event successfully finished: " + remoteFileMetaInfo);
+                        } else {
+                            LOG.warn("File created event failed: " + remoteFileMetaInfo);
+                        }
                     }
 
                     boolean notFound = FileGetResponse.Status.NOT_FOUND == fileGetResponse.status;
                     if (notFound) {
                         LOG.warn("File not found so it does not exist anymore: " + remoteFileMetaInfo.relativePath);
-                        remoteReaderService.reAddEvent(remoteEvent);
                         return;
                     }
 
-                    boolean succeed = localWriterService.write(remoteFileMetaInfo, fileGetResponse.content);
-                    if (remoteEvent.eventType == RemoteEventType.CREATED) {
-                        succeed = localWriterService.write(remoteFileMetaInfo, fileGetResponse.content);
-                    } else if (remoteEvent.eventType == RemoteEventType.MODIFIED) {
-                        succeed = localWriterService.replace(relativePath, remoteFileMetaInfo, fileGetResponse.content);
-                    }
-                    if (succeed) {
-                        LOG.debug("File created event successfully finished: " + remoteFileMetaInfo);
-                    } else {
-                        LOG.warn("File created event failed: " + remoteFileMetaInfo);
+                    boolean transferFailed = FileGetResponse.Status.TRANSFER_FAILED == fileGetResponse.status;
+                    if (transferFailed) {
+                        LOG.warn("Transfer failed: " + remoteFileMetaInfo.relativePath);
+                        remoteReaderService.reAddEvent(remoteEvent);
+                        return;
                     }
                 }
                 break;

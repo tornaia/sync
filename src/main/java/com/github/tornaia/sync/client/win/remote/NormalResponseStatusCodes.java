@@ -8,7 +8,7 @@ import static java.util.Arrays.asList;
 
 public final class NormalResponseStatusCodes {
 
-    private static final List<Integer> VALID_STATUS_CODES = asList(HttpStatus.SC_OK, HttpStatus.SC_CONFLICT, HttpStatus.SC_NOT_FOUND);
+    private static final List<Integer> VALID_STATUS_CODES = asList(HttpStatus.SC_OK);
 
     public static boolean isValid(int statusCode) {
         return VALID_STATUS_CODES.contains(statusCode);

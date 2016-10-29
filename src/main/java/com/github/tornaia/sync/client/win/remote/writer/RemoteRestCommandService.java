@@ -2,13 +2,10 @@ package com.github.tornaia.sync.client.win.remote.writer;
 
 import com.github.tornaia.sync.client.win.ClientidService;
 import com.github.tornaia.sync.client.win.httpclient.HttpClientProvider;
-import com.github.tornaia.sync.client.win.remote.SurvivableResponseStatusCodes;
 import com.github.tornaia.sync.shared.api.*;
 import com.github.tornaia.sync.shared.util.SerializerUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.StatusLine;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.ContentType;
@@ -25,7 +22,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Objects;
 
 @Component
 public class RemoteRestCommandService {
@@ -47,7 +43,7 @@ public class RemoteRestCommandService {
     @Autowired
     private SerializerUtils serializerUtils;
 
-    public FileCreateResponse onFileCreate(FileMetaInfo fileMetaInfo, File file) {
+    public CreateFileResponse onFileCreate(FileMetaInfo fileMetaInfo, File file) {
         CreateFileRequest createFileRequest = new CreateFileRequestBuilder()
                 .userid(userid)
                 .relativePath(fileMetaInfo.relativePath)
@@ -72,44 +68,26 @@ public class RemoteRestCommandService {
         HttpPost httpPost = new HttpPost(httpClientProvider.getServerUrl() + backendFileApiPath + "?clientid=" + clientidService.clientid);
         httpPost.setEntity(multipart);
 
-        FileMetaInfo remoteFileMetaInfo;
+
         HttpEntity entity = null;
         try {
             HttpResponse response = httpClientProvider.get().execute(httpPost);
             entity = response.getEntity();
-
-            StatusLine statusLine = response.getStatusLine();
-            int statusCode = statusLine.getStatusCode();
-
-            if (Objects.equals(statusCode, HttpStatus.SC_CONFLICT)) {
-                return FileCreateResponse.conflict(fileMetaInfo);
-            }
-
-            if (SurvivableResponseStatusCodes.isSolvableByRepeat(statusCode)) {
-                return FileCreateResponse.transferFailed(fileMetaInfo, statusLine.getReasonPhrase());
-            }
-
-            boolean ok = Objects.equals(statusCode, HttpStatus.SC_OK);
-            if (!ok) {
-                throw new IllegalStateException("Unhandled response: " + response);
-            }
-
-            remoteFileMetaInfo = serializerUtils.toObject(entity.getContent(), FileMetaInfo.class);
+            CreateFileResponse createFileResponse = serializerUtils.toObject(entity, CreateFileResponse.class);
+            LOG.debug("Created file: " + createFileResponse.fileMetaInfo);
+            return createFileResponse;
         } catch (FileNotFoundException e) {
             LOG.debug("File disappeared meanwhile it was under upload(post)? " + e.getMessage());
-            return FileCreateResponse.transferFailed(fileMetaInfo, e.getMessage());
+            return CreateFileResponse.transferFailed(e.getMessage());
         } catch (IOException e) {
-            return FileCreateResponse.transferFailed(fileMetaInfo, e.getMessage());
+            return CreateFileResponse.transferFailed(e.getMessage());
         } finally {
             httpClientProvider.consumeEntity(entity);
         }
-
-        LOG.debug("Created file: " + fileMetaInfo);
-        return FileCreateResponse.ok(remoteFileMetaInfo);
     }
 
-    public FileModifyResponse onFileModify(FileMetaInfo fileMetaInfo, File file) {
-        UpdateFileRequest updateFileRequest = new UpdateFileRequestBuilder()
+    public ModifyFileResponse onFileModify(FileMetaInfo fileMetaInfo, File file) {
+        ModifyFileRequest modifyFileRequest = new ModifyFileRequestBuilder()
                 .userid(userid)
                 .size(fileMetaInfo.size)
                 .creationDateTime(fileMetaInfo.creationDateTime)
@@ -122,56 +100,36 @@ public class RemoteRestCommandService {
                 .setMode(HttpMultipartMode.BROWSER_COMPATIBLE)
                 .setContentType(ContentType.MULTIPART_FORM_DATA)
                 .addPart(generateJsonFormBodyPart("fileAttributes",
-                        serializerUtils.toJSON(updateFileRequest)))
+                        serializerUtils.toJSON(modifyFileRequest)))
                 .addPart(file.isDirectory() ? null : FormBodyPartBuilder.create()
                         .setName("file")
                         .setBody(new FileBody(file, ContentType.APPLICATION_OCTET_STREAM, fileMetaInfo.relativePath))
                         .build())
                 .build();
 
+
         HttpPut httpPut = new HttpPut(httpClientProvider.getServerUrl() + backendFileApiPath + "/" + fileMetaInfo.id + "?clientid=" + clientidService.clientid);
         httpPut.setEntity(multipart);
+
 
         HttpEntity entity = null;
         try {
             HttpResponse response = httpClientProvider.get().execute(httpPut);
             entity = response.getEntity();
-
-            StatusLine statusLine = response.getStatusLine();
-            int statusCode = statusLine.getStatusCode();
-
-            if (Objects.equals(statusCode, HttpStatus.SC_CONFLICT)) {
-                return FileModifyResponse.conflict(fileMetaInfo);
-            }
-
-            if (Objects.equals(statusCode, HttpStatus.SC_NOT_FOUND)) {
-                return FileModifyResponse.notFound(fileMetaInfo);
-            }
-
-            if (SurvivableResponseStatusCodes.isSolvableByRepeat(statusCode)) {
-                return FileModifyResponse.transferFailed(fileMetaInfo, statusLine.getReasonPhrase());
-            }
-
-            boolean ok = Objects.equals(statusCode, HttpStatus.SC_OK);
-            if (!ok) {
-                throw new IllegalStateException("Unhandled response: " + response);
-            }
-
-            FileMetaInfo remoteFileMetaInfo = serializerUtils.toObject(entity, FileMetaInfo.class);
-
-            LOG.debug("Modified file: " + fileMetaInfo);
-            return FileModifyResponse.ok(remoteFileMetaInfo);
+            ModifyFileResponse modifyFileResponse = serializerUtils.toObject(entity, ModifyFileResponse.class);
+            LOG.debug("Modified file: " + modifyFileResponse.fileMetaInfo);
+            return modifyFileResponse;
         } catch (FileNotFoundException e) {
             LOG.debug("File disappeared meanwhile it was under upload(post)? " + e.getMessage());
-            return FileModifyResponse.transferFailed(fileMetaInfo, e.getMessage());
+            return ModifyFileResponse.transferFailed(e.getMessage());
         } catch (IOException e) {
-            return FileModifyResponse.transferFailed(fileMetaInfo, e.getMessage());
+            return ModifyFileResponse.transferFailed(e.getMessage());
         } finally {
             httpClientProvider.consumeEntity(entity);
         }
     }
 
-    public FileDeleteResponse onFileDelete(FileMetaInfo fileMetaInfo) {
+    public DeleteFileResponse onFileDelete(FileMetaInfo fileMetaInfo) {
         DeleteFileRequest deleteFileRequest = new DeleteFileRequestBuilder()
                 .id(fileMetaInfo.id)
                 .userid(userid)
@@ -191,35 +149,16 @@ public class RemoteRestCommandService {
         HttpPost httpPost = new HttpPost(httpClientProvider.getServerUrl() + backendFileApiPath + "/delete/" + fileMetaInfo.id + "?clientid=" + clientidService.clientid);
         httpPost.setEntity(multipart);
 
+
         HttpEntity entity = null;
         try {
             HttpResponse response = httpClientProvider.get().execute(httpPost);
             entity = response.getEntity();
-
-            StatusLine statusLine = response.getStatusLine();
-            int statusCode = statusLine.getStatusCode();
-
-            if (Objects.equals(statusCode, HttpStatus.SC_NOT_FOUND)) {
-                return FileDeleteResponse.notFound(fileMetaInfo, "Servers does not know about this file");
-            }
-
-            if (Objects.equals(statusCode, HttpStatus.SC_CONFLICT)) {
-                return FileDeleteResponse.conflict(fileMetaInfo, "Servers does not allow to delete this file");
-            }
-
-            if (SurvivableResponseStatusCodes.isSolvableByRepeat(statusCode)) {
-                return FileDeleteResponse.transferFailed(fileMetaInfo, response.getStatusLine().getReasonPhrase());
-            }
-
-            boolean ok = Objects.equals(statusCode, HttpStatus.SC_OK);
-            if (!ok) {
-                throw new IllegalStateException("Unhandled response: " + response);
-            }
-
+            DeleteFileResponse deleteFileResponse = serializerUtils.toObject(entity, DeleteFileResponse.class);
             LOG.debug("Deleted file: " + fileMetaInfo);
-            return FileDeleteResponse.ok(fileMetaInfo);
+            return deleteFileResponse;
         } catch (IOException e) {
-            return FileDeleteResponse.transferFailed(fileMetaInfo, e.getMessage());
+            return DeleteFileResponse.transferFailed(e.getMessage());
         } finally {
             httpClientProvider.consumeEntity(entity);
         }

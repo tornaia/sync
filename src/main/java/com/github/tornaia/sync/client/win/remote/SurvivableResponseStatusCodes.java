@@ -8,7 +8,7 @@ import static java.util.Arrays.asList;
 
 public final class SurvivableResponseStatusCodes {
 
-    private static final List<Integer> TEMPORARY_NETWORK_PROBLEM = asList(HttpStatus.SC_INTERNAL_SERVER_ERROR, HttpStatus.SC_BAD_GATEWAY, HttpStatus.SC_NOT_ACCEPTABLE);
+    private static final List<Integer> TEMPORARY_NETWORK_PROBLEM = asList(HttpStatus.SC_BAD_GATEWAY, HttpStatus.SC_GATEWAY_TIMEOUT, HttpStatus.SC_NOT_FOUND, HttpStatus.SC_INTERNAL_SERVER_ERROR);
 
     public static boolean isSolvableByRepeat(int statusCode) {
         return TEMPORARY_NETWORK_PROBLEM.contains(statusCode);

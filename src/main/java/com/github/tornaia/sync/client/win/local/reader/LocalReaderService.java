@@ -91,12 +91,36 @@ public class LocalReaderService {
         }
     }
 
-    public Optional<LocalFileEvent> getNextCreated() {
-        return getNext(createdEvents);
+    public BulkLocalFileCreatedEvent getNextCreated() {
+        BulkLocalFileCreatedEvent bulkLocalFileCreatedEvent = new BulkLocalFileCreatedEvent(syncDirectory);
+        synchronized (this) {
+            while (!createdEvents.isEmpty()) {
+                FileCreatedEvent localFileEvent = (FileCreatedEvent) createdEvents.iterator().next();
+                boolean added = bulkLocalFileCreatedEvent.add(localFileEvent);
+                if (added) {
+                    createdEvents.remove(localFileEvent);
+                } else {
+                    break;
+                }
+            }
+        }
+        return bulkLocalFileCreatedEvent;
     }
 
-    public Optional<LocalFileEvent> getNextModified() {
-        return getNext(modifiedEvents);
+    public BulkLocalFileModifiedEvent getNextModified() {
+        BulkLocalFileModifiedEvent bulkLocalFileModifiedEvent = new BulkLocalFileModifiedEvent(syncDirectory);
+        synchronized (this) {
+            while (!modifiedEvents.isEmpty()) {
+                FileModifiedEvent localFileEvent = (FileModifiedEvent) modifiedEvents.iterator().next();
+                boolean added = bulkLocalFileModifiedEvent.add(localFileEvent);
+                if (added) {
+                    modifiedEvents.remove(localFileEvent);
+                } else {
+                    break;
+                }
+            }
+        }
+        return bulkLocalFileModifiedEvent;
     }
 
     public Optional<LocalFileEvent> getNextDeleted() {
@@ -112,6 +136,18 @@ public class LocalReaderService {
             events.remove(next);
             return Optional.of(next);
         }
+    }
+
+    public List<FileCreatedEvent> getFileCreatedEventsUpTo(int maxNumber) {
+        List<FileCreatedEvent> eventz = new ArrayList<>();
+        synchronized (this) {
+            while (!createdEvents.isEmpty() && eventz.size() < maxNumber) {
+                FileCreatedEvent next = (FileCreatedEvent) createdEvents.iterator().next();
+                eventz.add(next);
+                createdEvents.remove(next);
+            }
+        }
+        return eventz;
     }
 
     public Optional<FileMetaInfo> getFileMetaInfo(String relativePath) {

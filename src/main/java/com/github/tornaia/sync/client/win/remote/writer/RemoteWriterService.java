@@ -2,7 +2,10 @@ package com.github.tornaia.sync.client.win.remote.writer;
 
 import com.github.tornaia.sync.client.win.local.writer.DiskWriterService;
 import com.github.tornaia.sync.client.win.remote.RemoteKnownState;
+import com.github.tornaia.sync.shared.api.CreateFileResponse;
+import com.github.tornaia.sync.shared.api.DeleteFileResponse;
 import com.github.tornaia.sync.shared.api.FileMetaInfo;
+import com.github.tornaia.sync.shared.api.ModifyFileResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -75,18 +78,19 @@ public class RemoteWriterService {
             return true;
         }
 
-        FileCreateResponse fileCreateResponse = remoteRestCommandService.onFileCreate(localFileMetaInfo, file);
-        boolean ok = Objects.equals(FileCreateResponse.Status.OK, fileCreateResponse.status);
+        CreateFileResponse createFileResponse = remoteRestCommandService.onFileCreate(localFileMetaInfo, file);
+        boolean ok = Objects.equals(CreateFileResponse.Status.OK, createFileResponse.status);
         if (ok) {
-            LOG.info("File created on server: " + fileCreateResponse.fileMetaInfo);
-            remoteKnownState.add(fileCreateResponse.fileMetaInfo);
+            LOG.info("File created on server: " + createFileResponse.fileMetaInfo);
+            remoteKnownState.add(createFileResponse.fileMetaInfo);
             return true;
         }
 
-        boolean conflict = Objects.equals(FileCreateResponse.Status.CONFLICT, fileCreateResponse.status);
-        if (conflict) {
+        boolean alreadyExist = Objects.equals(CreateFileResponse.Status.ALREADY_EXIST, createFileResponse.status);
+        if (alreadyExist) {
             if (localFileMetaInfo.isFile()) {
                 diskWriterService.handleConflictOfFile(absolutePath, localFileMetaInfo);
+                return true;
             } else {
                 if (optionalRemoteFileMetaInfo.isPresent()) {
                     LOG.info("Directory already is on disk. Attributes are different but wont update: " + optionalRemoteFileMetaInfo.get());
@@ -98,7 +102,13 @@ public class RemoteWriterService {
             }
         }
 
-        return false;
+        boolean transferFailed = Objects.equals(CreateFileResponse.Status.TRANSFER_FAILED, createFileResponse.status);
+        if (transferFailed) {
+            LOG.warn("Transfer failed: " + createFileResponse.fileMetaInfo + ", " + createFileResponse.message);
+            return false;
+        }
+
+        throw new IllegalStateException("Unhandled state");
     }
 
     public boolean modifyFile(String relativePath) {
@@ -137,27 +147,33 @@ public class RemoteWriterService {
             return false;
         }
 
-        FileModifyResponse fileModifyResponse = remoteRestCommandService.onFileModify(requestFileMetaInfo, file);
-        boolean ok = Objects.equals(FileModifyResponse.Status.OK, fileModifyResponse.status);
+        ModifyFileResponse modifyFileResponse = remoteRestCommandService.onFileModify(requestFileMetaInfo, file);
+        boolean ok = Objects.equals(ModifyFileResponse.Status.OK, modifyFileResponse.status);
         if (ok) {
-            LOG.info("File modified on server: " + fileModifyResponse.fileMetaInfo);
-            remoteKnownState.add(fileModifyResponse.fileMetaInfo);
+            LOG.info("File modified on server: " + modifyFileResponse.fileMetaInfo);
+            remoteKnownState.add(modifyFileResponse.fileMetaInfo);
             return true;
         }
 
-        boolean conflict = Objects.equals(FileModifyResponse.Status.CONFLICT, fileModifyResponse.status);
-        if (conflict) {
-            diskWriterService.handleConflictOfFile(absolutePath, localFileMetaInfo);
-            return false;
-        }
-
-        boolean notFound = Objects.equals(FileModifyResponse.Status.NOT_FOUND, fileModifyResponse.status);
+        boolean notFound = Objects.equals(ModifyFileResponse.Status.NOT_FOUND, modifyFileResponse.status);
         if (notFound) {
-            LOG.info("Updating file's content on server failed since it was removed. Create now file on server: " + relativePath);
+            LOG.info("Updating file's content on server failed since its not there. Create now file on server: " + relativePath);
             return createFile(relativePath);
         }
 
-        return false;
+        boolean outdated = Objects.equals(ModifyFileResponse.Status.OUTDATED, modifyFileResponse.status);
+        if (outdated) {
+            diskWriterService.handleConflictOfFile(absolutePath, localFileMetaInfo);
+            return true;
+        }
+
+        boolean transferFailed = Objects.equals(ModifyFileResponse.Status.TRANSFER_FAILED, modifyFileResponse.status);
+        if (transferFailed) {
+            LOG.warn("Transfer failed: " + modifyFileResponse.fileMetaInfo + ", " + modifyFileResponse.message);
+            return false;
+        }
+
+        throw new IllegalStateException("Unhandled state");
     }
 
     public boolean deleteFile(String relativePath) {
@@ -185,30 +201,36 @@ public class RemoteWriterService {
                     .forEachOrdered(this::deleteFile);
         }
 
-        FileDeleteResponse fileDeleteResponse = remoteRestCommandService.onFileDelete(fileMetaInfo);
+        DeleteFileResponse deleteFileResponse = remoteRestCommandService.onFileDelete(fileMetaInfo);
 
-        boolean ok = Objects.equals(FileDeleteResponse.Status.OK, fileDeleteResponse.status);
+        boolean ok = Objects.equals(DeleteFileResponse.Status.OK, deleteFileResponse.status);
         if (ok) {
             LOG.info("File deleted from server: " + fileMetaInfo);
             remoteKnownState.remove(fileMetaInfo);
             return true;
         }
 
-        boolean notFound = Objects.equals(FileDeleteResponse.Status.NOT_FOUND, fileDeleteResponse.status);
+        boolean notFound = Objects.equals(DeleteFileResponse.Status.NOT_FOUND, deleteFileResponse.status);
         if (notFound) {
-            LOG.info("File was not deleted from server. It knows nothing about this file: " + fileDeleteResponse.fileMetaInfo);
+            LOG.info("File was not deleted from server. It knows nothing about this file: " + fileMetaInfo);
             remoteKnownState.remove(fileMetaInfo);
             return true;
         }
 
-        boolean conflict = Objects.equals(FileDeleteResponse.Status.CONFLICT, fileDeleteResponse.status);
-        if (conflict) {
-            LOG.warn("File was not deleted from server. It knows nothing about this file: " + fileDeleteResponse.fileMetaInfo);
+        boolean outdated = Objects.equals(DeleteFileResponse.Status.OUTDATED, deleteFileResponse.status);
+        if (outdated) {
+            LOG.warn("File was not deleted from server. It might have an another state: " + fileMetaInfo);
             remoteKnownState.remove(fileMetaInfo);
+            return true;
+        }
+
+        boolean transferFailed = Objects.equals(DeleteFileResponse.Status.TRANSFER_FAILED, deleteFileResponse.status);
+        if (transferFailed) {
+            LOG.warn("Transfer failed: " + fileMetaInfo + ", " + deleteFileResponse.message);
             return false;
         }
 
-        return false;
+        throw new IllegalStateException("Unhandled state");
     }
 
     private Path getAbsolutePath(String relativePath) {
