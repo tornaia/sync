@@ -336,7 +336,7 @@ public class LocalReaderService {
                 Path filename = ev.context();
 
                 if (kind == OVERFLOW) {
-                    LOG.error("Overflow! Restarting LocalReaderService");
+                    LOG.warn("Overflow! Restarting LocalReaderService");
                     try {
                         onContextClosedEvent();
                         onContextRefreshedEvent();
