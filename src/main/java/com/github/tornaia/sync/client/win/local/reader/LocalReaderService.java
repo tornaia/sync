@@ -138,18 +138,6 @@ public class LocalReaderService {
         }
     }
 
-    public List<FileCreatedEvent> getFileCreatedEventsUpTo(int maxNumber) {
-        List<FileCreatedEvent> eventz = new ArrayList<>();
-        synchronized (this) {
-            while (!createdEvents.isEmpty() && eventz.size() < maxNumber) {
-                FileCreatedEvent next = (FileCreatedEvent) createdEvents.iterator().next();
-                eventz.add(next);
-                createdEvents.remove(next);
-            }
-        }
-        return eventz;
-    }
-
     public Optional<FileMetaInfo> getFileMetaInfo(String relativePath) {
         Path absolutePath = getAbsolutePath(relativePath);
         try {
