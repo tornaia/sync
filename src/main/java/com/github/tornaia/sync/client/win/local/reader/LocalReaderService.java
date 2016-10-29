@@ -1,5 +1,13 @@
 package com.github.tornaia.sync.client.win.local.reader;
 
+import com.github.tornaia.sync.client.win.local.reader.event.LocalFileEventType;
+import com.github.tornaia.sync.client.win.local.reader.event.bulk.LocalFileCreatedBulkEvents;
+import com.github.tornaia.sync.client.win.local.reader.event.bulk.LocalFileDeletedBulkEvents;
+import com.github.tornaia.sync.client.win.local.reader.event.bulk.LocalFileModifiedBulkEvents;
+import com.github.tornaia.sync.client.win.local.reader.event.single.AbstractLocalFileEvent;
+import com.github.tornaia.sync.client.win.local.reader.event.single.LocalFileCreatedEvent;
+import com.github.tornaia.sync.client.win.local.reader.event.single.LocalFileDeletedEvent;
+import com.github.tornaia.sync.client.win.local.reader.event.single.LocalFileModifiedEvent;
 import com.github.tornaia.sync.client.win.remote.RemoteKnownState;
 import com.github.tornaia.sync.client.win.util.FileUtils;
 import com.github.tornaia.sync.shared.api.FileMetaInfo;
@@ -45,9 +53,9 @@ public class LocalReaderService {
 
     private Path syncDirectory;
 
-    private LinkedHashSet<LocalFileEvent> createdEvents = new LinkedHashSet<>();
-    private LinkedHashSet<LocalFileEvent> modifiedEvents = new LinkedHashSet<>();
-    private LinkedHashSet<LocalFileEvent> deletedEvents = new LinkedHashSet<>();
+    private LinkedHashSet<AbstractLocalFileEvent> createdEvents = new LinkedHashSet<>();
+    private LinkedHashSet<AbstractLocalFileEvent> modifiedEvents = new LinkedHashSet<>();
+    private LinkedHashSet<AbstractLocalFileEvent> deletedEvents = new LinkedHashSet<>();
 
     private volatile boolean contextIsRunning;
 
@@ -81,7 +89,7 @@ public class LocalReaderService {
     private void registerWatcherAndAddAllFiles() {
         LOG.info("Register watcherService and scan syncDirectory");
         register(syncDirectory);
-        Set<LocalFileEvent> newOrModifiedChangeList = getNewOrModifiedChangeList(syncDirectory);
+        Set<AbstractLocalFileEvent> newOrModifiedChangeList = getNewOrModifiedChangeList(syncDirectory);
         addNewEvents(newOrModifiedChangeList);
     }
 
@@ -91,12 +99,12 @@ public class LocalReaderService {
         }
     }
 
-    public BulkLocalFileCreatedEvent getNextCreated() {
-        BulkLocalFileCreatedEvent bulkLocalFileCreatedEvent = new BulkLocalFileCreatedEvent(syncDirectory);
+    public LocalFileCreatedBulkEvents getNextCreated() {
+        LocalFileCreatedBulkEvents localFileCreatedBulkEvents = new LocalFileCreatedBulkEvents(syncDirectory);
         synchronized (this) {
             while (!createdEvents.isEmpty()) {
-                FileCreatedEvent localFileEvent = (FileCreatedEvent) createdEvents.iterator().next();
-                boolean added = bulkLocalFileCreatedEvent.add(localFileEvent);
+                LocalFileCreatedEvent localFileEvent = (LocalFileCreatedEvent) createdEvents.iterator().next();
+                boolean added = localFileCreatedBulkEvents.add(localFileEvent);
                 if (added) {
                     createdEvents.remove(localFileEvent);
                 } else {
@@ -104,15 +112,15 @@ public class LocalReaderService {
                 }
             }
         }
-        return bulkLocalFileCreatedEvent;
+        return localFileCreatedBulkEvents;
     }
 
-    public BulkLocalFileModifiedEvent getNextModified() {
-        BulkLocalFileModifiedEvent bulkLocalFileModifiedEvent = new BulkLocalFileModifiedEvent(syncDirectory);
+    public LocalFileModifiedBulkEvents getNextModified() {
+        LocalFileModifiedBulkEvents localFileModifiedBulkEvents = new LocalFileModifiedBulkEvents(syncDirectory);
         synchronized (this) {
             while (!modifiedEvents.isEmpty()) {
-                FileModifiedEvent localFileEvent = (FileModifiedEvent) modifiedEvents.iterator().next();
-                boolean added = bulkLocalFileModifiedEvent.add(localFileEvent);
+                LocalFileModifiedEvent localFileEvent = (LocalFileModifiedEvent) modifiedEvents.iterator().next();
+                boolean added = localFileModifiedBulkEvents.add(localFileEvent);
                 if (added) {
                     modifiedEvents.remove(localFileEvent);
                 } else {
@@ -120,19 +128,31 @@ public class LocalReaderService {
                 }
             }
         }
-        return bulkLocalFileModifiedEvent;
+        return localFileModifiedBulkEvents;
     }
 
-    public Optional<LocalFileEvent> getNextDeleted() {
-        return getNext(deletedEvents);
+    public LocalFileDeletedBulkEvents getNextDeleted() {
+        LocalFileDeletedBulkEvents localFileDeletedBulkEvents = new LocalFileDeletedBulkEvents(syncDirectory);
+        synchronized (this) {
+            while (!deletedEvents.isEmpty()) {
+                LocalFileDeletedEvent localFileEvent = (LocalFileDeletedEvent) deletedEvents.iterator().next();
+                boolean added = localFileDeletedBulkEvents.add(localFileEvent);
+                if (added) {
+                    deletedEvents.remove(localFileEvent);
+                } else {
+                    break;
+                }
+            }
+        }
+        return localFileDeletedBulkEvents;
     }
 
-    private Optional<LocalFileEvent> getNext(Set<LocalFileEvent> events) {
+    private Optional<AbstractLocalFileEvent> getNext(Set<AbstractLocalFileEvent> events) {
         synchronized (this) {
             if (events.isEmpty()) {
                 return Optional.empty();
             }
-            LocalFileEvent next = events.iterator().next();
+            AbstractLocalFileEvent next = events.iterator().next();
             events.remove(next);
             return Optional.of(next);
         }
@@ -164,26 +184,26 @@ public class LocalReaderService {
         return lookingForFile ? file.isFile() : file.isDirectory();
     }
 
-    public void reAddEvent(LocalFileEvent localFileEvent) {
-        boolean isFileExist = syncDirectory.resolve(localFileEvent.relativePath).toFile().exists();
-        boolean isDelete = Objects.equals(localFileEvent.eventType, LocalEventType.DELETED);
+    public void reAddEvent(AbstractLocalFileEvent abstractLocalFileEvent) {
+        boolean isFileExist = syncDirectory.resolve(abstractLocalFileEvent.relativePath).toFile().exists();
+        boolean isDelete = Objects.equals(abstractLocalFileEvent.eventType, LocalFileEventType.DELETED);
         if (isDelete && isFileExist) {
-            LOG.warn("Does not make sense to re-add DELETED local event to LocalReaderService when the file is on the disk: " + localFileEvent.relativePath);
+            LOG.warn("Does not make sense to re-add DELETED local event to LocalReaderService when the file is on the disk: " + abstractLocalFileEvent.relativePath);
             return;
         }
 
         if (isFileExist) {
-            LOG.debug("External hint to re-add event: " + localFileEvent);
-            addNewEvent(localFileEvent);
+            LOG.debug("External hint to re-add event: " + abstractLocalFileEvent);
+            addNewEvent(abstractLocalFileEvent);
         } else {
-            LOG.warn("Cannot re-add event since file does not exist: " + localFileEvent);
+            LOG.warn("Cannot re-add event since file does not exist: " + abstractLocalFileEvent);
         }
     }
 
-    private void addNewEvents(Set<LocalFileEvent> localFileEvents) {
-        LinkedHashSet<LocalFileEvent> newCreatedEvents = localFileEvents.stream().filter(lfe -> Objects.equals(LocalEventType.CREATED, lfe.eventType)).collect(Collectors.toCollection(LinkedHashSet::new));
-        LinkedHashSet<LocalFileEvent> newModifiedEvents = localFileEvents.stream().filter(lfe -> Objects.equals(LocalEventType.MODIFIED, lfe.eventType)).collect(Collectors.toCollection(LinkedHashSet::new));
-        LinkedHashSet<LocalFileEvent> newDeletedEvents = localFileEvents.stream().filter(lfe -> Objects.equals(LocalEventType.DELETED, lfe.eventType)).collect(Collectors.toCollection(LinkedHashSet::new));
+    private void addNewEvents(Set<AbstractLocalFileEvent> abstractLocalFileEvents) {
+        LinkedHashSet<AbstractLocalFileEvent> newCreatedEvents = abstractLocalFileEvents.stream().filter(lfe -> Objects.equals(LocalFileEventType.CREATED, lfe.eventType)).collect(Collectors.toCollection(LinkedHashSet::new));
+        LinkedHashSet<AbstractLocalFileEvent> newModifiedEvents = abstractLocalFileEvents.stream().filter(lfe -> Objects.equals(LocalFileEventType.MODIFIED, lfe.eventType)).collect(Collectors.toCollection(LinkedHashSet::new));
+        LinkedHashSet<AbstractLocalFileEvent> newDeletedEvents = abstractLocalFileEvents.stream().filter(lfe -> Objects.equals(LocalFileEventType.DELETED, lfe.eventType)).collect(Collectors.toCollection(LinkedHashSet::new));
         LOG.debug("Size of possibly new local events to process: c/m/d " + newCreatedEvents.size() + "/" + newModifiedEvents.size() + "/" + newDeletedEvents.size());
         synchronized (this) {
             LOG.debug("Size of pending events before adding possibly new local events to process: c/m/d " + createdEvents.size() + "/" + modifiedEvents.size() + "/" + deletedEvents.size());
@@ -194,66 +214,66 @@ public class LocalReaderService {
         }
     }
 
-    private void addNewCreatedEventsToTheBeginningOfTheCreatedEventsLinkedHashSet(LinkedHashSet<LocalFileEvent> newCreatedEvents) {
+    private void addNewCreatedEventsToTheBeginningOfTheCreatedEventsLinkedHashSet(LinkedHashSet<AbstractLocalFileEvent> newCreatedEvents) {
         synchronized (this) {
             newCreatedEvents.addAll(createdEvents);
             createdEvents = newCreatedEvents;
         }
     }
 
-    private void addNewModifiedEventsToTheBeginningOfTheModifiedEventsLinkedHashSet(LinkedHashSet<LocalFileEvent> newModifiedEvents) {
+    private void addNewModifiedEventsToTheBeginningOfTheModifiedEventsLinkedHashSet(LinkedHashSet<AbstractLocalFileEvent> newModifiedEvents) {
         synchronized (this) {
             newModifiedEvents.addAll(modifiedEvents);
             modifiedEvents = newModifiedEvents;
         }
     }
 
-    private void addNewDeletedEventsToTheEndOfTheDeletedEventsLinkedHashSet(LinkedHashSet<LocalFileEvent> newDeletedEvents) {
+    private void addNewDeletedEventsToTheEndOfTheDeletedEventsLinkedHashSet(LinkedHashSet<AbstractLocalFileEvent> newDeletedEvents) {
         synchronized (this) {
             deletedEvents.addAll(newDeletedEvents);
         }
     }
 
     // TODO ugly and poor design
-    private void addNewEvent(LocalFileEvent localFileEvent) {
+    private void addNewEvent(AbstractLocalFileEvent abstractLocalFileEvent) {
         // TODO later here we can combine events to optimize things like:
         // create-delete (same path) -> nothing
         // create-delete-create (same path) -> last create only
-        switch (localFileEvent.eventType) {
+        switch (abstractLocalFileEvent.eventType) {
             case CREATED:
-                addNewCreatedEvent((FileCreatedEvent) localFileEvent);
+                addNewCreatedEvent((LocalFileCreatedEvent) abstractLocalFileEvent);
                 break;
             case MODIFIED:
-                addNewModifiedEvent((FileModifiedEvent) localFileEvent);
+                addNewModifiedEvent((LocalFileModifiedEvent) abstractLocalFileEvent);
                 break;
             case DELETED:
-                addNewDeletedEvent((FileDeleteEvent) localFileEvent);
+                addNewDeletedEvent((LocalFileDeletedEvent) abstractLocalFileEvent);
                 break;
             default:
-                throw new IllegalStateException("Unknown localFileEvent: " + localFileEvent);
+                throw new IllegalStateException("Unknown abstractLocalFileEvent: " + abstractLocalFileEvent);
         }
     }
 
-    private void addNewCreatedEvent(FileCreatedEvent fileCreatedEvent) {
-        LinkedHashSet<LocalFileEvent> set = new LinkedHashSet<>();
-        set.add(fileCreatedEvent);
+    private void addNewCreatedEvent(LocalFileCreatedEvent localFileCreatedEvent) {
+        LinkedHashSet<AbstractLocalFileEvent> set = new LinkedHashSet<>();
+        set.add(localFileCreatedEvent);
         addNewCreatedEventsToTheBeginningOfTheCreatedEventsLinkedHashSet(set);
     }
 
-    private void addNewModifiedEvent(FileModifiedEvent fileModifiedEvent) {
-        LinkedHashSet<LocalFileEvent> set = new LinkedHashSet<>();
+    private void addNewModifiedEvent(LocalFileModifiedEvent fileModifiedEvent) {
+        LinkedHashSet<AbstractLocalFileEvent> set = new LinkedHashSet<>();
         set.add(fileModifiedEvent);
         addNewModifiedEventsToTheBeginningOfTheModifiedEventsLinkedHashSet(set);
     }
 
-    private void addNewDeletedEvent(FileDeleteEvent fileDeleteEvent) {
+    private void addNewDeletedEvent(LocalFileDeletedEvent fileDeleteEvent) {
         synchronized (this) {
             deletedEvents.add(fileDeleteEvent);
         }
     }
 
-    private Set<LocalFileEvent> getNewOrModifiedChangeList(Path root) {
-        Set<LocalFileEvent> newFileEvents = new HashSet<>();
+    private Set<AbstractLocalFileEvent> getNewOrModifiedChangeList(Path root) {
+        Set<AbstractLocalFileEvent> newFileEvents = new HashSet<>();
         try {
             Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
                 @Override
@@ -267,7 +287,7 @@ public class LocalReaderService {
                     Optional<FileMetaInfo> optionalKnownFileMetaInfo = remoteKnownState.get(relativePath);
                     if (!optionalKnownFileMetaInfo.isPresent()) {
                         LOG.trace("New directory found: " + relativePath);
-                        newFileEvents.add(FileCreatedEvent.ofDirectory(relativePath));
+                        newFileEvents.add(LocalFileCreatedEvent.ofDirectory(relativePath));
                         return FileVisitResult.CONTINUE;
                     }
 
@@ -281,7 +301,7 @@ public class LocalReaderService {
                     Optional<FileMetaInfo> optionalKnownFileMetaInfo = remoteKnownState.get(getRelativePath(file.toFile()));
                     if (!optionalKnownFileMetaInfo.isPresent()) {
                         LOG.trace("New file found: " + relativePath);
-                        newFileEvents.add(FileCreatedEvent.ofFile(relativePath));
+                        newFileEvents.add(LocalFileCreatedEvent.ofFile(relativePath));
                         return FileVisitResult.CONTINUE;
                     }
 
@@ -289,7 +309,7 @@ public class LocalReaderService {
                     FileMetaInfo localFileMetaInfo = new FileMetaInfo(null, userid, relativePath, attrs.size(), attrs.creationTime().toMillis(), attrs.lastModifiedTime().toMillis());
                     if (!Objects.equals(knownFileMetaInfo, localFileMetaInfo)) {
                         LOG.trace("Modified file found: " + knownFileMetaInfo + " -> " + localFileMetaInfo);
-                        newFileEvents.add(FileModifiedEvent.ofFile(relativePath));
+                        newFileEvents.add(LocalFileModifiedEvent.ofFile(relativePath));
                     }
                     return FileVisitResult.CONTINUE;
                 }
@@ -360,11 +380,11 @@ public class LocalReaderService {
 
         if (file.isFile()) {
             LOG.debug("File created event: " + fileUtils.getDescriptionForFile(file));
-            addNewEvent(FileCreatedEvent.ofFile(relativePath));
+            addNewEvent(LocalFileCreatedEvent.ofFile(relativePath));
         } else if (file.isDirectory()) {
-            addNewEvent(FileCreatedEvent.ofDirectory(relativePath));
+            addNewEvent(LocalFileCreatedEvent.ofDirectory(relativePath));
             LOG.debug("Directory created event: " + fileUtils.getDescriptionForFile(file));
-            Set<LocalFileEvent> newOrModifiedChangeList = getNewOrModifiedChangeList(filePath);
+            Set<AbstractLocalFileEvent> newOrModifiedChangeList = getNewOrModifiedChangeList(filePath);
             addNewEvents(newOrModifiedChangeList);
         } else {
             LOG.debug("Created event of an unknown file type. File/directory does not exist? " + file);
@@ -376,9 +396,9 @@ public class LocalReaderService {
         String relativePath = getRelativePath(file);
         if (file.isFile()) {
             LOG.debug("File modified event: " + fileUtils.getDescriptionForFile(file));
-            addNewEvent(FileModifiedEvent.ofFile(relativePath));
+            addNewEvent(LocalFileModifiedEvent.ofFile(relativePath));
         } else if (file.isDirectory()) {
-            addNewEvent(FileModifiedEvent.ofDirectory(relativePath));
+            addNewEvent(LocalFileModifiedEvent.ofDirectory(relativePath));
             LOG.debug("Directory modified event: " + fileUtils.getDescriptionForFile(file));
             return;
         } else {
@@ -405,10 +425,10 @@ public class LocalReaderService {
         FileMetaInfo fileMetaInfo = fileMetaInfoAsFile.get();
         if (fileMetaInfo.isFile()) {
             LOG.debug("File deleted event: " + fileUtils.getDescriptionForFile(file));
-            addNewEvent(FileDeleteEvent.ofFile(relativePath));
+            addNewEvent(LocalFileDeletedEvent.ofFile(relativePath));
         } else if (fileMetaInfo.isDirectory()) {
             LOG.trace("Directory deleted event: " + fileUtils.getDescriptionForFile(file));
-            addNewEvent(FileDeleteEvent.ofDirectory(relativePath));
+            addNewEvent(LocalFileDeletedEvent.ofDirectory(relativePath));
         }
     }
 

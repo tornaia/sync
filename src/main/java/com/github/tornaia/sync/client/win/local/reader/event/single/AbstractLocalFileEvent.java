@@ -1,5 +1,6 @@
-package com.github.tornaia.sync.client.win.local.reader;
+package com.github.tornaia.sync.client.win.local.reader.event.single;
 
+import com.github.tornaia.sync.client.win.local.reader.event.LocalFileEventType;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
@@ -8,13 +9,13 @@ import java.util.Objects;
 import static com.github.tornaia.sync.shared.constant.FileSystemConstants.SEPARATOR_UNIX;
 import static com.github.tornaia.sync.shared.constant.FileSystemConstants.SEPARATOR_WINDOWS;
 
-public abstract class LocalFileEvent {
+public abstract class AbstractLocalFileEvent {
 
-    public final LocalEventType eventType;
+    public final LocalFileEventType eventType;
 
     public final String relativePath;
 
-    public LocalFileEvent(LocalEventType eventType, String relativePath) {
+    public AbstractLocalFileEvent(LocalFileEventType eventType, String relativePath) {
         checkArgument(relativePath);
         this.eventType = eventType;
         this.relativePath = relativePath;
@@ -47,15 +48,15 @@ public abstract class LocalFileEvent {
             return false;
         }
 
-        LocalFileEvent other = (LocalFileEvent) obj;
+        AbstractLocalFileEvent other = (AbstractLocalFileEvent) obj;
 
         return Objects.equals(this.eventType, other.eventType) && Objects.equals(this.relativePath, other.relativePath);
     }
 
     @Override
     public String toString() {
-        return new ToStringBuilder("LocalFileEvent", ToStringStyle.JSON_STYLE)
-                .append("LocalFileEvent", "")
+        return new ToStringBuilder(getClass().getSimpleName(), ToStringStyle.JSON_STYLE)
+                .append(this.getClass().getSimpleName(), "")
                 .append("eventType", eventType)
                 .append("relativePath", relativePath)
                 .toString();

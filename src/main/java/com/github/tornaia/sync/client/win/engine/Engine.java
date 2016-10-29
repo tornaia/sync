@@ -1,9 +1,10 @@
 package com.github.tornaia.sync.client.win.engine;
 
-import com.github.tornaia.sync.client.win.local.reader.BulkLocalFileCreatedEvent;
-import com.github.tornaia.sync.client.win.local.reader.BulkLocalFileModifiedEvent;
-import com.github.tornaia.sync.client.win.local.reader.LocalFileEvent;
 import com.github.tornaia.sync.client.win.local.reader.LocalReaderService;
+import com.github.tornaia.sync.client.win.local.reader.event.bulk.LocalFileCreatedBulkEvents;
+import com.github.tornaia.sync.client.win.local.reader.event.bulk.LocalFileDeletedBulkEvents;
+import com.github.tornaia.sync.client.win.local.reader.event.bulk.LocalFileModifiedBulkEvents;
+import com.github.tornaia.sync.client.win.local.reader.event.single.AbstractLocalFileEvent;
 import com.github.tornaia.sync.client.win.local.writer.LocalWriterService;
 import com.github.tornaia.sync.client.win.remote.RemoteKnownState;
 import com.github.tornaia.sync.client.win.remote.reader.BulkRemoteFileCreatedEvent;
@@ -111,23 +112,25 @@ public class Engine {
                     continue;
                 }
 
-                Optional<LocalFileEvent> localDeletedEvent = localReaderService.getNextDeleted();
-                if (localDeletedEvent.isPresent()) {
-                    handle(localDeletedEvent.get());
-                    continue;
-                }
-
-                BulkLocalFileModifiedEvent localModifiedEvents = localReaderService.getNextModified();
-                if (!localModifiedEvents.modifyEvents.isEmpty()) {
-                    localModifiedEvents.modifyEvents.stream()
+                LocalFileDeletedBulkEvents localDeletedEvents = localReaderService.getNextDeleted();
+                if (!localDeletedEvents.events.isEmpty()) {
+                    localDeletedEvents.events.stream()
                             .parallel()
                             .forEach(lfe -> handle(lfe));
                     continue;
                 }
 
-                BulkLocalFileCreatedEvent localCreatedEvents = localReaderService.getNextCreated();
-                if (!localCreatedEvents.createEvents.isEmpty()) {
-                    localCreatedEvents.createEvents.stream()
+                LocalFileModifiedBulkEvents localModifiedEvents = localReaderService.getNextModified();
+                if (!localModifiedEvents.events.isEmpty()) {
+                    localModifiedEvents.events.stream()
+                            .parallel()
+                            .forEach(lfe -> handle(lfe));
+                    continue;
+                }
+
+                LocalFileCreatedBulkEvents localCreatedEvents = localReaderService.getNextCreated();
+                if (!localCreatedEvents.events.isEmpty()) {
+                    localCreatedEvents.events.stream()
                             .parallel()
                             .forEach(lfe -> handle(lfe));
                     continue;
@@ -261,7 +264,7 @@ public class Engine {
         }
     }
 
-    private void handle(LocalFileEvent localEvent) {
+    private void handle(AbstractLocalFileEvent localEvent) {
         LOG.debug("Starting to process local event: " + localEvent);
         String relativePath = localEvent.relativePath;
         switch (localEvent.eventType) {
