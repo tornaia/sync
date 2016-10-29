@@ -66,7 +66,7 @@ public class FileController {
     @RequestMapping(value = "/{id}", method = PUT)
     public ResponseEntity<ModifyFileResponse> putFile(@PathVariable String id, @RequestPart("fileAttributes") ModifyFileRequest request, @RequestPart(value = "file", required = false) MultipartFile multipartFile, @RequestParam("clientid") String clientid) throws IOException {
         try {
-            FileMetaInfo fileMetaInfo = fileCommandService.modifyFile(clientid, request.getUserid(), id, request.getSize(), request.getCreationDateTime(), request.getModificationDateTime(), multipartFile == null ? null : multipartFile.getInputStream());
+            FileMetaInfo fileMetaInfo = fileCommandService.modifyFile(clientid, request.getUserid(), id, request.getOldSize(), request.getOldCreationDateTime(), request.getOldModificationDateTime(), request.getNewSize(), request.getNewCreationDateTime(), request.getNewModificationDateTime(), multipartFile == null ? null : multipartFile.getInputStream());
             return ResponseEntity.ok(ModifyFileResponse.ok(fileMetaInfo));
         } catch (FileNotFoundException e) {
             return ResponseEntity.ok(ModifyFileResponse.notFound(e.getMessage()));

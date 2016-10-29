@@ -72,9 +72,9 @@ public class FileCommandService {
         return fileMetaInfo;
     }
 
-    public FileMetaInfo modifyFile(String clientid, String userid, String id, long size, long creationDateTime, long modificationDateTime, InputStream content) throws IOException {
-        if (content == null && size != 0L) {
-            throw new IllegalStateException("When content is NULL then the file is a directory so the size must be zero. Content: " + content + ", size: " + size);
+    public FileMetaInfo modifyFile(String clientid, String userid, String id, long oldSize, long oldCreationDateTime, long oldModificationDateTime, long newSize, long newCreationDateTime, long newModificationDateTime, InputStream newContent) throws IOException {
+        if (newContent == null && newSize != 0L) {
+            throw new IllegalStateException("When content is NULL then the file is a directory so the newSize must be zero. Content: " + newContent + ", newSize: " + newSize);
         }
 
         File file = fileRepository.findByUseridAndId(userid, id);
@@ -83,14 +83,30 @@ public class FileCommandService {
             throw new FileNotFoundException(userid, id);
         }
 
-        checkIfRequestWouldLikeToOverwriteBasedOnAnOutDatedInfoFIXME(file, size, creationDateTime, modificationDateTime);
+        if (file.getSize() != oldSize) {
+            String message = "MODIFY Request based on outdated newSize: " + file + ", old: " + file.getSize() + ", new: " + oldSize;
+            LOG.warn(message);
+            throw new OutdatedException(file.getUserid(), file.getId());
+        }
 
-        file.setCreationDate(creationDateTime);
-        file.setLastModifiedDate(modificationDateTime);
-        file.setSize(size);
+        if (file.getCreationDate() != oldCreationDateTime) {
+            String message = "MODIFY Request based on outdated newCreationDateTime: " + file + ", old: " + file.getCreationDate() + ", new: " + oldCreationDateTime;
+            LOG.warn(message);
+            throw new OutdatedException(file.getUserid(), file.getId());
+        }
+
+        if (file.getLastModifiedDate() != oldModificationDateTime) {
+            String message = "MODIFY Request based on outdated lastModifiedDateTime: " + file + ", old: " + file.getLastModifiedDate() + ", new: " + oldModificationDateTime;
+            LOG.warn(message);
+            throw new OutdatedException(file.getUserid(), file.getId());
+        }
+
+        file.setCreationDate(newCreationDateTime);
+        file.setLastModifiedDate(newModificationDateTime);
+        file.setSize(newSize);
 
         FileMetaInfo fileMetaInfo = fileToFileMetaInfoConverter.convert(file);
-        s3Service.putFile(fileMetaInfo, content == null ? new ByteArrayInputStream(new byte[0]) : content);
+        s3Service.putFile(fileMetaInfo, newContent == null ? new ByteArrayInputStream(new byte[0]) : newContent);
         // FIXME what if the previous statement (update object in S3) works but the next (updating fileMetaInfo in Mongo) fails?
         fileRepository.save(file);
 
@@ -142,18 +158,6 @@ public class FileCommandService {
         files.forEach(fileRepository::delete);
         files.stream().map(fileToFileMetaInfoConverter::convert).map(fmi -> fmi.id).forEach(s3Service::deleteFile);
         LOG.info("All files deleted from DB");
-    }
-
-    // FIXME
-    private void checkIfRequestWouldLikeToOverwriteBasedOnAnOutDatedInfoFIXME(File file, long size, long creationDateTime, long modificationDateTime) {
-        if (new Object() == null && (file.getSize() != size || file.getCreationDate() != creationDateTime)) {
-            LOG.warn("MODIFY File attributes mismatch: " + file + ", vs: " + size + ", " + creationDateTime + ", " + modificationDateTime);
-            throw new OutdatedException("TODO" + file.getUserid(), file.getId());
-        }
-        if (new Object() == null && file.isFile() && file.getLastModifiedDate() != modificationDateTime) {
-            LOG.warn("MODIFY File attributes mismatch: " + file + ", vs: " + size + ", " + creationDateTime + ", " + modificationDateTime);
-            throw new OutdatedException("TODO" + file.getUserid(), file.getId());
-        }
     }
 
     private void deleteFileFromDynamicStorageQuietly(String id) {

@@ -66,9 +66,12 @@ public class FileControllerIntTest extends AbstractSyncServerIntTest {
 
         ModifyFileRequest modifyFileRequest = new ModifyFileRequestBuilder()
                 .userid("userid")
-                .size(4L)
-                .creationDateTime(3L)
-                .modificationDateTime(4L)
+                .oldSize(4L)
+                .oldCreationDateTime(2L)
+                .oldModificationDateTime(3L)
+                .newSize(5L)
+                .newCreationDateTime(3L)
+                .newModificationDateTime(4L)
                 .create();
 
         ResponseEntity<ModifyFileResponse> response = fileController.putFile(fileMetaInfo.id, modifyFileRequest, updatedFile, "clientid");
@@ -77,11 +80,43 @@ public class FileControllerIntTest extends AbstractSyncServerIntTest {
 
         FileMetaInfoMatcher expectedMatcher = new FileMetaInfoMatcher()
                 .relativePath("test.png")
-                .size(4L)
+                .size(5L)
                 .creationDateTime(3L)
                 .modificationDateTime(4L);
 
         assertThat(actual, expectedMatcher);
+    }
+
+    @Test
+    public void putFileWhenOldModificationDateTimeIsInvalidSoRequestIsOutdated() throws Exception {
+        MockMultipartFile file = new MockMultipartFile("test", "this.does.not.count.test.png", "image/png", "TEST".getBytes());
+        CreateFileRequest createFileRequest = new CreateFileRequestBuilder()
+                .userid("userid")
+                .relativePath("test.png")
+                .size(4L)
+                .creationDateTime(2L)
+                .modificationDateTime(3L)
+                .create();
+        fileController.postFile(createFileRequest, file, "clientid");
+
+        List<FileMetaInfo> modifiedFiles = fileQueryService.getModifiedFiles("userid", -1L);
+        FileMetaInfo fileMetaInfo = modifiedFiles.get(0);
+
+        MockMultipartFile updatedFile = new MockMultipartFile("test", "test.png", "image/png", "TEST2".getBytes());
+
+        ModifyFileRequest modifyFileRequest = new ModifyFileRequestBuilder()
+                .userid("userid")
+                .oldSize(4L)
+                .oldCreationDateTime(2L)
+                .oldModificationDateTime(4L)
+                .newSize(10L)
+                .newCreationDateTime(13L)
+                .newModificationDateTime(14L)
+                .create();
+
+        ResponseEntity<ModifyFileResponse> outdatedModifyResponse = fileController.putFile(fileMetaInfo.id, modifyFileRequest, updatedFile, "clientid");
+        ModifyFileResponse body = outdatedModifyResponse.getBody();
+        assertEquals(ModifyFileResponse.Status.OUTDATED, body.status);
     }
 
     @Test
