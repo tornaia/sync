@@ -15,7 +15,6 @@
 
         <java.version>1.8</java.version>
         <httpmime.version>4.5.2</httpmime.version>
-        <commons-io.version>2.5</commons-io.version>
         <jackson-databind.version>2.6.6</jackson-databind.version>
         <junit.version>4.12</junit.version>
         <mockito-core.version>1.9.5</mockito-core.version>
@@ -92,12 +91,6 @@
             </dependency>
 
             <dependency>
-                <groupId>commons-io</groupId>
-                <artifactId>commons-io</artifactId>
-                <version>${commons-io.version}</version>
-            </dependency>
-
-            <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-databind</artifactId>
                 <version>${jackson-databind.version}</version>
@@ -150,11 +143,6 @@
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpmime</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>commons-io</groupId>
-            <artifactId>commons-io</artifactId>
         </dependency>
 
         <dependency>
