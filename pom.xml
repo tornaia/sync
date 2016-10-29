@@ -22,10 +22,10 @@
         <junit.version>4.12</junit.version>
         <org.springframework.boot.version>1.4.1.RELEASE</org.springframework.boot.version>
         <com.github.fakemongo.version>2.0.6</com.github.fakemongo.version>
+        <s3mock_2.11.version>0.1.4</s3mock_2.11.version>
 
         <maven-compiler-plugin.version>3.5.1</maven-compiler-plugin.version>
         <maven-jar-plugin.version>2.6</maven-jar-plugin.version>
-        <s3mock_2.11.version>0.1.4</s3mock_2.11.version>
     </properties>
 
     <parent>
