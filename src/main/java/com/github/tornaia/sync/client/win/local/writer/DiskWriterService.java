@@ -254,7 +254,7 @@ public class DiskWriterService {
     }
 
     public boolean delete(Path fileAbsolutePath) {
-        LOG.trace("Delete " + fileAbsolutePath.toFile().getAbsolutePath());
+        LOG.info("Delete " + fileAbsolutePath.toFile().getAbsolutePath());
         try {
             Files.delete(fileAbsolutePath);
         } catch (DirectoryNotEmptyException e) {
