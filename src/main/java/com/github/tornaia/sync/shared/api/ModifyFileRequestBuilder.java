@@ -3,16 +3,22 @@ package com.github.tornaia.sync.shared.api;
 public class ModifyFileRequestBuilder {
 
     private String userid;
-    private Long size;
-    private Long creationDateTime;
-    private Long modificationDateTime;
+    private Long oldSize;
+    private Long oldCreationDateTime;
+    private Long oldModificationDateTime;
+    private Long newSize;
+    private Long newCreationDateTime;
+    private Long newModificationDateTime;
 
     public ModifyFileRequest create() {
         ModifyFileRequest modifyFileRequest = new ModifyFileRequest();
         modifyFileRequest.setUserid(userid);
-        modifyFileRequest.setSize(size);
-        modifyFileRequest.setCreationDateTime(creationDateTime);
-        modifyFileRequest.setModificationDateTime(modificationDateTime);
+        modifyFileRequest.setOldSize(oldSize);
+        modifyFileRequest.setOldCreationDateTime(oldCreationDateTime);
+        modifyFileRequest.setOldModificationDateTime(oldModificationDateTime);
+        modifyFileRequest.setNewSize(newSize);
+        modifyFileRequest.setNewCreationDateTime(newCreationDateTime);
+        modifyFileRequest.setNewModificationDateTime(newModificationDateTime);
         return modifyFileRequest;
     }
 
@@ -21,18 +27,33 @@ public class ModifyFileRequestBuilder {
         return this;
     }
 
-    public ModifyFileRequestBuilder size(long size) {
-        this.size = size;
+    public ModifyFileRequestBuilder oldSize(long oldSize) {
+        this.oldSize = oldSize;
         return this;
     }
 
-    public ModifyFileRequestBuilder creationDateTime(long creationDateTime) {
-        this.creationDateTime = creationDateTime;
+    public ModifyFileRequestBuilder oldCreationDateTime(long oldCreationDateTime) {
+        this.oldCreationDateTime = oldCreationDateTime;
         return this;
     }
 
-    public ModifyFileRequestBuilder modificationDateTime(long modificationDateTime) {
-        this.modificationDateTime = modificationDateTime;
+    public ModifyFileRequestBuilder oldModificationDateTime(long oldModificationDateTime) {
+        this.oldModificationDateTime = oldModificationDateTime;
+        return this;
+    }
+
+    public ModifyFileRequestBuilder newSize(long newSize) {
+        this.newSize = newSize;
+        return this;
+    }
+
+    public ModifyFileRequestBuilder newCreationDateTime(long newCreationDateTime) {
+        this.newCreationDateTime = newCreationDateTime;
+        return this;
+    }
+
+    public ModifyFileRequestBuilder newModificationDateTime(long newModificationDateTime) {
+        this.newModificationDateTime = newModificationDateTime;
         return this;
     }
 }

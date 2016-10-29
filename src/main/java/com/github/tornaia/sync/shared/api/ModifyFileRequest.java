@@ -4,11 +4,17 @@ public class ModifyFileRequest extends AbstractRequest {
 
     private String userid;
 
-    private long size;
+    private long oldSize;
 
-    private long creationDateTime;
+    private long oldCreationDateTime;
 
-    private long modificationDateTime;
+    private long oldModificationDateTime;
+
+    private long newSize;
+
+    private long newCreationDateTime;
+
+    private long newModificationDateTime;
 
     public String getUserid() {
         return userid;
@@ -18,27 +24,51 @@ public class ModifyFileRequest extends AbstractRequest {
         this.userid = userid;
     }
 
-    public long getSize() {
-        return size;
+    public long getOldSize() {
+        return oldSize;
     }
 
-    public void setSize(long size) {
-        this.size = size;
+    public void setOldSize(long oldSize) {
+        this.oldSize = oldSize;
     }
 
-    public long getCreationDateTime() {
-        return creationDateTime;
+    public long getOldCreationDateTime() {
+        return oldCreationDateTime;
     }
 
-    public void setCreationDateTime(Long creationDateTime) {
-        this.creationDateTime = creationDateTime;
+    public void setOldCreationDateTime(long oldCreationDateTime) {
+        this.oldCreationDateTime = oldCreationDateTime;
     }
 
-    public long getModificationDateTime() {
-        return modificationDateTime;
+    public long getOldModificationDateTime() {
+        return oldModificationDateTime;
     }
 
-    public void setModificationDateTime(Long modificationDateTime) {
-        this.modificationDateTime = modificationDateTime;
+    public void setOldModificationDateTime(long oldModificationDateTime) {
+        this.oldModificationDateTime = oldModificationDateTime;
+    }
+
+    public long getNewSize() {
+        return newSize;
+    }
+
+    public void setNewSize(long newSize) {
+        this.newSize = newSize;
+    }
+
+    public long getNewCreationDateTime() {
+        return newCreationDateTime;
+    }
+
+    public void setNewCreationDateTime(long newCreationDateTime) {
+        this.newCreationDateTime = newCreationDateTime;
+    }
+
+    public long getNewModificationDateTime() {
+        return newModificationDateTime;
+    }
+
+    public void setNewModificationDateTime(long newModificationDateTime) {
+        this.newModificationDateTime = newModificationDateTime;
     }
 }
