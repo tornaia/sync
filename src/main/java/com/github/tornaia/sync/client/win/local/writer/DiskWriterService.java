@@ -72,7 +72,7 @@ public class DiskWriterService {
         return Optional.of(tempFile);
     }
 
-    public Optional<Path> createTempDirectory(long creationDateTime, long modificationDateTime) {
+    public Optional<Path> createTempDirectory(long creationDateTime) {
         Path tempDirectory;
         try {
             tempDirectory = fileUtils.createWorkDirectory();
@@ -165,7 +165,7 @@ public class DiskWriterService {
             throw new IllegalStateException("Directory's absolutePath must end with .");
         }
 
-        Optional<Path> tempDirectory = createTempDirectory(creationDateTime, modificationDateTime);
+        Optional<Path> tempDirectory = createTempDirectory(creationDateTime);
 
         if (!tempDirectory.isPresent()) {
             LOG.error("Cannot create temporary directory");
