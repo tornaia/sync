@@ -17,6 +17,7 @@ import org.springframework.data.mongodb.config.AbstractMongoConfiguration;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Configuration
 public class SpringMongoConfig extends AbstractMongoConfiguration {
@@ -58,7 +59,8 @@ public class SpringMongoConfig extends AbstractMongoConfiguration {
 
     private MongoClient initCloud() throws IOException {
         LOG.info("We are in cloud. Init Mongo for Cloud!");
-        Map<String, Object> vcapServicesMap = serializerUtils.toObject(vcapServices, Map.class);
+        Optional<Map> optionalVcapServicesMap = serializerUtils.toObject(vcapServices, Map.class);
+        Map<String, Object> vcapServicesMap = optionalVcapServicesMap.get();
         List<Map<String, Object>> mongoDbList = (List<Map<String, Object>>) vcapServicesMap.get("mongodb");
         Map<String, Object> mongoDbFirstMap = mongoDbList.get(0);
         Map<String, String> credentialsMap = (Map<String, String>) mongoDbFirstMap.get("credentials");
