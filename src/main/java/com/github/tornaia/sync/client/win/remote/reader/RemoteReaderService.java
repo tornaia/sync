@@ -69,7 +69,12 @@ public class RemoteReaderService {
             return;
         }
 
-        RemoteFileEvent remoteFileEvent = serializerUtils.toObject(message, RemoteFileEvent.class);
+        Optional<RemoteFileEvent> optionalRemoteFileEvent = serializerUtils.toObject(message, RemoteFileEvent.class);
+        if (!optionalRemoteFileEvent.isPresent()) {
+            throw new RuntimeException("Invalid message: " + message);
+        }
+
+        RemoteFileEvent remoteFileEvent = optionalRemoteFileEvent.get();
         addNewEvent(remoteFileEvent);
     }
 

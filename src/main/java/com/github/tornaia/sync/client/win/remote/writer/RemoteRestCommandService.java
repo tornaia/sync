@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Optional;
 
 @Component
 public class RemoteRestCommandService {
@@ -73,7 +74,11 @@ public class RemoteRestCommandService {
         try {
             HttpResponse response = httpClientProvider.get().execute(httpPost);
             entity = response.getEntity();
-            CreateFileResponse createFileResponse = serializerUtils.toObject(entity, CreateFileResponse.class);
+            Optional<CreateFileResponse> optionalCreateFileResponse = serializerUtils.toObject(entity, CreateFileResponse.class);
+            if (!optionalCreateFileResponse.isPresent()) {
+                return CreateFileResponse.transferFailed("Malformed response: " + response);
+            }
+            CreateFileResponse createFileResponse = optionalCreateFileResponse.get();
             LOG.debug("Created file: " + createFileResponse.fileMetaInfo);
             return createFileResponse;
         } catch (FileNotFoundException e) {
@@ -116,7 +121,11 @@ public class RemoteRestCommandService {
         try {
             HttpResponse response = httpClientProvider.get().execute(httpPut);
             entity = response.getEntity();
-            ModifyFileResponse modifyFileResponse = serializerUtils.toObject(entity, ModifyFileResponse.class);
+            Optional<ModifyFileResponse> optionalModifyFileResponse = serializerUtils.toObject(entity, ModifyFileResponse.class);
+            if (!optionalModifyFileResponse.isPresent()) {
+                return ModifyFileResponse.transferFailed("Malformed response: " + response);
+            }
+            ModifyFileResponse modifyFileResponse = optionalModifyFileResponse.get();
             LOG.debug("Modified file: " + modifyFileResponse.fileMetaInfo);
             return modifyFileResponse;
         } catch (FileNotFoundException e) {
@@ -154,7 +163,11 @@ public class RemoteRestCommandService {
         try {
             HttpResponse response = httpClientProvider.get().execute(httpPost);
             entity = response.getEntity();
-            DeleteFileResponse deleteFileResponse = serializerUtils.toObject(entity, DeleteFileResponse.class);
+            Optional<DeleteFileResponse> optionalDeleteFileResponse = serializerUtils.toObject(entity, DeleteFileResponse.class);
+            if (!optionalDeleteFileResponse.isPresent()) {
+                return DeleteFileResponse.transferFailed("Malformed response: " + response);
+            }
+            DeleteFileResponse deleteFileResponse = optionalDeleteFileResponse.get();
             LOG.debug("Deleted file: " + fileMetaInfo);
             return deleteFileResponse;
         } catch (IOException e) {
