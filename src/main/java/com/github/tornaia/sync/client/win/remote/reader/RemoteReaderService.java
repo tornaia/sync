@@ -170,7 +170,7 @@ public class RemoteReaderService {
                     break;
                 case DELETED:
                     removeAllModifiedEvents(relativePath);
-                    removeAllCreatedEventsS(relativePath);
+                    removeAllCreatedEvents(relativePath);
                     deletedEvents.add(remoteFileEvent);
                     break;
                 default:
@@ -186,7 +186,7 @@ public class RemoteReaderService {
         modifiedEvents.removeAll(invalidModifiedEvents);
     }
 
-    private void removeAllCreatedEventsS(String relativePath) {
+    private void removeAllCreatedEvents(String relativePath) {
         Set<RemoteFileEvent> invalidCreatedEvents = createdEvents.parallelStream()
                 .filter(me -> me.fileMetaInfo.relativePath.equals(relativePath))
                 .collect(Collectors.toSet());
