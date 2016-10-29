@@ -7,7 +7,7 @@ import org.hamcrest.core.IsAnything;
 
 import static org.hamcrest.CoreMatchers.is;
 
-public class FileMetaInfoMatcher extends AbstractSyncMatcher<FileMetaInfo> {
+public class FileMetaInfoMatcher extends AbstractTypeSafeDiagnosingMatcher<FileMetaInfo> {
 
     private Matcher<String> id = new IsAnything<>();
 

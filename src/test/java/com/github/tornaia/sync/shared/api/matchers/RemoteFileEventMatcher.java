@@ -9,7 +9,7 @@ import org.hamcrest.core.IsAnything;
 
 import static org.hamcrest.CoreMatchers.is;
 
-public class RemoteFileEventMatcher extends AbstractSyncMatcher<RemoteFileEvent> {
+public class RemoteFileEventMatcher extends AbstractTypeSafeDiagnosingMatcher<RemoteFileEvent> {
 
     private Matcher<RemoteEventType> eventType = new IsAnything<>();
 
