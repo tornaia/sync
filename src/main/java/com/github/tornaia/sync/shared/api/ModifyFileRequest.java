@@ -1,6 +1,6 @@
 package com.github.tornaia.sync.shared.api;
 
-public class UpdateFileRequest extends AbstractRequest {
+public class ModifyFileRequest extends AbstractRequest {
 
     private String userid;
 
