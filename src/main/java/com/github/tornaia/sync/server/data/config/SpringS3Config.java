@@ -19,6 +19,7 @@ import org.springframework.context.annotation.Configuration;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 @Configuration
 public class SpringS3Config {
@@ -64,7 +65,8 @@ public class SpringS3Config {
 
     private AmazonS3 initCloud() {
         LOG.info("We are in cloud. Init S3 for Cloud!");
-        Map<String, Object> vcapServicesMap = serializerUtils.toObject(vcapServices, Map.class);
+        Optional<Map> optionalVcapServicesMap = serializerUtils.toObject(vcapServices, Map.class);
+        Map<String, Object> vcapServicesMap = optionalVcapServicesMap.get();
         List<Map<String, Object>> dynstrgList = (List<Map<String, Object>>) vcapServicesMap.get("dynstrg");
         Map<String, Object> s3StorageFirstMap = dynstrgList.get(0);
         Map<String, String> credentialsMap = (Map<String, String>) s3StorageFirstMap.get("credentials");
