@@ -1,16 +1,19 @@
 package com.github.tornaia.sync.client.win.httpclient;
 
-import com.github.tornaia.sync.client.win.remote.SurvivableResponseStatusCodes;
 import com.github.tornaia.sync.client.win.remote.NormalResponseStatusCodes;
+import com.github.tornaia.sync.client.win.remote.SurvivableResponseStatusCodes;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpResponseInterceptor;
+import org.apache.http.StatusLine;
 import org.apache.http.protocol.HttpContext;
 
 public class FailOnErrorResponseInterceptor implements HttpResponseInterceptor {
 
     @Override
     public void process(HttpResponse response, HttpContext context) {
-        int statusCode = response.getStatusLine().getStatusCode();
+        StatusLine statusLine = response.getStatusLine();
+        int statusCode = statusLine.getStatusCode();
+
         if (NormalResponseStatusCodes.isValid(statusCode)) {
             return;
         }
