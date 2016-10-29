@@ -1,6 +1,6 @@
 package com.github.tornaia.sync.e2e;
 
-import com.github.tornaia.sync.shared.api.matchers.AbstractSyncMatcher;
+import com.github.tornaia.sync.shared.api.matchers.AbstractTypeSafeDiagnosingMatcher;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.core.IsAnything;
@@ -13,7 +13,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 
 import static org.hamcrest.Matchers.is;
 
-public class DirectoryMatcher extends AbstractSyncMatcher<File> {
+public class DirectoryMatcher extends AbstractTypeSafeDiagnosingMatcher<File> {
 
     private Path rootDirectory;
 
