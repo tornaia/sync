@@ -34,7 +34,7 @@ public class SerializerUtils {
             LOG.warn("Cannot deserialize string content: " + json + ", to: " + clazz.getCanonicalName());
             return Optional.empty();
         } catch (IOException e) {
-            throw new RuntimeException("Cannot deserialize string content", e);
+            throw new RuntimeException("Cannot deserialize string: " + json, e);
         }
     }
 
@@ -43,7 +43,7 @@ public class SerializerUtils {
             String json = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
             return toObject(json, clazz);
         } catch (IOException e) {
-            throw new RuntimeException("Cannot deserialize inputStream content", e);
+            throw new RuntimeException("Cannot deserialize inputStream", e);
         }
     }
 
@@ -52,7 +52,7 @@ public class SerializerUtils {
             InputStream inputStream = httpEntity.getContent();
             return toObject(inputStream, clazz);
         } catch (IOException e) {
-            throw new RuntimeException("Cannot deserialize httpEntity content", e);
+            throw new RuntimeException("Cannot deserialize httpEntity", e);
         }
     }
 
