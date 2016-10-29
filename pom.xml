@@ -17,7 +17,7 @@
         <httpmime.version>4.5.2</httpmime.version>
         <jackson-databind.version>2.6.6</jackson-databind.version>
         <junit.version>4.12</junit.version>
-        <mockito-core.version>1.9.5</mockito-core.version>
+        <mockito-core.version>2.2.9</mockito-core.version>
 
         <maven-compiler-plugin.version>3.5.1</maven-compiler-plugin.version>
         <maven-jar-plugin.version>2.6</maven-jar-plugin.version>
