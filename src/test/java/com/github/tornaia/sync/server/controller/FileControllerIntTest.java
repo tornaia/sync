@@ -1,22 +1,27 @@
 package com.github.tornaia.sync.server.controller;
 
-import com.github.tornaia.sync.server.service.exception.FileNotFoundException;
+import com.github.tornaia.sync.server.service.FileQueryService;
 import com.github.tornaia.sync.shared.api.*;
 import com.github.tornaia.sync.shared.api.matchers.FileMetaInfoMatcher;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockMultipartFile;
 import utils.AbstractSyncServerIntTest;
 
 import java.util.List;
 
 import static org.hamcrest.Matchers.contains;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 
 public class FileControllerIntTest extends AbstractSyncServerIntTest {
 
     @Autowired
     private FileController fileController;
+
+    @Autowired
+    private FileQueryService fileQueryService;
 
     @Test
     public void getMetaInfo() throws Exception {
@@ -30,8 +35,8 @@ public class FileControllerIntTest extends AbstractSyncServerIntTest {
                 .create();
         fileController.postFile(createFileRequest, file, "clientid");
 
-        List<FileMetaInfo> modifiedFiles = fileController.getModifiedFiles(new GetModifiedFilesRequestBuilder().userid("userid").modTS(-1L).create());
-        FileMetaInfo result = fileController.getMetaInfo(modifiedFiles.get(0).id, "userid");
+        List<FileMetaInfo> modifiedFiles = fileQueryService.getModifiedFiles("userid", -1L);
+        FileMetaInfo result = modifiedFiles.get(0);
 
         FileMetaInfoMatcher expected = new FileMetaInfoMatcher()
                 .relativePath("test.png")
@@ -54,27 +59,29 @@ public class FileControllerIntTest extends AbstractSyncServerIntTest {
                 .create();
         fileController.postFile(createFileRequest, file, "clientid");
 
-        List<FileMetaInfo> modifiedFiles = fileController.getModifiedFiles(new GetModifiedFilesRequestBuilder().userid("userid").modTS(-1L).create());
-        FileMetaInfo fileMetaInfo = fileController.getMetaInfo(modifiedFiles.get(0).id, "userid");
+        List<FileMetaInfo> modifiedFiles = fileQueryService.getModifiedFiles("userid", -1L);
+        FileMetaInfo fileMetaInfo = modifiedFiles.get(0);
 
         MockMultipartFile updatedFile = new MockMultipartFile("test", "test.png", "image/png", "TEST2".getBytes());
 
-        UpdateFileRequest updateFileRequest = new UpdateFileRequestBuilder()
+        ModifyFileRequest modifyFileRequest = new ModifyFileRequestBuilder()
                 .userid("userid")
                 .size(4L)
                 .creationDateTime(3L)
                 .modificationDateTime(4L)
                 .create();
 
-        FileMetaInfo result = fileController.putFile(fileMetaInfo.id, updateFileRequest, updatedFile, "clientid");
+        ResponseEntity<ModifyFileResponse> response = fileController.putFile(fileMetaInfo.id, modifyFileRequest, updatedFile, "clientid");
+        ModifyFileResponse result = response.getBody();
+        FileMetaInfo actual = result.fileMetaInfo;
 
-        FileMetaInfoMatcher expected = new FileMetaInfoMatcher()
+        FileMetaInfoMatcher expectedMatcher = new FileMetaInfoMatcher()
                 .relativePath("test.png")
                 .size(4L)
                 .creationDateTime(3L)
                 .modificationDateTime(4L);
 
-        assertThat(result, expected);
+        assertThat(actual, expectedMatcher);
     }
 
     @Test
@@ -90,11 +97,11 @@ public class FileControllerIntTest extends AbstractSyncServerIntTest {
                 .create();
         fileController.postFile(createFileRequest, file, "clientid");
 
-        List<FileMetaInfo> modifiedFiles = fileController.getModifiedFiles(new GetModifiedFilesRequestBuilder().userid("userid").modTS(-1L).create());
-        FileMetaInfo createdFile = fileController.getMetaInfo(modifiedFiles.get(0).id, "userid");
+        List<FileMetaInfo> modifiedFiles = fileQueryService.getModifiedFiles("userid", -1L);
+        FileMetaInfo createdFileMetaInfo = modifiedFiles.get(0);
 
         DeleteFileRequest deleteFileRequest = new DeleteFileRequestBuilder()
-                .id(createdFile.id)
+                .id(createdFileMetaInfo.id)
                 .userid("userid")
                 .size(4L)
                 .creationDateTime(1L)
@@ -102,12 +109,13 @@ public class FileControllerIntTest extends AbstractSyncServerIntTest {
                 .create();
         fileController.deleteFile(deleteFileRequest, "clientid");
 
-        expectedException.expect(FileNotFoundException.class);
-        fileController.getMetaInfo("userid", createdFile.id);
+        ResponseEntity<DeleteFileResponse> notFoundDeleteResponse = fileController.deleteFile(deleteFileRequest, "clientid");
+        DeleteFileResponse body = notFoundDeleteResponse.getBody();
+        assertEquals(DeleteFileResponse.Status.NOT_FOUND, body.status);
     }
 
     @Test
-    public void deleteFileWhenRequesterIsInAsync() throws Exception {
+    public void deleteFileWhenRequestIsOutdated() throws Exception {
         MockMultipartFile file = new MockMultipartFile("test", "this.does.not.count.test.png", "image/png", "TEST".getBytes());
 
         CreateFileRequest createFileRequest = new CreateFileRequestBuilder()
@@ -119,18 +127,21 @@ public class FileControllerIntTest extends AbstractSyncServerIntTest {
                 .create();
         fileController.postFile(createFileRequest, file, "clientid");
 
-        List<FileMetaInfo> modifiedFiles = fileController.getModifiedFiles(new GetModifiedFilesRequestBuilder().userid("userid").modTS(-1L).create());
-        FileMetaInfo createdFile = fileController.getMetaInfo(modifiedFiles.get(0).id, "userid");
+        List<FileMetaInfo> modifiedFiles = fileQueryService.getModifiedFiles("userid", -1L);
+        FileMetaInfo createdFileMetaInfo = modifiedFiles.get(0);
 
         DeleteFileRequest deleteFileRequest = new DeleteFileRequestBuilder()
-                .id(createdFile.id)
+                .id(createdFileMetaInfo.id)
                 .userid("userid")
                 .size(5L)
                 .creationDateTime(1L)
                 .modificationDateTime(3L)
                 .create();
-        expectedException.expect(FileNotFoundException.class);
-        fileController.deleteFile(deleteFileRequest, "clientid");
+
+        ResponseEntity<DeleteFileResponse> outdatedDeleteResponse = fileController.deleteFile(deleteFileRequest, "clientid");
+
+        DeleteFileResponse body = outdatedDeleteResponse.getBody();
+        assertEquals(DeleteFileResponse.Status.OUTDATED, body.status);
     }
 
     @Test
@@ -155,7 +166,7 @@ public class FileControllerIntTest extends AbstractSyncServerIntTest {
                 .create();
         fileController.postFile(createFileRequest2, file2, "clientid");
 
-        List<FileMetaInfo> result = fileController.getModifiedFiles(new GetModifiedFilesRequestBuilder().userid("userid").modTS(2L).create());
+        List<FileMetaInfo> createdFiles = fileQueryService.getModifiedFiles("userid", 2L);
 
         FileMetaInfoMatcher expected = new FileMetaInfoMatcher()
                 .relativePath("test2.png")
@@ -163,6 +174,6 @@ public class FileControllerIntTest extends AbstractSyncServerIntTest {
                 .creationDateTime(3L)
                 .modificationDateTime(3L);
 
-        assertThat(result, contains(expected));
+        assertThat(createdFiles, contains(expected));
     }
 }

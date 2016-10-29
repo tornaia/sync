@@ -20,7 +20,6 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
 import java.io.InputStream;
 
@@ -28,6 +27,7 @@ import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.doThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.fileUpload;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @RunWith(SpringRunner.class)
@@ -68,7 +68,7 @@ public class FileControllerTest {
                         .file(new MockMultipartFile("file", "4.txt", MediaType.APPLICATION_OCTET_STREAM_VALUE, "fileContent".getBytes()))
                         .param("clientid", "abc-clientid"))
                 .andExpect(status().isOk())
-                .andExpect(MockMvcResultMatchers.content().json("{\"id\":\"id\",\"userid\":\"userid\",\"relativePath\":\"path\",\"size\":1024,\"creationDateTime\":1,\"modificationDateTime\":2}"));
+                .andExpect(content().json("{\"status\":\"OK\",\"fileMetaInfo\":{\"id\":\"id\",\"userid\":\"userid\",\"relativePath\":\"path\",\"size\":1024,\"creationDateTime\":1,\"modificationDateTime\":2},\"message\":null}"));
     }
 
     @Test
@@ -88,7 +88,8 @@ public class FileControllerTest {
                         .file(new MockMultipartFile("fileAttributes", null, MediaType.APPLICATION_JSON_VALUE, serializerUtils.toJSON(createFileRequest).getBytes()))
                         .file(new MockMultipartFile("file", "4.txt", MediaType.APPLICATION_OCTET_STREAM_VALUE, "fileContent".getBytes()))
                         .param("clientid", "abc-clientid"))
-                .andExpect(status().isConflict());
+                .andExpect(status().isOk())
+                .andExpect(content().json("{\"status\":\"ALREADY_EXIST\",\"fileMetaInfo\":null,\"message\":null}"));
     }
 
     @Test
@@ -96,18 +97,8 @@ public class FileControllerTest {
         doThrow(FileNotFoundException.class)
                 .when(fileQueryService).getFileById("1000", "12");
 
-        mvc.perform(
-                get("/api/files/12?userid=1000"))
-                .andExpect(status().isNotFound());
-    }
-
-    @Test
-    public void getIfMetaInfoDoesNotExist() throws Exception {
-        doThrow(FileNotFoundException.class)
-                .when(fileQueryService).getFileMetaInfoById("1000", "12");
-
-        mvc.perform(
-                get("/api/files/12/metaInfo?userid=1000"))
-                .andExpect(status().isNotFound());
+        mvc.perform(get("/api/files/12?userid=1000"))
+                .andExpect(status().isOk())
+                .andExpect(content().bytes("".getBytes()));
     }
 }

@@ -5,6 +5,8 @@ import com.github.tornaia.sync.server.data.document.File;
 import com.github.tornaia.sync.server.data.repository.FileRepository;
 import com.github.tornaia.sync.server.service.exception.FileNotFoundException;
 import com.github.tornaia.sync.shared.api.FileMetaInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -16,6 +18,8 @@ import static java.util.stream.Collectors.toList;
 
 @Component
 public class FileQueryService {
+
+    private static final Logger LOG = LoggerFactory.getLogger(FileQueryService.class);
 
     @Autowired
     private FileRepository fileRepository;
@@ -46,6 +50,7 @@ public class FileQueryService {
             throw new FileNotFoundException(userid, id);
         }
 
+        LOG.info("GET: " + file.getRelativePath());
         return file;
     }
 

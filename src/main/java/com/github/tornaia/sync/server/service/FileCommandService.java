@@ -3,10 +3,7 @@ package com.github.tornaia.sync.server.service;
 import com.github.tornaia.sync.server.data.converter.FileToFileMetaInfoConverter;
 import com.github.tornaia.sync.server.data.document.File;
 import com.github.tornaia.sync.server.data.repository.FileRepository;
-import com.github.tornaia.sync.server.service.exception.DirectoryNotEmptyException;
-import com.github.tornaia.sync.server.service.exception.DynamicStorageException;
-import com.github.tornaia.sync.server.service.exception.FileAlreadyExistsException;
-import com.github.tornaia.sync.server.service.exception.FileNotFoundException;
+import com.github.tornaia.sync.server.service.exception.*;
 import com.github.tornaia.sync.server.websocket.SyncWebSocketHandler;
 import com.github.tornaia.sync.shared.api.FileMetaInfo;
 import com.github.tornaia.sync.shared.api.RemoteFileEvent;
@@ -71,11 +68,11 @@ public class FileCommandService {
         }
 
         syncWebSocketHandler.notifyClientsExceptForSource(clientid, new RemoteFileEvent(CREATED, fileMetaInfo));
-        LOG.info("CREATE file: " + fileMetaInfo);
+        LOG.info("CREATE: " + fileMetaInfo);
         return fileMetaInfo;
     }
 
-    public void modifyFile(String clientid, String userid, String id, long size, long creationDateTime, long modificationDateTime, InputStream content) throws IOException {
+    public FileMetaInfo modifyFile(String clientid, String userid, String id, long size, long creationDateTime, long modificationDateTime, InputStream content) throws IOException {
         if (content == null && size != 0L) {
             throw new IllegalStateException("When content is NULL then the file is a directory so the size must be zero. Content: " + content + ", size: " + size);
         }
@@ -85,6 +82,8 @@ public class FileCommandService {
             LOG.warn("MODIFY Not found file! userid: " + userid + ", id: " + id);
             throw new FileNotFoundException(userid, id);
         }
+
+        checkIfRequestWouldLikeToOverwriteBasedOnAnOutDatedInfoFIXME(file, size, creationDateTime, modificationDateTime);
 
         file.setCreationDate(creationDateTime);
         file.setLastModifiedDate(modificationDateTime);
@@ -96,7 +95,8 @@ public class FileCommandService {
         fileRepository.save(file);
 
         syncWebSocketHandler.notifyClientsExceptForSource(clientid, new RemoteFileEvent(MODIFIED, fileMetaInfo));
-        LOG.info("MODIFY file: " + fileMetaInfo);
+        LOG.info("MODIFY: " + fileMetaInfo);
+        return fileMetaInfo;
     }
 
     public void deleteFile(String clientid, String userid, String id, long size, long creationDateTime, long modificationDateTime) {
@@ -108,11 +108,11 @@ public class FileCommandService {
 
         if (file.getSize() != size || file.getCreationDate() != creationDateTime) {
             LOG.warn("DELETE File attributes mismatch: " + file + ", vs: " + size + ", " + creationDateTime + ", " + modificationDateTime);
-            throw new FileNotFoundException(userid, id);
+            throw new OutdatedException(userid, id);
         }
         if (file.isFile() && file.getLastModifiedDate() != modificationDateTime) {
             LOG.warn("DELETE File attributes mismatch: " + file + ", vs: " + size + ", " + creationDateTime + ", " + modificationDateTime);
-            throw new FileNotFoundException(userid, id);
+            throw new OutdatedException(userid, id);
         }
 
         if (file.isDirectory()) {
@@ -133,12 +133,7 @@ public class FileCommandService {
         deleteFileFromDynamicStorageQuietly(id);
 
         syncWebSocketHandler.notifyClientsExceptForSource(clientid, new RemoteFileEvent(DELETED, deletedFileMetaInfo));
-        LOG.info("DELETE file: " + deletedFileMetaInfo.relativePath);
-    }
-
-    public void deleteFileFromMongoQuietly(String id) {
-        LOG.warn("Delete file quietly: " + id);
-        fileRepository.delete(id);
+        LOG.info("DELETE: " + deletedFileMetaInfo.relativePath);
     }
 
     public void deleteAll() {
@@ -149,8 +144,20 @@ public class FileCommandService {
         LOG.info("All files deleted from DB");
     }
 
+    // FIXME
+    private void checkIfRequestWouldLikeToOverwriteBasedOnAnOutDatedInfoFIXME(File file, long size, long creationDateTime, long modificationDateTime) {
+        if (new Object() == null && (file.getSize() != size || file.getCreationDate() != creationDateTime)) {
+            LOG.warn("MODIFY File attributes mismatch: " + file + ", vs: " + size + ", " + creationDateTime + ", " + modificationDateTime);
+            throw new OutdatedException("TODO" + file.getUserid(), file.getId());
+        }
+        if (new Object() == null && file.isFile() && file.getLastModifiedDate() != modificationDateTime) {
+            LOG.warn("MODIFY File attributes mismatch: " + file + ", vs: " + size + ", " + creationDateTime + ", " + modificationDateTime);
+            throw new OutdatedException("TODO" + file.getUserid(), file.getId());
+        }
+    }
+
     private void deleteFileFromDynamicStorageQuietly(String id) {
-        LOG.warn("Delete file quietly: " + id);
+        LOG.debug("Delete file from dynamic storage quietly: " + id);
         try {
             s3Service.deleteFile(id);
         } catch (DynamicStorageException e) {
