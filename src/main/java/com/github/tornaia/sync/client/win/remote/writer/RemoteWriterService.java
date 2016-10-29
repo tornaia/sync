@@ -134,20 +134,21 @@ public class RemoteWriterService {
             LOG.debug("Cannot modify a file that is unknown to server. So lets create instead of modification: " + localFileMetaInfo);
             return createFile(relativePath);
         }
-        if (optionalRemoteFileMetaInfo.isPresent() && Objects.equals(optionalRemoteFileMetaInfo.get(), localFileMetaInfo)) {
+        FileMetaInfo oldRemoteFileMetaInfo = optionalRemoteFileMetaInfo.get();
+        if (Objects.equals(oldRemoteFileMetaInfo, localFileMetaInfo)) {
             LOG.debug("File is already known by server: " + localFileMetaInfo);
             return true;
         }
 
-        FileMetaInfo requestFileMetaInfo;
+        FileMetaInfo newLocalFileMetaInfo;
         try {
-            requestFileMetaInfo = new FileMetaInfo(optionalRemoteFileMetaInfo.get().id, localFileMetaInfo.userid, localFileMetaInfo.relativePath, file);
+            newLocalFileMetaInfo = new FileMetaInfo(oldRemoteFileMetaInfo.id, localFileMetaInfo.userid, localFileMetaInfo.relativePath, file);
         } catch (IOException e) {
             LOG.warn("Cannot read file from disk", e);
             return false;
         }
 
-        ModifyFileResponse modifyFileResponse = remoteRestCommandService.onFileModify(requestFileMetaInfo, file);
+        ModifyFileResponse modifyFileResponse = remoteRestCommandService.onFileModify(oldRemoteFileMetaInfo, newLocalFileMetaInfo, file);
         boolean ok = Objects.equals(ModifyFileResponse.Status.OK, modifyFileResponse.status);
         if (ok) {
             LOG.info("File modified on server: " + modifyFileResponse.fileMetaInfo);

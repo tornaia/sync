@@ -91,12 +91,15 @@ public class RemoteRestCommandService {
         }
     }
 
-    public ModifyFileResponse onFileModify(FileMetaInfo fileMetaInfo, File file) {
+    public ModifyFileResponse onFileModify(FileMetaInfo oldRemoteFileMetaInfo, FileMetaInfo newLocalFileMetaInfo, File file) {
         ModifyFileRequest modifyFileRequest = new ModifyFileRequestBuilder()
                 .userid(userid)
-                .size(fileMetaInfo.size)
-                .creationDateTime(fileMetaInfo.creationDateTime)
-                .modificationDateTime(fileMetaInfo.modificationDateTime)
+                .oldSize(oldRemoteFileMetaInfo.size)
+                .oldCreationDateTime(oldRemoteFileMetaInfo.creationDateTime)
+                .oldModificationDateTime(oldRemoteFileMetaInfo.modificationDateTime)
+                .newSize(newLocalFileMetaInfo.size)
+                .newCreationDateTime(newLocalFileMetaInfo.creationDateTime)
+                .newModificationDateTime(newLocalFileMetaInfo.modificationDateTime)
                 .create();
 
         HttpEntity multipart = MultipartEntityBuilder
@@ -108,12 +111,12 @@ public class RemoteRestCommandService {
                         serializerUtils.toJSON(modifyFileRequest)))
                 .addPart(file.isDirectory() ? null : FormBodyPartBuilder.create()
                         .setName("file")
-                        .setBody(new FileBody(file, ContentType.APPLICATION_OCTET_STREAM, fileMetaInfo.relativePath))
+                        .setBody(new FileBody(file, ContentType.APPLICATION_OCTET_STREAM, newLocalFileMetaInfo.relativePath))
                         .build())
                 .build();
 
 
-        HttpPut httpPut = new HttpPut(httpClientProvider.getServerUrl() + backendFileApiPath + "/" + fileMetaInfo.id + "?clientid=" + clientidService.clientid);
+        HttpPut httpPut = new HttpPut(httpClientProvider.getServerUrl() + backendFileApiPath + "/" + newLocalFileMetaInfo.id + "?clientid=" + clientidService.clientid);
         httpPut.setEntity(multipart);
 
 
