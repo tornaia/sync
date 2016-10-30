@@ -8,6 +8,8 @@ import com.github.tornaia.sync.server.service.exception.FileAlreadyExistsExcepti
 import com.github.tornaia.sync.server.service.exception.FileNotFoundException;
 import com.github.tornaia.sync.server.service.exception.OutdatedException;
 import com.github.tornaia.sync.shared.api.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
@@ -27,6 +29,8 @@ import static org.springframework.web.bind.annotation.RequestMethod.*;
 @RequestMapping("/api/files")
 public class FileController {
 
+    private static final Logger LOG = LoggerFactory.getLogger(FileController.class);
+
     @Autowired
     private FileCommandService fileCommandService;
 
@@ -38,6 +42,7 @@ public class FileController {
         fileCommandService.deleteAll();
     }
 
+    // TODO poor catch exception design. abolish code duplication
     @RequestMapping(method = POST)
     public ResponseEntity<CreateFileResponse> postFile(@RequestPart("fileAttributes") CreateFileRequest request, @RequestPart(value = "file", required = false) MultipartFile multipartFile, @RequestParam("clientid") String clientid) throws IOException {
         try {
@@ -47,8 +52,16 @@ public class FileController {
             return ResponseEntity.ok(CreateFileResponse.alreadyExists(e.getMessage()));
         } catch (DynamicStorageException e) {
             return ResponseEntity.ok(CreateFileResponse.transferFailed(e.getMessage()));
+        } catch (IllegalStateException e) {
+            String message = e.getMessage();
+            if ("Connection pool shut down".equals(message)) {
+                return ResponseEntity.ok(CreateFileResponse.transferFailed(e.getMessage()));
+            }
+            LOG.error("Unknown problem", e);
+            return ResponseEntity.ok(CreateFileResponse.unknownProblem(e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.ok(CreateFileResponse.unknownProblem());
+            LOG.error("Unknown problem", e);
+            return ResponseEntity.ok(CreateFileResponse.unknownProblem(e.getMessage()));
         }
     }
 
@@ -63,8 +76,16 @@ public class FileController {
             return ResponseEntity.ok(ModifyFileResponse.outdated(e.getMessage()));
         } catch (DynamicStorageException e) {
             return ResponseEntity.ok(ModifyFileResponse.transferFailed(e.getMessage()));
+        } catch (IllegalStateException e) {
+            String message = e.getMessage();
+            if ("Connection pool shut down".equals(message)) {
+                return ResponseEntity.ok(ModifyFileResponse.transferFailed(e.getMessage()));
+            }
+            LOG.error("Unknown problem", e);
+            return ResponseEntity.ok(ModifyFileResponse.unknownProblem(e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.ok(ModifyFileResponse.unknownProblem());
+            LOG.error("Unknown problem", e);
+            return ResponseEntity.ok(ModifyFileResponse.unknownProblem(e.getMessage()));
         }
     }
 
@@ -79,8 +100,16 @@ public class FileController {
             return ResponseEntity.ok(DeleteFileResponse.outdated(e.getMessage()));
         } catch (DynamicStorageException e) {
             return ResponseEntity.ok(DeleteFileResponse.transferFailed(e.getMessage()));
+        } catch (IllegalStateException e) {
+            String message = e.getMessage();
+            if ("Connection pool shut down".equals(message)) {
+                return ResponseEntity.ok(DeleteFileResponse.transferFailed(e.getMessage()));
+            }
+            LOG.error("Unknown problem", e);
+            return ResponseEntity.ok(DeleteFileResponse.unknownProblem(e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.ok(DeleteFileResponse.unknownProblem());
+            LOG.error("Unknown problem", e);
+            return ResponseEntity.ok(DeleteFileResponse.unknownProblem(e.getMessage()));
         }
     }
 
@@ -98,8 +127,16 @@ public class FileController {
             return ResponseEntity.ok().headers(createHeaderFor(GetFileResponseStatus.NOT_FOUND)).build();
         } catch (DynamicStorageException e) {
             return ResponseEntity.ok().headers(createHeaderFor(GetFileResponseStatus.TRANSFER_FAILED)).build();
+        } catch (IllegalStateException e) {
+            String message = e.getMessage();
+            if ("Connection pool shut down".equals(message)) {
+                return ResponseEntity.ok().headers(createHeaderFor(GetFileResponseStatus.TRANSFER_FAILED)).build();
+            }
+            LOG.error("Unknown problem", e);
+            return ResponseEntity.ok().headers(createHeaderFor(GetFileResponseStatus.UNKNOWN_PROBLEM)).body(e.getMessage());
         } catch (Exception e) {
-            return ResponseEntity.ok().headers(createHeaderFor(GetFileResponseStatus.UNKNOWN_PROBLEM)).build();
+            LOG.error("Unknown problem", e);
+            return ResponseEntity.ok().headers(createHeaderFor(GetFileResponseStatus.UNKNOWN_PROBLEM)).body(e.getMessage());
         }
     }
 
