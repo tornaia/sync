@@ -63,7 +63,9 @@ public class SyncWebSocketHandler extends TextWebSocketHandler {
     }
 
     private void sendCompleteStatus(WebSocketSession session, String userid) throws IOException {
+        LOG.info("SendCompleteStatus to session " + session.getId() + " about user: " + userid);
         List<FileMetaInfo> modifiedFiles = fileQueryService.getModifiedFiles(userid, Long.MIN_VALUE);
+        LOG.info("Number of events to send " + modifiedFiles.size() + " to session " + session.getId() + " about user: " + userid);
 
         List<RemoteFileEvent> initMessages = modifiedFiles.stream()
                 .map(mf -> new RemoteFileEvent(RemoteEventType.CREATED, new FileMetaInfo(mf.id, mf.userid, mf.relativePath, mf.size, mf.creationDateTime, mf.modificationDateTime)))
