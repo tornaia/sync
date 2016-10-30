@@ -319,7 +319,7 @@ public class LocalReaderService {
             // TODO recursive so stack overflow might occur if the fileSystem is blocked for long
             registerWatcherAndAddAllFiles();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new IllegalStateException(e);
         }
         return newFileEvents;
     }
@@ -349,7 +349,7 @@ public class LocalReaderService {
                         onContextClosedEvent();
                         onContextRefreshedEvent();
                     } catch (IOException e) {
-                        throw new RuntimeException(e);
+                        throw new IllegalStateException(e);
                     }
                     return;
                 }

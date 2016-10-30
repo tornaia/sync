@@ -36,7 +36,7 @@ public class HttpClientProvider {
         try {
             EntityUtils.consume(entity);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new IllegalStateException(e);
         }
     }
 

@@ -71,7 +71,7 @@ public class RemoteReaderService {
 
         Optional<RemoteFileEvent> optionalRemoteFileEvent = serializerUtils.toObject(message, RemoteFileEvent.class);
         if (!optionalRemoteFileEvent.isPresent()) {
-            throw new RuntimeException("Invalid message: " + message);
+            throw new IllegalStateException("Invalid message: " + message);
         }
 
         RemoteFileEvent remoteFileEvent = optionalRemoteFileEvent.get();
