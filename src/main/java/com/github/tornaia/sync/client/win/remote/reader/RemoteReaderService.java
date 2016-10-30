@@ -141,12 +141,14 @@ public class RemoteReaderService {
     @OnClose
     public void closedConnection(Session session) {
         LOG.info("Session closed. SessionId: " + session.getId());
+        initDone = false;
         syncWebSocketReConnectService.reconnect();
     }
 
     @OnError
     public void error(Session session, Throwable t) {
         LOG.warn("Error on session. SessionId: " + session.getId(), t);
+        initDone = false;
         syncWebSocketReConnectService.reconnect();
     }
 

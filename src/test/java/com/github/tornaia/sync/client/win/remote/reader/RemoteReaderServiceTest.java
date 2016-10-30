@@ -6,14 +6,21 @@ import com.github.tornaia.sync.shared.api.RemoteFileEvent;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import javax.websocket.Session;
 import java.util.Optional;
 
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 @RunWith(MockitoJUnitRunner.class)
 public class RemoteReaderServiceTest {
+
+    @Mock
+    private SyncWebSocketReConnectService syncWebSocketReConnectService;
 
     @InjectMocks
     private RemoteReaderService remoteReaderService;
@@ -89,4 +96,44 @@ public class RemoteReaderServiceTest {
         Optional<RemoteFileEvent> nextDeleted = remoteReaderService.getNextDeleted();
         assertFalse(nextDeleted.isPresent());
     }
+
+    @Test
+    public void initIsFalseByDefault() {
+        assertFalse(remoteReaderService.isInitDone());
+    }
+
+    @Test
+    public void initIsTrueAfterInitDoneMessage() {
+        remoteReaderService.onMessage("init-done");
+        assertTrue(remoteReaderService.isInitDone());
+    }
+
+    @Test
+    public void initIsFalseAfterClosedConnection() {
+        remoteReaderService.onMessage("init-done");
+        remoteReaderService.closedConnection(mock(Session.class));
+        assertFalse(remoteReaderService.isInitDone());
+
+        verify(syncWebSocketReConnectService).reconnect();
+    }
+
+    @Test
+    public void initIsFalseAfterError() {
+        remoteReaderService.onMessage("init-done");
+        remoteReaderService.error(mock(Session.class), null);
+        assertFalse(remoteReaderService.isInitDone());
+
+        verify(syncWebSocketReConnectService).reconnect();
+    }
+
+    @Test
+    public void initIsTrueAfterReconnect() {
+        remoteReaderService.onMessage("init-done");
+        remoteReaderService.closedConnection(mock(Session.class));
+        remoteReaderService.onMessage("init-done");
+        assertTrue(remoteReaderService.isInitDone());
+
+        verify(syncWebSocketReConnectService).reconnect();
+    }
+
 }
