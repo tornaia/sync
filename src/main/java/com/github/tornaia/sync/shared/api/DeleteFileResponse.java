@@ -40,7 +40,7 @@ public class DeleteFileResponse {
         return new DeleteFileResponse(Status.TRANSFER_FAILED, message);
     }
 
-    public static DeleteFileResponse unknownProblem() {
-        return new DeleteFileResponse(Status.UNKNOWN_PROBLEM, null);
+    public static DeleteFileResponse unknownProblem(String message) {
+        return new DeleteFileResponse(Status.UNKNOWN_PROBLEM, message);
     }
 }

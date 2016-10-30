@@ -39,7 +39,7 @@ public class CreateFileResponse {
         return new CreateFileResponse(Status.TRANSFER_FAILED, null, message);
     }
 
-    public static CreateFileResponse unknownProblem() {
-        return new CreateFileResponse(Status.UNKNOWN_PROBLEM, null, null);
+    public static CreateFileResponse unknownProblem(String message) {
+        return new CreateFileResponse(Status.UNKNOWN_PROBLEM, null, message);
     }
 }

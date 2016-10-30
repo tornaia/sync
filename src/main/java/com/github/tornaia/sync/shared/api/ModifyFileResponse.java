@@ -44,7 +44,7 @@ public class ModifyFileResponse {
         return new ModifyFileResponse(Status.TRANSFER_FAILED, null, message);
     }
 
-    public static ModifyFileResponse unknownProblem() {
-        return new ModifyFileResponse(Status.UNKNOWN_PROBLEM, null, null);
+    public static ModifyFileResponse unknownProblem(String message) {
+        return new ModifyFileResponse(Status.UNKNOWN_PROBLEM, null, message);
     }
 }
