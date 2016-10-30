@@ -174,64 +174,9 @@ public class Engine {
                         LOG.debug("Remote and local fileMetaInfo equals: " + remoteFileMetaInfo.relativePath);
                         return;
                     }
-
-                    // TODO localFileExist and the else branch here has some duplications
-                    FileGetResponse fileGetResponse = remoteReaderService.getFile(remoteFileMetaInfo);
-                    if (FileGetResponse.Status.OK == fileGetResponse.status) {
-                        boolean succeed = false;
-                        if (remoteEvent.eventType == RemoteEventType.CREATED) {
-                            succeed = localWriterService.write(remoteFileMetaInfo, fileGetResponse.content);
-                        } else if (remoteEvent.eventType == RemoteEventType.MODIFIED) {
-                            succeed = localWriterService.replace(relativePath, remoteFileMetaInfo, fileGetResponse.content);
-                        }
-                        if (succeed) {
-                            LOG.debug("File modified event successfully finished: " + remoteFileMetaInfo);
-                        } else {
-                            LOG.warn("File modified event failed: " + remoteFileMetaInfo);
-                        }
-                    }
-
-                    boolean notFound = FileGetResponse.Status.NOT_FOUND == fileGetResponse.status;
-                    if (notFound) {
-                        LOG.warn("File not found so it does not exist anymore: " + remoteFileMetaInfo.relativePath);
-                        return;
-                    }
-
-                    boolean transferFailed = FileGetResponse.Status.TRANSFER_FAILED == fileGetResponse.status;
-                    if (transferFailed) {
-                        LOG.warn("Transfer failed: " + remoteFileMetaInfo.relativePath);
-                        remoteReaderService.reAddEvent(remoteEvent);
-                        return;
-                    }
-                } else {
-                    FileGetResponse fileGetResponse = remoteReaderService.getFile(remoteFileMetaInfo);
-                    if (FileGetResponse.Status.OK == fileGetResponse.status) {
-                        boolean succeed = false;
-                        if (remoteEvent.eventType == RemoteEventType.CREATED) {
-                            succeed = localWriterService.write(remoteFileMetaInfo, fileGetResponse.content);
-                        } else if (remoteEvent.eventType == RemoteEventType.MODIFIED) {
-                            succeed = localWriterService.replace(relativePath, remoteFileMetaInfo, fileGetResponse.content);
-                        }
-                        if (succeed) {
-                            LOG.debug("File created event successfully finished: " + remoteFileMetaInfo);
-                        } else {
-                            LOG.warn("File created event failed: " + remoteFileMetaInfo);
-                        }
-                    }
-
-                    boolean notFound = FileGetResponse.Status.NOT_FOUND == fileGetResponse.status;
-                    if (notFound) {
-                        LOG.warn("File not found so it does not exist anymore: " + remoteFileMetaInfo.relativePath);
-                        return;
-                    }
-
-                    boolean transferFailed = FileGetResponse.Status.TRANSFER_FAILED == fileGetResponse.status;
-                    if (transferFailed) {
-                        LOG.warn("Transfer failed: " + remoteFileMetaInfo.relativePath);
-                        remoteReaderService.reAddEvent(remoteEvent);
-                        return;
-                    }
                 }
+
+                downloadFile(remoteEvent);
                 break;
             case DELETED:
                 remoteKnownState.remove(remoteFileMetaInfo);
@@ -297,6 +242,38 @@ public class Engine {
                 break;
             default:
                 LOG.warn("Unhandled message: " + localEvent);
+        }
+    }
+
+    private void downloadFile(RemoteFileEvent remoteEvent) {
+        FileMetaInfo remoteFileMetaInfo = remoteEvent.fileMetaInfo;
+        String relativePath = remoteFileMetaInfo.relativePath;
+        FileGetResponse fileGetResponse = remoteReaderService.getFile(remoteFileMetaInfo);
+        if (FileGetResponse.Status.OK == fileGetResponse.status) {
+            boolean succeed = false;
+            if (remoteEvent.eventType == RemoteEventType.CREATED) {
+                succeed = localWriterService.write(remoteFileMetaInfo, fileGetResponse.content);
+            } else if (remoteEvent.eventType == RemoteEventType.MODIFIED) {
+                succeed = localWriterService.replace(relativePath, remoteFileMetaInfo, fileGetResponse.content);
+            }
+            if (succeed) {
+                LOG.debug("Remote event process succeed: " + remoteEvent);
+            } else {
+                LOG.warn("Remote event process failed: " + remoteEvent);
+            }
+        }
+
+        boolean notFound = FileGetResponse.Status.NOT_FOUND == fileGetResponse.status;
+        if (notFound) {
+            LOG.warn("File not found so it does not exist anymore: " + remoteFileMetaInfo.relativePath);
+            return;
+        }
+
+        boolean transferFailed = FileGetResponse.Status.TRANSFER_FAILED == fileGetResponse.status;
+        if (transferFailed) {
+            LOG.warn("Transfer failed: " + remoteFileMetaInfo.relativePath);
+            remoteReaderService.reAddEvent(remoteEvent);
+            return;
         }
     }
 }
