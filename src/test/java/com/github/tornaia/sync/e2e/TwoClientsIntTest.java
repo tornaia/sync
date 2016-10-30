@@ -3,6 +3,7 @@ package com.github.tornaia.sync.e2e;
 import org.junit.Test;
 import org.springframework.test.annotation.Repeat;
 
+import static com.github.tornaia.sync.e2e.DirectoryAssertUtils.assertDirectoriesEquality;
 import static java.util.Arrays.asList;
 import static org.hamcrest.Matchers.contains;
 import static org.junit.Assert.*;
@@ -28,20 +29,13 @@ public class TwoClientsIntTest extends AbstractIntTest {
         createFile(client1.syncDirectory.resolve(uglyFilename4), "   ", 110000L, 120000L);
         waitForSyncDone();
 
-        // TODO one check is OK, and then a recursive check to verify that the two directories are equal
         assertThat(asList(client1.syncDirectory.toFile().listFiles()),
                 contains(new FileMatcher(client1.syncDirectory).relativePath(uglyFilename1).creationTime(50000L).lastModifiedTime(60000L).size(0L).content(""),
                         new FileMatcher(client1.syncDirectory).relativePath(uglyFilename2).creationTime(70000L).lastModifiedTime(80000L).size(1L).content("\r"),
                         new FileMatcher(client1.syncDirectory).relativePath(uglyFilename3).creationTime(90000L).lastModifiedTime(100000L).size(2L).content("\n\t"),
                         new FileMatcher(client1.syncDirectory).relativePath(uglyFilename4).creationTime(110000L).lastModifiedTime(120000L).size(3L).content("   ")
                 ));
-
-        assertThat(asList(client2.syncDirectory.toFile().listFiles()),
-                contains(new FileMatcher(client2.syncDirectory).relativePath(uglyFilename1).creationTime(50000L).lastModifiedTime(60000L).size(0L).content(""),
-                        new FileMatcher(client2.syncDirectory).relativePath(uglyFilename2).creationTime(70000L).lastModifiedTime(80000L).size(1L).content("\r"),
-                        new FileMatcher(client2.syncDirectory).relativePath(uglyFilename3).creationTime(90000L).lastModifiedTime(100000L).size(2L).content("\n\t"),
-                        new FileMatcher(client2.syncDirectory).relativePath(uglyFilename4).creationTime(110000L).lastModifiedTime(120000L).size(3L).content("   ")
-                ));
+        assertDirectoriesEquality(client1.syncDirectory, client2.syncDirectory);
     }
 
     @Test
@@ -214,8 +208,6 @@ public class TwoClientsIntTest extends AbstractIntTest {
         createFile(client1.syncDirectory.resolve("dummy.txt"), "11", 10000L, 20000L);
         createFile(client2.syncDirectory.resolve("dummy.txt"), "22", 30000L, 40000L);
         client1.start();
-        waitForSyncDone();
-
         client2.start();
         waitForSyncDone();
 
@@ -280,7 +272,6 @@ public class TwoClientsIntTest extends AbstractIntTest {
 
         assertThat(asList(client1.syncDirectory.toFile().listFiles()),
                 contains(
-                        // TODO add lastModifiedRecently check to these checks
                         new DirectoryMatcher(client1.syncDirectory).relativePath("emptyDirectory").creationTime(1476000000000L)
                 ));
         assertThat(asList(client2.syncDirectory.toFile().listFiles()),
@@ -346,7 +337,6 @@ public class TwoClientsIntTest extends AbstractIntTest {
         waitForSyncDone();
 
         assertTrue(asList(client1.syncDirectory.toFile().listFiles()).isEmpty());
-        assertTrue(asList(client2.syncDirectory.toFile().listFiles()).isEmpty());
     }
 
     @Test
@@ -365,11 +355,6 @@ public class TwoClientsIntTest extends AbstractIntTest {
                         new FileMatcher(client1.syncDirectory).relativePath("file-directory").content("whatever1").creationTime(100L).lastModifiedTime(200L),
                         new DirectoryMatcher(client1.syncDirectory).relativePath("file-directory_conflict_0_300_400")
                 ));
-        assertThat(asList(client2.syncDirectory.toFile().listFiles()),
-                contains(
-                        new FileMatcher(client2.syncDirectory).relativePath("file-directory").content("whatever1").creationTime(100L).lastModifiedTime(200L),
-                        new DirectoryMatcher(client2.syncDirectory).relativePath("file-directory_conflict_0_300_400")
-                ));
     }
 
     @Test
@@ -387,11 +372,6 @@ public class TwoClientsIntTest extends AbstractIntTest {
                 contains(
                         new DirectoryMatcher(client1.syncDirectory).relativePath("file-directory").creationTime(100L).lastModifiedTime(200L),
                         new FileMatcher(client1.syncDirectory).relativePath("file-directory_conflict_9_300_400").content("whatever1").creationTime(300L).lastModifiedTime(400L)
-                ));
-        assertThat(asList(client2.syncDirectory.toFile().listFiles()),
-                contains(
-                        new DirectoryMatcher(client2.syncDirectory).relativePath("file-directory").creationTime(100L),
-                        new FileMatcher(client2.syncDirectory).relativePath("file-directory_conflict_9_300_400").content("whatever1").creationTime(300L).lastModifiedTime(400L)
                 ));
     }
 
@@ -412,10 +392,6 @@ public class TwoClientsIntTest extends AbstractIntTest {
                 contains(
                         new DirectoryMatcher(client1.syncDirectory).relativePath("directory")
                 ));
-        assertThat(asList(client2.syncDirectory.toFile().listFiles()),
-                contains(
-                        new DirectoryMatcher(client2.syncDirectory).relativePath("directory")
-                ));
     }
 
     @Test
@@ -432,10 +408,6 @@ public class TwoClientsIntTest extends AbstractIntTest {
         assertThat(asList(client1.syncDirectory.toFile().listFiles()),
                 contains(
                         new FileMatcher(client1.syncDirectory).relativePath("FILE.TXT").content("content").creationTime(1476000000000L)
-                ));
-        assertThat(asList(client2.syncDirectory.toFile().listFiles()),
-                contains(
-                        new FileMatcher(client2.syncDirectory).relativePath("file.txt").content("content").creationTime(1476000000000L)
                 ));
     }
 
@@ -456,10 +428,6 @@ public class TwoClientsIntTest extends AbstractIntTest {
                 contains(
                         new FileMatcher(client1.syncDirectory).relativePath("FILE.TXT").content("content2").creationTime(1476000000000L)
                 ));
-        assertThat(asList(client2.syncDirectory.toFile().listFiles()),
-                contains(
-                        new FileMatcher(client2.syncDirectory).relativePath("FILE.TXT").content("content2").creationTime(1476000000000L)
-                ));
     }
 
     @Test
@@ -476,7 +444,6 @@ public class TwoClientsIntTest extends AbstractIntTest {
         waitForSyncDone();
 
         assertTrue(asList(client1.syncDirectory.toFile().listFiles()).isEmpty());
-        assertTrue(asList(client2.syncDirectory.toFile().listFiles()).isEmpty());
     }
 
     @Test
@@ -493,6 +460,5 @@ public class TwoClientsIntTest extends AbstractIntTest {
         waitForSyncDone();
 
         assertTrue(asList(client1.syncDirectory.toFile().listFiles()).isEmpty());
-        assertTrue(asList(client2.syncDirectory.toFile().listFiles()).isEmpty());
     }
 }

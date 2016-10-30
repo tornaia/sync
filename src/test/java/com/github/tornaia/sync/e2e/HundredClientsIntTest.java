@@ -26,11 +26,7 @@ public class HundredClientsIntTest extends AbstractIntTest {
 
         Client client0 = clients.get(0);
         createFile(client0.syncDirectory.resolve("filename.txt"), "content", 500L, 600L);
-        waitForSyncDone();
-        waitForSyncDone();
-        waitForSyncDone();
-        waitForSyncDone();
-        waitForSyncDone();
+        waitForSyncDone(5);
 
         clients.stream().forEach(client -> {
             assertThat(asList(client.syncDirectory.toFile().listFiles()),

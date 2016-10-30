@@ -29,7 +29,10 @@ import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static com.github.tornaia.sync.e2e.DirectoryAssertUtils.assertDirectoriesEquality;
 
 @RunWith(SpringRunner.class)
 public abstract class AbstractIntTest {
@@ -72,6 +75,17 @@ public abstract class AbstractIntTest {
     public void closeClients() {
         LOG.info("Shutdown all clients");
         clients.stream().forEach(client -> client.close());
+    }
+
+    @After
+    public void compareSyncDirectories() {
+        LOG.info("Compare syncDirectories: " + clients.size());
+        if (clients.size() > 1) {
+            Path referenceSyncDirectory = clients.get(0).syncDirectory;
+            clients.stream()
+                    .map(client -> client.syncDirectory)
+                    .forEach(syncDirectory -> assertDirectoriesEquality(referenceSyncDirectory, syncDirectory));
+        }
     }
 
     protected void startServer() {
@@ -200,11 +214,17 @@ public abstract class AbstractIntTest {
     }
 
     protected void waitForSyncDone() {
+        waitForSyncDone(1);
+        compareSyncDirectories();
+    }
+
+    protected void waitForSyncDone(int seconds) {
         try {
-            Thread.sleep(1000L);
+            TimeUnit.SECONDS.sleep(seconds);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
+        compareSyncDirectories();
     }
 
     private static void createEmptyDirectory(Path path) {
