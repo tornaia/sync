@@ -263,6 +263,9 @@ public class DiskWriterService {
         } catch (NoSuchFileException e) {
             LOG.debug("Cannot delete a non-existing file: " + fileAbsolutePath);
             return true;
+        } catch (FileSystemException e) {
+            LOG.warn("Cannot delete target file: " + fileAbsolutePath + ", it might be in use? " + e.getMessage());
+            return false;
         } catch (IOException e) {
             LOG.warn("Cannot delete target file", e);
             return false;
