@@ -42,16 +42,8 @@ public class FileUtils {
         return path.toFile().getAbsolutePath() + ", creationTime: " + attr.creationTime().toMillis() + ", lastModifiedTime: " + attr.lastModifiedTime().toMillis();
     }
 
-    public long getCreationTime(Path path) throws IOException {
-        return ((FileTime) Files.getAttribute(path, "basic:creationTime")).toMillis();
-    }
-
     public void setCreationTime(Path path, long creationDateTime) throws IOException {
         Files.setAttribute(path, "basic:creationTime", FileTime.fromMillis(creationDateTime));
-    }
-
-    public long getLastModifiedTime(Path path) throws IOException {
-        return ((FileTime) Files.getAttribute(path, "basic:lastModifiedTime")).toMillis();
     }
 
     public void setLastModifiedTime(Path path, long modificationDateTime) throws IOException {
