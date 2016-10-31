@@ -2,8 +2,8 @@ package com.github.tornaia.sync.shared.util;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.tornaia.sync.shared.exception.SerializerException;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.slf4j.Logger;
@@ -30,11 +30,8 @@ public class SerializerUtils {
         try {
             T value = objectMapper.readValue(json, clazz);
             return Optional.of(value);
-        } catch (JsonMappingException e) {
-            LOG.warn("Cannot deserialize string content: " + json + ", to: " + clazz.getCanonicalName());
-            return Optional.empty();
         } catch (IOException e) {
-            throw new RuntimeException("Cannot deserialize string: " + json, e);
+            throw new SerializerException("Cannot deserialize string: " + json + ", to: " + clazz.getCanonicalName());
         }
     }
 
@@ -43,7 +40,7 @@ public class SerializerUtils {
             String json = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
             return toObject(json, clazz);
         } catch (IOException e) {
-            throw new RuntimeException("Cannot deserialize inputStream", e);
+            throw new SerializerException("Cannot deserialize inputStream", e);
         }
     }
 
@@ -52,7 +49,7 @@ public class SerializerUtils {
             InputStream inputStream = httpEntity.getContent();
             return toObject(inputStream, clazz);
         } catch (IOException e) {
-            throw new RuntimeException("Cannot deserialize httpEntity", e);
+            throw new SerializerException("Cannot deserialize httpEntity", e);
         }
     }
 
