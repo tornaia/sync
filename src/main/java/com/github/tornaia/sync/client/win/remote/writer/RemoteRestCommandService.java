@@ -2,8 +2,8 @@ package com.github.tornaia.sync.client.win.remote.writer;
 
 import com.github.tornaia.sync.client.win.ClientidService;
 import com.github.tornaia.sync.client.win.httpclient.HttpClientProvider;
-import com.github.tornaia.sync.client.win.remote.reader.FileGetResponse;
 import com.github.tornaia.sync.shared.api.*;
+import com.github.tornaia.sync.shared.exception.SerializerException;
 import com.github.tornaia.sync.shared.util.SerializerUtils;
 import org.apache.http.ConnectionClosedException;
 import org.apache.http.HttpEntity;
@@ -88,7 +88,7 @@ public class RemoteRestCommandService {
         } catch (FileNotFoundException e) {
             LOG.debug("File disappeared meanwhile it was under upload(post)? " + e.getMessage());
             return CreateFileResponse.transferFailed(e.getMessage());
-        } catch (SocketException | ConnectionClosedException | SocketTimeoutException e) {
+        } catch (SerializerException | SocketException | ConnectionClosedException | SocketTimeoutException e) {
             return CreateFileResponse.transferFailed("Client side: " + e.getMessage());
         } catch (IOException e) {
             throw new IllegalStateException("Unhandled state", e);
@@ -140,7 +140,7 @@ public class RemoteRestCommandService {
         } catch (FileNotFoundException e) {
             LOG.debug("File disappeared meanwhile it was under upload(post)? " + e.getMessage());
             return ModifyFileResponse.transferFailed(e.getMessage());
-        } catch (SocketException | ConnectionClosedException | SocketTimeoutException e) {
+        } catch (SerializerException | SocketException | ConnectionClosedException | SocketTimeoutException e) {
             return ModifyFileResponse.transferFailed("Client side: " + e.getMessage());
         } catch (IOException e) {
             throw new IllegalStateException("Unhandled state", e);
@@ -181,7 +181,7 @@ public class RemoteRestCommandService {
             DeleteFileResponse deleteFileResponse = optionalDeleteFileResponse.get();
             LOG.debug("Deleted file: " + fileMetaInfo);
             return deleteFileResponse;
-        } catch (SocketException | ConnectionClosedException | SocketTimeoutException e) {
+        } catch (SerializerException | SocketException | ConnectionClosedException | SocketTimeoutException e) {
             return DeleteFileResponse.transferFailed("Client side: " + e.getMessage());
         } catch (IOException e) {
             throw new IllegalStateException("Unhandled state", e);

@@ -4,6 +4,7 @@ import com.github.tornaia.sync.client.win.ClientidService;
 import com.github.tornaia.sync.shared.api.FileMetaInfo;
 import com.github.tornaia.sync.shared.api.RemoteEventType;
 import com.github.tornaia.sync.shared.api.RemoteFileEvent;
+import com.github.tornaia.sync.shared.exception.SerializerException;
 import com.github.tornaia.sync.shared.util.SerializerUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,12 +70,15 @@ public class RemoteReaderService {
             return;
         }
 
-        Optional<RemoteFileEvent> optionalRemoteFileEvent = serializerUtils.toObject(message, RemoteFileEvent.class);
-        if (!optionalRemoteFileEvent.isPresent()) {
-            throw new IllegalStateException("Invalid message: " + message);
+        RemoteFileEvent remoteFileEvent;
+        try {
+            remoteFileEvent = serializerUtils.toObject(message, RemoteFileEvent.class).get();
+        } catch (SerializerException e) {
+            LOG.warn("Restarting WebSocket connection because of a malformed message: " + message);
+            this.closedConnection(session);
+            return;
         }
 
-        RemoteFileEvent remoteFileEvent = optionalRemoteFileEvent.get();
         addNewEvent(remoteFileEvent);
     }
 

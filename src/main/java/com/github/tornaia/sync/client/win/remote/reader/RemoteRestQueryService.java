@@ -3,6 +3,7 @@ package com.github.tornaia.sync.client.win.remote.reader;
 import com.github.tornaia.sync.client.win.httpclient.HttpClientProvider;
 import com.github.tornaia.sync.shared.api.FileMetaInfo;
 import com.github.tornaia.sync.shared.api.GetFileResponseStatus;
+import com.github.tornaia.sync.shared.exception.SerializerException;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.ConnectionClosedException;
 import org.apache.http.Header;
@@ -72,7 +73,7 @@ public class RemoteRestQueryService {
 
             LOG.debug("GET file: " + fileMetaInfo);
             return FileGetResponse.ok(fileMetaInfo, content);
-        } catch (SocketException | ConnectionClosedException | SocketTimeoutException e) {
+        } catch (SerializerException | SocketException | ConnectionClosedException | SocketTimeoutException e) {
             return FileGetResponse.transferFailed(fileMetaInfo, "Client side: " + e.getMessage());
         } catch (IOException e) {
             throw new IllegalStateException("Unhandled state", e);
