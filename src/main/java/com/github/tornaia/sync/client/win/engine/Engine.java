@@ -260,6 +260,7 @@ public class Engine {
                 LOG.debug("Remote event process succeed: " + remoteEvent);
             } else {
                 LOG.warn("Remote event process failed: " + remoteEvent);
+                remoteReaderService.reAddEvent(remoteEvent);
             }
         }
 
