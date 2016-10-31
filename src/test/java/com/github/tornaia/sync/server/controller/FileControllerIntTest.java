@@ -211,4 +211,48 @@ public class FileControllerIntTest extends AbstractSyncServerIntTest {
 
         assertThat(createdFiles, contains(expected));
     }
+
+    @Test
+    public void createDirectoryCreateFileThenDeleteFileAndDeleteDirectory() throws Exception {
+        CreateFileRequest createDirectoryRequest = new CreateFileRequestBuilder()
+                .userid("userid")
+                .relativePath("directory\\.")
+                .size(0L)
+                .creationDateTime(1L)
+                .modificationDateTime(5L)
+                .create();
+        ResponseEntity<CreateFileResponse> createDirectoryResponse = fileController.postFile(createDirectoryRequest, null, "clientid");
+        assertEquals(CreateFileResponse.Status.OK, createDirectoryResponse.getBody().status);
+
+        MockMultipartFile file = new MockMultipartFile("test", "this.does.not.count.test.png", "image/png", "TEST".getBytes());
+        CreateFileRequest createFileRequest = new CreateFileRequestBuilder()
+                .userid("userid")
+                .relativePath("directory\\file.txt")
+                .size(4L)
+                .creationDateTime(2L)
+                .modificationDateTime(5L)
+                .create();
+        ResponseEntity<CreateFileResponse> createFileResponse = fileController.postFile(createFileRequest, file, "clientid");
+        assertEquals(CreateFileResponse.Status.OK, createFileResponse.getBody().status);
+
+        DeleteFileRequest deleteFileRequest = new DeleteFileRequestBuilder()
+                .id(createFileResponse.getBody().fileMetaInfo.id)
+                .userid("userid")
+                .size(4L)
+                .creationDateTime(2L)
+                .modificationDateTime(5L)
+                .create();
+        ResponseEntity<DeleteFileResponse> deleteFileResponse = fileController.deleteFile(deleteFileRequest, "clientid");
+        assertEquals(DeleteFileResponse.Status.OK, deleteFileResponse.getBody().status);
+
+        DeleteFileRequest deleteDirectoryRequest = new DeleteFileRequestBuilder()
+                .id(createDirectoryResponse.getBody().fileMetaInfo.id)
+                .userid("userid")
+                .size(0L)
+                .creationDateTime(3L)
+                .modificationDateTime(6L)
+                .create();
+        ResponseEntity<DeleteFileResponse> deleteDirectoryResponse = fileController.deleteFile(deleteDirectoryRequest, "clientid");
+        assertEquals(DeleteFileResponse.Status.OK, deleteDirectoryResponse.getBody().status);
+    }
 }

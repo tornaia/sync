@@ -122,11 +122,11 @@ public class FileCommandService {
             throw new FileNotFoundException(userid, id);
         }
 
-        if (file.getSize() != size || file.getCreationDate() != creationDateTime) {
+        if (file.getSize() != size) {
             LOG.warn("DELETE File attributes mismatch: " + file + ", vs: " + size + ", " + creationDateTime + ", " + modificationDateTime);
             throw new OutdatedException(userid, id);
         }
-        if (file.isFile() && file.getLastModifiedDate() != modificationDateTime) {
+        if (file.isFile() && file.getCreationDate() != creationDateTime && file.getLastModifiedDate() != modificationDateTime) {
             LOG.warn("DELETE File attributes mismatch: " + file + ", vs: " + size + ", " + creationDateTime + ", " + modificationDateTime);
             throw new OutdatedException(userid, id);
         }
