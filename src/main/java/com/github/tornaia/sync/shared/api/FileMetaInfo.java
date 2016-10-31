@@ -70,7 +70,7 @@ public class FileMetaInfo implements Serializable {
         return new HashCodeBuilder()
                 .append(userid)
                 .append(relativePath)
-                .append(size)
+                .append(isFile() ? size : 0L)
                 .append(isFile() ? creationDateTime : 0L)
                 .append(isFile() ? modificationDateTime : 0L)
                 .toHashCode();
@@ -87,7 +87,7 @@ public class FileMetaInfo implements Serializable {
         return new EqualsBuilder()
                 .append(userid, other.userid)
                 .append(relativePath, other.relativePath)
-                .append(size, other.size)
+                .append(isFile() ? size : 0L, other.isFile() ? other.size : 0L)
                 .append(isFile() ? creationDateTime : 0L, other.isFile() ? other.creationDateTime : 0L)
                 .append(isFile() ? modificationDateTime : 0L, other.isFile() ? other.modificationDateTime : 0L)
                 .isEquals();
