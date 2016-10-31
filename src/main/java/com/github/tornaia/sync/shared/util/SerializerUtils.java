@@ -6,8 +6,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tornaia.sync.shared.exception.SerializerException;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -17,8 +15,6 @@ import java.util.Optional;
 
 @Component
 public class SerializerUtils {
-
-    private static final Logger LOG = LoggerFactory.getLogger(SerializerUtils.class);
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
