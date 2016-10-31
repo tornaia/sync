@@ -13,6 +13,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
+// TODO do not return optional<T> anymore
 @Component
 public class SerializerUtils {
 
