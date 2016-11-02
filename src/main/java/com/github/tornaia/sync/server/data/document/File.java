@@ -4,6 +4,7 @@ import com.github.tornaia.sync.shared.constant.FileSystemConstants;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.nio.file.Paths;
@@ -14,8 +15,10 @@ public class File {
     @Id
     private String id;
 
+    @Indexed
     private String userid;
 
+    @Indexed
     private String relativePath;
 
     private long size;
