@@ -19,6 +19,9 @@ Remember: it is just a PoC and not something ready for production use.
 		logpath = C:\mongodb\log\mongo-server.log
 		verbose=v
 		~~~
+	    * Create data and log directories
+	    	* C:\mongodb\data\db\
+		* C:\mongodb\log\
 	    * `$ mongod --config "C:\Program Files\MongoDB\Server\3.2\bin\mongod.cfg" --install`
 	* Create root:root user
 	    * `$ mongo --port 27017`
