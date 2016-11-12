@@ -199,7 +199,7 @@ public class RemoteReaderService {
         createdEvents.removeAll(invalidCreatedEvents);
     }
 
-    private class RelativePathLengthComparator implements Comparator<RemoteFileEvent> {
+    private static class RelativePathLengthComparator implements Comparator<RemoteFileEvent> {
         public int compare(RemoteFileEvent obj1, RemoteFileEvent obj2) {
             if (obj1 == obj2) {
                 return 0;
