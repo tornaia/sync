@@ -1,0 +1,7 @@
+---
+applications:
+- name: sync-backend
+  memory: 2048M
+  instances: 1
+  disk_quota: 1024M
+  path: target/sync-server-1.0-SNAPSHOT.jar

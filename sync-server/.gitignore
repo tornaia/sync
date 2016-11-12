@@ -1,0 +1,8 @@
+.idea/
+*.iml
+target/
+/bin/
+temp/
+src/main/resources/application-real-s3-cloud.properties
+src/main/resources/application-real-mongo-cloud.properties
+cf.login.bat
