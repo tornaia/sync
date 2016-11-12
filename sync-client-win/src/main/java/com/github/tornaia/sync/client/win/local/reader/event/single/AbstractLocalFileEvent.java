@@ -23,10 +23,10 @@ public abstract class AbstractLocalFileEvent {
 
     private static void checkArgument(String relativePath) {
         if (relativePath.startsWith(SEPARATOR_WINDOWS) || relativePath.startsWith(SEPARATOR_UNIX)) {
-            throw new IllegalArgumentException("RelativePath of a file must never start with separator char: " + relativePath);
+            throw new IllegalArgumentException("RelativePath of a file must not start with separator char: " + relativePath);
         }
         if (relativePath.endsWith(SEPARATOR_WINDOWS) || relativePath.endsWith(SEPARATOR_UNIX)) {
-            throw new IllegalArgumentException("RelativePath of a file must never end with separator char: " + relativePath);
+            throw new IllegalArgumentException("RelativePath of a file must not end with separator char: " + relativePath);
         }
     }
 

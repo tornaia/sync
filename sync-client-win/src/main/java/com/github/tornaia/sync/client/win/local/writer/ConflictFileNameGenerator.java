@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 import java.io.File;
 import java.nio.file.Path;
 
-import static com.github.tornaia.sync.shared.constant.FileSystemConstants.DIRECTORY_POSTFIX;
+import static com.github.tornaia.sync.shared.constant.FileSystemConstants.DOT_FILENAME;
 
 @Component
 public class ConflictFileNameGenerator {
@@ -20,19 +20,17 @@ public class ConflictFileNameGenerator {
     private static final String EXTENSION_SEPARATOR_STRING = ".";
 
     public Path resolve(Path absolutePath, FileMetaInfo localFileMetaInfo) {
-        String originalFileName = absolutePath.toFile().getAbsolutePath();
-        boolean isDirectory = originalFileName.endsWith(DIRECTORY_POSTFIX);
-        if (isDirectory) {
-            originalFileName = originalFileName.substring(0, originalFileName.length() - DIRECTORY_POSTFIX.length());
-        }
+        boolean isDirectory = absolutePath.toFile().getName().equals(DOT_FILENAME);
+        String originalFileName = absolutePath.normalize().toFile().getName();
         boolean hasExtension = originalFileName.indexOf(EXTENSION_SEPARATOR_CHAR) != -1;
         String postFix = "_conflict_" + localFileMetaInfo.size + "_" + localFileMetaInfo.creationDateTime + "_" + localFileMetaInfo.modificationDateTime;
         String conflictFileName = hasExtension ? originalFileName.split("\\.", 2)[0] + postFix + EXTENSION_SEPARATOR_STRING + originalFileName.split("\\.", 2)[1] : originalFileName + postFix;
 
         // TODO what should happen when this renamed/conflictFileName file exists? or if the generated file name/path is too long?
-        Path renamed = new File(absolutePath.toFile().getParentFile().getAbsolutePath()).toPath().resolve(conflictFileName);
+        File originalFile = absolutePath.normalize().toFile();
+        Path renamed = new File(originalFile.getParentFile().getAbsolutePath()).toPath().resolve(conflictFileName).normalize();
         if (isDirectory) {
-            renamed = renamed.resolve(FileSystemConstants.DOT_FILENAME);
+            renamed = renamed.resolve(DOT_FILENAME);
         }
         LOG.warn("Instead of " + absolutePath + " use " + renamed);
         return renamed;

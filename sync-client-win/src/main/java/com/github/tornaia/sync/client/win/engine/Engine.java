@@ -5,6 +5,9 @@ import com.github.tornaia.sync.client.win.local.reader.event.bulk.LocalFileCreat
 import com.github.tornaia.sync.client.win.local.reader.event.bulk.LocalFileDeletedBulkEvents;
 import com.github.tornaia.sync.client.win.local.reader.event.bulk.LocalFileModifiedBulkEvents;
 import com.github.tornaia.sync.client.win.local.reader.event.single.AbstractLocalFileEvent;
+import com.github.tornaia.sync.client.win.local.reader.event.single.LocalFileCreatedEvent;
+import com.github.tornaia.sync.client.win.local.reader.event.single.LocalFileDeletedEvent;
+import com.github.tornaia.sync.client.win.local.reader.event.single.LocalFileModifiedEvent;
 import com.github.tornaia.sync.client.win.local.writer.LocalWriterService;
 import com.github.tornaia.sync.client.win.remote.RemoteKnownState;
 import com.github.tornaia.sync.client.win.remote.reader.BulkRemoteFileCreatedEvent;
@@ -219,7 +222,7 @@ public class Engine {
                     LOG.debug("File is in sync with the server (created): " + relativePath);
                 } else {
                     LOG.warn("File creation cannot synced with server: " + relativePath);
-                    localReaderService.reAddEvent(localEvent);
+                    localReaderService.reAddEvent((LocalFileCreatedEvent) localEvent);
                 }
                 break;
             case MODIFIED:
@@ -228,7 +231,7 @@ public class Engine {
                     LOG.debug("File is in sync with the server (modified): " + relativePath);
                 } else {
                     LOG.warn("File modification cannot synced with server: " + relativePath);
-                    localReaderService.reAddEvent(localEvent);
+                    localReaderService.reAddEvent((LocalFileModifiedEvent) localEvent);
                 }
                 break;
             case DELETED:
@@ -237,7 +240,7 @@ public class Engine {
                     LOG.debug("File is in sync with the server (deleted): " + relativePath);
                 } else {
                     LOG.warn("File deletion cannot synced with server: " + relativePath);
-                    localReaderService.reAddEvent(localEvent);
+                    localReaderService.reAddEvent((LocalFileDeletedEvent) localEvent);
                 }
                 break;
             default:
