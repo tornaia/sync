@@ -1,6 +1,6 @@
-## General information
+# <tt style="color:limegreen">Sync</tt> - File synchronization
 
-This project is just proof of concept to demonstrate that <tt style="color:red">file synchronization</tt> is not necessarily super difficult and can be fast.
+<tt style="color:limegreen">Sync</tt> is just proof of concept to demonstrate that <tt style="color:limegreen">file synchronization</tt> is not necessarily super difficult and can be fast.
 Remember: it is just a PoC and not something ready for production use.
 
 ##### Dependencies
@@ -41,6 +41,6 @@ Remember: it is just a PoC and not something ready for production use.
 	* Program arguments: --spring.profiles.active=cloud-1
 	* Use classpath of module: sync-client-win
 
-##### More to read
+## More to read
 
-https://tornaiandras.com/tag/file-sync/
+https://tornaiandras.com/tag/sync/
