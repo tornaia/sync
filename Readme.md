@@ -10,9 +10,9 @@ Remember: it is just a PoC and not something ready for production use.
 * Jubos/fake-s3 for localhost development and e2e tests
 	* Install Ruby: http://rubyinstaller.org/
 	* Install jubos/fake-s3
+	   * https://github.com/jubos/fake-s3
 	   * `$ gem install fakes3`
-	* https://github.com/jubos/fake-s3
-	* http://railsapps.github.io/openssl-certificate-verify-failed.html
+	   * If you have SSL problems: https://gist.github.com/luislavena/f064211759ee0f806c88
 * MongoDB for localhost development and e2e tests
 	* Install it as a windows service
 	    * Create config file: C:\Program Files\MongoDB\Server\3.2\bin\mongod.cfg
