@@ -8,6 +8,12 @@
     <artifactId>sync-server</artifactId>
     <version>1.0-SNAPSHOT</version>
 
+	<parent>
+        <artifactId>sync</artifactId>
+        <groupId>com.github.tornaia</groupId>
+        <version>0.1-SNAPSHOT</version>
+    </parent>
+	
     <properties>
         <file.encoding>UTF-8</file.encoding>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -27,12 +33,6 @@
         <maven-compiler-plugin.version>3.5.1</maven-compiler-plugin.version>
         <maven-jar-plugin.version>2.6</maven-jar-plugin.version>
     </properties>
-
-    <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>1.4.1.RELEASE</version>
-    </parent>
 
     <build>
         <plugins>
