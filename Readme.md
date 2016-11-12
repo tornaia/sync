@@ -1,6 +1,6 @@
-## General information
+# <tt style="color:limegreen">Sync</tt> - File synchronization
 
-This project is just proof of concept to demonstrate that <tt style="color:red">file synchronization</tt> is not necessarily super difficult and can be fast.
+<tt style="color:limegreen">Sync</tt> is just proof of concept to demonstrate that <tt style="color:limegreen">file synchronization</tt> is not necessarily super difficult and can be fast.
 Remember: it is just a PoC and not something ready for production use.
 
 ##### Dependencies
@@ -8,12 +8,25 @@ Remember: it is just a PoC and not something ready for production use.
 * Java: JDK8
 * Maven: 3.3.9
 * Jubos/fake-s3 for localhost development and e2e tests
-	* https://github.com/jubos/fake-s3
-	* http://railsapps.github.io/openssl-certificate-verify-failed.html
+	* Install Ruby: http://rubyinstaller.org/
+	* Install jubos/fake-s3
+	   * https://github.com/jubos/fake-s3
+	   * `$ gem install fakes3`
+	   * If you have SSL problems: https://gist.github.com/luislavena/f064211759ee0f806c88
 * MongoDB for localhost development and e2e tests
-	* install it as a windows service
-	    * `$ mongod --install`
-	* create root:root user
+	* Install it as a windows service
+	    * Create config file: C:\Program Files\MongoDB\Server\3.2\bin\mongod.cfg
+	   	~~~
+		bind_ip = 127.0.0.1
+		dbpath = C:\mongodb\data\db
+		logpath = C:\mongodb\log\mongo-server.log
+		verbose=v
+		~~~
+	    * Create data and log directories
+	    	* C:\mongodb\data\db\
+		* C:\mongodb\log\
+	    * `$ mongod --config "C:\Program Files\MongoDB\Server\3.2\bin\mongod.cfg" --install`
+	* Create root:root user
 	    * `$ mongo --port 27017`
 	    * `$ use admin`
 	    * `$ db.createUser( { user: "root", pwd: "root", roles: [ "root" ] } )`
