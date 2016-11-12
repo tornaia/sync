@@ -11,7 +11,7 @@ Remember: it is just a PoC and not something ready for production use.
 	* https://github.com/jubos/fake-s3
 	* http://railsapps.github.io/openssl-certificate-verify-failed.html
 * MongoDB for localhost development and e2e tests
-	* install it as a windows service
+	* Install it as a windows service
 	    * Create config file: C:\Program Files\MongoDB\Server\3.2\bin\mongod.cfg
 	   	~~~
 		bind_ip = 127.0.0.1
@@ -50,7 +50,3 @@ Remember: it is just a PoC and not something ready for production use.
 	* Main class: com.github.tornaia.sync.client.win.WinClientApp
 	* Program arguments: --spring.profiles.active=cloud-1
 	* Use classpath of module: sync-client-win
-
-## More to read
-
-https://tornaiandras.com/tag/sync/
