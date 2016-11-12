@@ -8,6 +8,9 @@ Remember: it is just a PoC and not something ready for production use.
 * Java: JDK8
 * Maven: 3.3.9
 * Jubos/fake-s3 for localhost development and e2e tests
+	* Install Ruby: http://rubyinstaller.org/
+	* Install jubos/fake-s3
+	   * `$ gem install fakes3`
 	* https://github.com/jubos/fake-s3
 	* http://railsapps.github.io/openssl-certificate-verify-failed.html
 * MongoDB for localhost development and e2e tests
