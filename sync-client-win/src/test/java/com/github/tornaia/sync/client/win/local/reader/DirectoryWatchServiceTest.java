@@ -21,7 +21,8 @@ import static org.junit.Assert.assertTrue;
 
 public class DirectoryWatchServiceTest {
 
-    private Path tempDirectory = Files.createTempDirectory("prefix");
+    private Path tempDirectory = Files.createTempDirectory("junit_test");
+
     private DirectoryWatchService directoryWatchService = new DirectoryWatchService(tempDirectory.toFile().getAbsolutePath());
 
     private List<LocalFileCreatedEvent> localFileCreatedEvents = new ArrayList<>();
@@ -55,7 +56,7 @@ public class DirectoryWatchServiceTest {
     public void fileCreated() throws Exception {
         tempDirectory.resolve("file.txt").toFile().createNewFile();
 
-        Thread.sleep(50L);
+        waitForEvents();
 
         assertThat(localFileCreatedEvents, hasItems(new LocalFileEventMatcher().eventType(CREATED).relativePath("file.txt")));
         assertTrue(localFileModifiedEvents.isEmpty());
@@ -67,10 +68,14 @@ public class DirectoryWatchServiceTest {
         tempDirectory.resolve("file1.txt").toFile().createNewFile();
         tempDirectory.resolve("file2.txt").toFile().createNewFile();
 
-        Thread.sleep(50L);
+        waitForEvents();
 
         assertThat(localFileCreatedEvents, hasItems(new LocalFileEventMatcher().eventType(CREATED).relativePath("file1.txt"), new LocalFileEventMatcher().eventType(CREATED).relativePath("file2.txt")));
         assertTrue(localFileModifiedEvents.isEmpty());
         assertTrue(localFileDeletedEvents.isEmpty());
+    }
+
+    private void waitForEvents() throws Exception {
+        Thread.sleep(50L);
     }
 }
