@@ -20,6 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Paths;
 
 import static com.github.tornaia.sync.shared.api.GetFileResponseStatus.FILE_STATUS_HEADER_FIELD_NAME;
 import static org.springframework.http.HttpHeaders.CONTENT_DISPOSITION;
@@ -120,7 +121,8 @@ public class FileController {
             InputStream content = fileQueryService.getContent(id);
             InputStreamResource inputStreamResource = new InputStreamResource(content);
             HttpHeaders responseHeaders = createHeaderFor(GetFileResponseStatus.OK);
-            responseHeaders.add(CONTENT_DISPOSITION, "attachment; filename=" + file.getFilename());
+            String fileName = Paths.get(file.getRelativePath()).getFileName().toString();
+            responseHeaders.add(CONTENT_DISPOSITION, "attachment; filename=" + fileName);
             responseHeaders.setContentLength(file.getSize());
             return ResponseEntity.ok().headers(responseHeaders).body(inputStreamResource);
         } catch (FileNotFoundException e) {

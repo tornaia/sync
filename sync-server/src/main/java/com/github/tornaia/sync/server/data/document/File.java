@@ -46,10 +46,6 @@ public class File {
         return relativePath.endsWith(FileSystemConstants.DIRECTORY_POSTFIX);
     }
 
-    public String getFilename() {
-        return Paths.get(relativePath).getFileName().toString();
-    }
-
     public String getId() {
         return id;
     }
