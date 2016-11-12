@@ -40,3 +40,7 @@ Remember: it is just a PoC and not something ready for production use.
 	* Main class: com.github.tornaia.sync.client.win.WinClientApp
 	* Program arguments: --spring.profiles.active=cloud-1
 	* Use classpath of module: sync-client-win
+
+##### More to read
+
+https://tornaiandras.com/tag/file-sync/
