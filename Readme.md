@@ -12,8 +12,15 @@ Remember: it is just a PoC and not something ready for production use.
 	* http://railsapps.github.io/openssl-certificate-verify-failed.html
 * MongoDB for localhost development and e2e tests
 	* install it as a windows service
-	    * `$ mongod --install`
-	* create root:root user
+	    * Create config file: C:\Program Files\MongoDB\Server\3.2\bin\mongod.cfg
+	   	~~~
+		bind_ip = 127.0.0.1
+		dbpath = C:\mongodb\data\db
+		logpath = C:\mongodb\log\mongo-server.log
+		verbose=v
+		~~~
+	    * `$ mongod --config "C:\Program Files\MongoDB\Server\3.2\bin\mongod.cfg" --install`
+	* Create root:root user
 	    * `$ mongo --port 27017`
 	    * `$ use admin`
 	    * `$ db.createUser( { user: "root", pwd: "root", roles: [ "root" ] } )`
