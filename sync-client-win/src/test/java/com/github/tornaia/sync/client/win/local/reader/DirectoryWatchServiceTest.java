@@ -30,19 +30,18 @@ import static org.junit.Assert.assertTrue;
 
 public class DirectoryWatchServiceTest {
 
-    private Path tempDirectory = Files.createTempDirectory("junit_test");
+    private Path tempDirectory;
 
-    private DirectoryWatchService directoryWatchService = new DirectoryWatchService(tempDirectory.toFile().getAbsolutePath());
+    private DirectoryWatchService directoryWatchService;
 
     private List<LocalFileCreatedEvent> localFileCreatedEvents = new ArrayList<>();
     private List<LocalFileModifiedEvent> localFileModifiedEvents = new ArrayList<>();
     private List<LocalFileDeletedEvent> localFileDeletedEvents = new ArrayList<>();
 
-    public DirectoryWatchServiceTest() throws Exception {
-    }
-
     @Before
     public void initListeners() throws Exception {
+        tempDirectory = Files.createTempDirectory("junit_test");
+        directoryWatchService = new DirectoryWatchService(tempDirectory.toFile().getAbsolutePath());
         directoryWatchService.addCreatedListener(item -> localFileCreatedEvents.add(item));
         directoryWatchService.addModifiedListener(item -> localFileModifiedEvents.add(item));
         directoryWatchService.addDeletedListener(item -> localFileDeletedEvents.add(item));
@@ -307,7 +306,7 @@ public class DirectoryWatchServiceTest {
     }
 
     private void waitForEvents() throws Exception {
-        Thread.sleep(50L);
+        Thread.sleep(100L);
     }
 
     private static LocalFileEventMatcher event(LocalFileEventType type, String relativePath) {
