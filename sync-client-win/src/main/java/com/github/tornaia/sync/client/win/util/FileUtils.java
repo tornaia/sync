@@ -18,6 +18,9 @@ public class FileUtils {
     @Autowired
     private RandomUtils randomUtils;
 
+    private FileUtils() {
+    }
+
     public String getDescriptionForFile(File file) {
         try {
             Path pathAsFile = file.toPath();
