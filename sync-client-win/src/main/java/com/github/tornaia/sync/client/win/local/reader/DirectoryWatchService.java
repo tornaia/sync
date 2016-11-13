@@ -86,7 +86,9 @@ public class DirectoryWatchService {
 
     private void registerWatcherAndAddAllFiles() {
         try {
-            syncDirectory.register(watchService, new WatchEvent.Kind[]{ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY, OVERFLOW}, ExtendedWatchEventModifier.FILE_TREE);
+            WatchEvent.Kind[] kinds = {ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY, OVERFLOW};
+            WatchEvent.Modifier[] modifiers = new WatchEvent.Modifier[]{ExtendedWatchEventModifier.FILE_TREE};
+            syncDirectory.register(watchService, kinds, modifiers);
         } catch (IOException e) {
             throw new IllegalStateException("Should not happen", e);
         }
