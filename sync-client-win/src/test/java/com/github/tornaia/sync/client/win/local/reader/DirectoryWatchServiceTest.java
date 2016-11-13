@@ -12,15 +12,18 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileWriter;
+import java.io.RandomAccessFile;
+import java.nio.channels.FileChannel;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.github.tornaia.sync.client.win.local.reader.event.LocalFileEventType.CREATED;
-import static com.github.tornaia.sync.client.win.local.reader.event.LocalFileEventType.MODIFIED;
+import static com.github.tornaia.sync.client.win.local.reader.event.LocalFileEventType.*;
 import static org.hamcrest.Matchers.contains;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
@@ -48,7 +51,7 @@ public class DirectoryWatchServiceTest {
 
     @After
     public void deleteTempDirectory() throws Exception {
-        FileUtils.deleteDirectory(tempDirectory.toFile());
+        FileUtils.forceDelete(tempDirectory.toFile());
     }
 
     @Test
@@ -130,12 +133,160 @@ public class DirectoryWatchServiceTest {
         assertTrue(localFileDeletedEvents.isEmpty());
     }
 
-    private File createNewFile(String filename) throws Exception {
-        File file = tempDirectory.resolve(filename).toFile();
+    @Test
+    public void directoryCreated() throws Exception {
+        createNewDirectory("directory");
+
+        assertThat(localFileCreatedEvents, contains(event(CREATED, "directory")));
+        assertTrue(localFileModifiedEvents.isEmpty());
+        assertTrue(localFileDeletedEvents.isEmpty());
+    }
+
+    @Test
+    public void fileDeleted() throws Exception {
+        File newFile = createNewFile("file.txt");
+        deleteFile(newFile);
+
+        assertThat(localFileCreatedEvents, contains(event(CREATED, "file.txt")));
+        assertThat(localFileModifiedEvents, contains(event(MODIFIED, "file.txt")));
+        assertThat(localFileDeletedEvents, contains(event(DELETED, "file.txt")));
+    }
+
+    @Test
+    public void directoryDeleted() throws Exception {
+        File newDirectory = createNewDirectory("directory");
+        deleteFile(newDirectory);
+
+        assertThat(localFileCreatedEvents, contains(event(CREATED, "directory")));
+        assertTrue(localFileModifiedEvents.isEmpty());
+        assertThat(localFileDeletedEvents, contains(event(DELETED, "directory")));
+    }
+
+    @Test
+    public void directoryWithSomeFilesDeleted() throws Exception {
+        File directory = createNewDirectory("directory");
+        createNewFile("directory/file1.txt");
+        createNewFile("directory/file2.txt");
+        deleteFile(directory);
+
+        assertThat(localFileCreatedEvents, contains(event(CREATED, "directory"), event(CREATED, "directory\\file1.txt"), event(CREATED, "directory\\file2.txt")));
+        assertThat(localFileModifiedEvents, contains(event(MODIFIED, "directory"), event(MODIFIED, "directory\\file1.txt"), event(MODIFIED, "directory\\file2.txt"), event(MODIFIED, "directory")));
+        assertThat(localFileDeletedEvents, contains(event(DELETED, "directory\\file1.txt"), event(DELETED, "directory\\file2.txt"), event(DELETED, "directory")));
+    }
+
+    @Test
+    public void fileDeletedWithinDirectory() throws Exception {
+        createNewDirectory("directory");
+        File file = createNewFile("directory/file.txt");
+        deleteFile(file);
+
+        assertThat(localFileCreatedEvents, contains(event(CREATED, "directory"), event(CREATED, "directory\\file.txt")));
+        assertThat(localFileModifiedEvents, contains(event(MODIFIED, "directory\\file.txt")));
+        assertThat(localFileDeletedEvents, contains(event(DELETED, "directory\\file.txt")));
+    }
+
+    @Test
+    public void fileCreatedThenLocked() throws Exception {
+        File file = createNewFile("locked-file");
+
+        try (RandomAccessFile rwd = new RandomAccessFile(file, "rw")) {
+            FileChannel channel = rwd.getChannel();
+            channel.lock(0L, 0L, false);
+        }
+
+        waitForEvents();
+
+        assertThat(localFileCreatedEvents, contains(event(CREATED, "locked-file")));
+        assertTrue(localFileModifiedEvents.isEmpty());
+        assertTrue(localFileDeletedEvents.isEmpty());
+    }
+
+    @Test
+    public void fileCreatedThenLockedAndModified() throws Exception {
+        File file = createNewFile("locked-file");
+
+        try (RandomAccessFile rwd = new RandomAccessFile(file, "rw")) {
+            FileChannel channel = rwd.getChannel();
+            channel.lock(0L, 0L, false);
+
+            try (FileWriter fw = new FileWriter(file)) {
+                fw.append("newContent");
+            }
+        }
+
+        waitForEvents();
+
+        assertThat(localFileCreatedEvents, contains(event(CREATED, "locked-file")));
+        assertThat(localFileModifiedEvents, contains(event(MODIFIED, "locked-file"), event(MODIFIED, "locked-file")));
+        assertTrue(localFileDeletedEvents.isEmpty());
+    }
+
+    @Test
+    public void fileCreatedThenLockedAndModifiedTwice() throws Exception {
+        File file = createNewFile("locked-file");
+
+        try (RandomAccessFile rwd = new RandomAccessFile(file, "rw")) {
+            FileChannel channel = rwd.getChannel();
+            channel.lock(0L, 0L, false);
+
+            try (FileWriter fw = new FileWriter(file)) {
+                fw.append("newContent");
+                fw.append("newContent2");
+            }
+        }
+
+        waitForEvents();
+
+        assertThat(localFileCreatedEvents, contains(event(CREATED, "locked-file")));
+        assertThat(localFileModifiedEvents, contains(event(MODIFIED, "locked-file"), event(MODIFIED, "locked-file")));
+        assertTrue(localFileDeletedEvents.isEmpty());
+    }
+
+    @Test
+    public void fileStateReadWhileItWasInModificationSoAdditionalModifiedEventsAreFired() throws Exception {
+        File file = createNewFile("locked-file");
+
+        try (RandomAccessFile rwd = new RandomAccessFile(file, "rws")) {
+            FileChannel channel = rwd.getChannel();
+            channel.lock(0L, 0L, true);
+
+            try (FileWriter fw = new FileWriter(file)) {
+                fw.append("one");
+                fw.flush();
+                readFile(file);
+                fw.append("two");
+                fw.flush();
+                readFile(file);
+            }
+        }
+
+        waitForEvents();
+
+        assertThat(localFileCreatedEvents, contains(event(CREATED, "locked-file")));
+        assertThat(localFileModifiedEvents, contains(event(MODIFIED, "locked-file"), event(MODIFIED, "locked-file"), event(MODIFIED, "locked-file"), event(MODIFIED, "locked-file")));
+        assertTrue(localFileDeletedEvents.isEmpty());
+    }
+
+    private File createNewFile(String fileName) throws Exception {
+        File file = tempDirectory.resolve(fileName).toFile();
         boolean successfullyCreated = file.createNewFile();
         assertTrue(successfullyCreated);
         waitForEvents();
         return file;
+    }
+
+    private File createNewDirectory(String directoryName) throws Exception {
+        File file = tempDirectory.resolve(directoryName).toFile();
+        boolean successfullyCreated = file.mkdirs();
+        assertTrue(successfullyCreated);
+        waitForEvents();
+        return file;
+    }
+
+    private String readFile(File file) throws Exception {
+        try (FileInputStream fis = new FileInputStream(file)) {
+            return IOUtils.toString(fis, Charset.defaultCharset());
+        }
     }
 
     private void setCreationTime(File file, long creationTime) throws Exception {
@@ -147,6 +298,11 @@ public class DirectoryWatchServiceTest {
         try (FileWriter fw = new FileWriter(file)) {
             IOUtils.write(newContent, fw);
         }
+        waitForEvents();
+    }
+
+    private void deleteFile(File file) throws Exception {
+        FileUtils.forceDelete(file);
         waitForEvents();
     }
 
