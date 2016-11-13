@@ -24,9 +24,9 @@ public class DirectoryWatchService {
 
     private static final Logger LOG = LoggerFactory.getLogger(DirectoryWatchService.class);
 
-    private LinkedHashSet<Consumer<LocalFileCreatedEvent>> createdListeners = new LinkedHashSet<>();
-    private LinkedHashSet<Consumer<LocalFileModifiedEvent>> modifiedListeners = new LinkedHashSet<>();
-    private LinkedHashSet<Consumer<LocalFileDeletedEvent>> deletedListeners = new LinkedHashSet<>();
+    private Set<Consumer<LocalFileCreatedEvent>> createdListeners = new LinkedHashSet<>();
+    private Set<Consumer<LocalFileModifiedEvent>> modifiedListeners = new LinkedHashSet<>();
+    private Set<Consumer<LocalFileDeletedEvent>> deletedListeners = new LinkedHashSet<>();
 
     private Path syncDirectory;
 
@@ -37,19 +37,20 @@ public class DirectoryWatchService {
     private volatile boolean contextIsRunning;
 
     public DirectoryWatchService(String syncDirectoryAsString) throws IOException {
-        this.syncDirectory = FileSystems.getDefault().getPath(syncDirectoryAsString);
+        FileSystem fileSystem = FileSystems.getDefault();
+        this.syncDirectory = fileSystem.getPath(syncDirectoryAsString);
         Files.createDirectories(syncDirectory);
     }
 
-    public void addCreatedListener(Consumer<LocalFileCreatedEvent> fileCreatedConsumer) {
+    public synchronized void addCreatedListener(Consumer<LocalFileCreatedEvent> fileCreatedConsumer) {
         createdListeners.add(fileCreatedConsumer);
     }
 
-    public void addModifiedListener(Consumer<LocalFileModifiedEvent> fileModifiedConsumer) {
+    public synchronized void addModifiedListener(Consumer<LocalFileModifiedEvent> fileModifiedConsumer) {
         modifiedListeners.add(fileModifiedConsumer);
     }
 
-    public void addDeletedListener(Consumer<LocalFileDeletedEvent> fileDeletedConsumer) {
+    public synchronized void addDeletedListener(Consumer<LocalFileDeletedEvent> fileDeletedConsumer) {
         deletedListeners.add(fileDeletedConsumer);
     }
 
@@ -78,7 +79,7 @@ public class DirectoryWatchService {
         directoryEventsReaderThread.interrupt();
     }
 
-    public void restart() {
+    public synchronized void restart() {
         stop();
         start();
     }
