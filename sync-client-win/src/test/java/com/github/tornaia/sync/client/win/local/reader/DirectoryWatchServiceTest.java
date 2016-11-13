@@ -156,8 +156,6 @@ public class DirectoryWatchServiceTest {
         File newDirectory = createNewDirectory("directory");
         deleteFile(newDirectory);
 
-        assertThat(localFileCreatedEvents, contains(event(CREATED, "directory")));
-        assertTrue(localFileModifiedEvents.isEmpty());
         assertThat(localFileDeletedEvents, contains(event(DELETED, "directory")));
     }
 
@@ -168,8 +166,6 @@ public class DirectoryWatchServiceTest {
         createNewFile("directory/file2.txt");
         deleteFile(directory);
 
-        assertThat(localFileCreatedEvents, contains(event(CREATED, "directory"), event(CREATED, "directory\\file1.txt"), event(CREATED, "directory\\file2.txt")));
-        assertThat(localFileModifiedEvents, contains(event(MODIFIED, "directory"), event(MODIFIED, "directory\\file1.txt"), event(MODIFIED, "directory\\file2.txt"), event(MODIFIED, "directory")));
         assertThat(localFileDeletedEvents, contains(event(DELETED, "directory\\file1.txt"), event(DELETED, "directory\\file2.txt"), event(DELETED, "directory")));
     }
 
@@ -179,8 +175,6 @@ public class DirectoryWatchServiceTest {
         File file = createNewFile("directory/file.txt");
         deleteFile(file);
 
-        assertThat(localFileCreatedEvents, contains(event(CREATED, "directory"), event(CREATED, "directory\\file.txt")));
-        assertThat(localFileModifiedEvents, contains(event(MODIFIED, "directory\\file.txt")));
         assertThat(localFileDeletedEvents, contains(event(DELETED, "directory\\file.txt")));
     }
 
