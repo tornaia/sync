@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.websocket.*;
+import java.io.Serializable;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -199,7 +200,7 @@ public class RemoteReaderService {
         createdEvents.removeAll(invalidCreatedEvents);
     }
 
-    private static class RelativePathLengthComparator implements Comparator<RemoteFileEvent> {
+    private static class RelativePathLengthComparator implements Comparator<RemoteFileEvent>, Serializable {
         public int compare(RemoteFileEvent obj1, RemoteFileEvent obj2) {
             if (obj1 == obj2) {
                 return 0;
