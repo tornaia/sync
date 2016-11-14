@@ -89,12 +89,12 @@ public class DirectoryAssertUtils {
 
                     long expectedCreatedDateTime = getCreationTime(expectedFile);
                     long actualCreatedDateTime = getCreationTime(actualFile);
-                    String creationErrorMessage = String.format("File creation datetime mismatch. Expected \'%s\', actual \'%s\'", relativeExpectedFile, actualFile);
+                    String creationErrorMessage = String.format("File creation datetime mismatch. Expected \'%s\', actual \'%s\'", relativeExpectedFile, actualCreatedDateTime);
                     assertEquals(creationErrorMessage, expectedCreatedDateTime, actualCreatedDateTime);
 
                     long expectedModifiedDateTime = getLastModifiedTime(expectedFile);
                     long actualModifiedDateTime = getLastModifiedTime(actualFile);
-                    String modifiedErrorMessage = String.format("File modified datetime mismatch. Expected \'%s\', actual \'%s\'", relativeExpectedFile, actualFile);
+                    String modifiedErrorMessage = String.format("File modified datetime mismatch. Expected \'%s\', actual \'%s\'", relativeExpectedFile, actualModifiedDateTime);
                     assertEquals(modifiedErrorMessage, expectedModifiedDateTime, actualModifiedDateTime);
 
                     return FileVisitResult.CONTINUE;
