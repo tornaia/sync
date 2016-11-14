@@ -4,6 +4,7 @@ import com.github.tornaia.sync.client.win.local.reader.event.single.LocalFileCre
 import com.github.tornaia.sync.client.win.local.reader.event.single.LocalFileDeletedEvent;
 import com.github.tornaia.sync.client.win.local.reader.event.single.LocalFileModifiedEvent;
 import com.sun.nio.file.ExtendedWatchEventModifier;
+import com.sun.nio.file.SensitivityWatchEventModifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -87,13 +88,13 @@ public class DirectoryWatchService {
     private void registerWatcherAndAddAllFiles() {
         try {
             WatchEvent.Kind[] kinds = {ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY, OVERFLOW};
-            WatchEvent.Modifier[] modifiers = new WatchEvent.Modifier[]{ExtendedWatchEventModifier.FILE_TREE};
+            WatchEvent.Modifier[] modifiers = new WatchEvent.Modifier[]{ExtendedWatchEventModifier.FILE_TREE/*, SensitivityWatchEventModifier.HIGH*/};
             syncDirectory.register(watchService, kinds, modifiers);
         } catch (IOException e) {
             throw new IllegalStateException("Should not happen", e);
         }
 
-        Path rootDirectoryPath = syncDirectory.toAbsolutePath().resolve(DOT_FILENAME);
+        Path rootDirectoryPath = syncDirectory.toAbsolutePath();
         onFileCreated(rootDirectoryPath);
     }
 
@@ -149,7 +150,7 @@ public class DirectoryWatchService {
 
         boolean isDirectory = file.isDirectory();
         if (isDirectory) {
-            boolean isRootDirectory = filePath.normalize().equals(syncDirectory);
+            boolean isRootDirectory = filePath.equals(syncDirectory);
             if (!isRootDirectory) {
                 createdListeners.stream().forEach(listener -> listener.accept(new LocalFileCreatedEvent(relativePath)));
             }
