@@ -212,6 +212,9 @@ public class DiskWriterService {
 
         try {
             Files.move(tempDirectory.get(), absolutePath, StandardCopyOption.ATOMIC_MOVE);
+        } catch (AccessDeniedException e) {
+            LOG.warn("Cannot move temporary file to target: " + e.getMessage());
+            return false;
         } catch (IOException e) {
             LOG.error("Cannot move temporary file to target", e);
             return false;
