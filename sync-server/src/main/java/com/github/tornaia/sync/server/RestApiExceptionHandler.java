@@ -37,7 +37,6 @@ public final class RestApiExceptionHandler {
             }
         }
 
-        e.printStackTrace();
         throw e;
     }
 
