@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.github.tornaia.sync.client.win.local.reader.event.LocalFileEventType.*;
+import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.Matchers.contains;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
@@ -256,7 +257,7 @@ public class DirectoryWatchServiceTest {
         waitForEvents();
 
         assertThat(localFileCreatedEvents, contains(event(CREATED, "locked-file")));
-        assertThat(localFileModifiedEvents, contains(event(MODIFIED, "locked-file"), event(MODIFIED, "locked-file"), event(MODIFIED, "locked-file"), event(MODIFIED, "locked-file")));
+        assertThat(localFileModifiedEvents, hasItems(event(MODIFIED, "locked-file"), event(MODIFIED, "locked-file")));
         assertTrue(localFileDeletedEvents.isEmpty());
     }
 
