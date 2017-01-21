@@ -116,9 +116,7 @@
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>${maven-surefire-plugin.version}</version>
                     <configuration>
-                        <!-- Sets the VM argument line used when unit tests are run. -->
                         <argLine>${surefireArgLine}</argLine>
-                        <!-- Skips unit tests if the value of skip.unit.tests property is true -->
                         <skipTests>${skip.unit.tests}</skipTests>
                     </configuration>
                 </plugin>
@@ -138,7 +136,5 @@
             </plugins>
         </pluginManagement>
     </build>
-	
-	
 
 </project>
