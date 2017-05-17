@@ -70,7 +70,6 @@
                     <configuration>
                         <source>${java.version}</source>
                         <target>${java.version}</target>
-                        <fork>true</fork>
                     </configuration>
                 </plugin>
 
